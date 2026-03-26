@@ -1,9 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var authHandler = require('../utils/authHandler');
-var db = require('../utils/db');
-
-var prisma = db.prisma;
+var models = require('../utils/models');
+var mongo = require('../utils/mongo');
 
 router.get('/events/:id/comments', function (req, res, next) {
     Promise.resolve()
@@ -14,27 +13,23 @@ router.get('/events/:id/comments', function (req, res, next) {
         return;
     }
 
-    var event = await prisma.event.findUnique({
-        where: {
-            id: eventId,
-        },
-    });
+    var event = await models.event.findOne({ _id: mongo.toObjectId(eventId) }).lean();
+    event = mongo.toPlain(event);
 
     if (!event || event.isHidden) {
         res.status(404).send({ code: 'EVENT_NOT_FOUND', message: 'Event not found.' });
         return;
     }
 
-    var items = await prisma.eventComment.findMany({
-        where: {
-            eventId: eventId,
+    var items = await models.eventComment
+        .find({
+            eventId: mongo.toObjectId(eventId),
             isHidden: false,
-        },
-        orderBy: {
-            createdAt: 'desc',
-        },
-        take: 100,
-    });
+        })
+        .sort({ createdAt: -1 })
+        .limit(100)
+        .lean();
+    items = mongo.toPlain(items);
 
     res.send({
         items: items,
@@ -61,25 +56,21 @@ router.post('/events/:id/comments', authHandler.requireAuth, function (req, res,
         return;
     }
 
-    var event = await prisma.event.findUnique({
-        where: {
-            id: eventId,
-        },
-    });
+    var event = await models.event.findOne({ _id: mongo.toObjectId(eventId) }).lean();
+    event = mongo.toPlain(event);
 
     if (!event || event.isHidden) {
         res.status(404).send({ code: 'EVENT_NOT_FOUND', message: 'Event not found.' });
         return;
     }
 
-    var row = await prisma.eventComment.create({
-        data: {
-            eventId: eventId,
-            userId: authUser.userId,
-            content: content,
-            isHidden: false,
-        },
+    var row = await models.eventComment.create({
+        eventId: mongo.toObjectId(eventId),
+        userId: mongo.toObjectId(authUser.userId),
+        content: content,
+        isHidden: false,
     });
+    row = mongo.toPlain(row.toObject());
 
     res.status(201).send(row);
         })
@@ -95,27 +86,23 @@ router.get('/organizations/:id/reviews', function (req, res, next) {
         return;
     }
 
-    var org = await prisma.organization.findUnique({
-        where: {
-            id: organizationId,
-        },
-    });
+    var org = await models.organization.findOne({ _id: mongo.toObjectId(organizationId) }).lean();
+    org = mongo.toPlain(org);
 
     if (!org) {
         res.status(404).send({ code: 'ORGANIZATION_NOT_FOUND', message: 'Organization not found.' });
         return;
     }
 
-    var items = await prisma.organizationReview.findMany({
-        where: {
-            organizationId: organizationId,
+    var items = await models.organizationReview
+        .find({
+            organizationId: mongo.toObjectId(organizationId),
             status: 'Approved',
-        },
-        orderBy: {
-            createdAt: 'desc',
-        },
-        take: 100,
-    });
+        })
+        .sort({ createdAt: -1 })
+        .limit(100)
+        .lean();
+    items = mongo.toPlain(items);
 
     var averageRating = 0;
     if (items.length > 0) {
@@ -152,49 +139,46 @@ router.post('/organizations/:id/reviews', authHandler.requireAuth, function (req
         return;
     }
 
-    var org = await prisma.organization.findUnique({
-        where: {
-            id: organizationId,
-        },
-    });
+    var org = await models.organization.findOne({ _id: mongo.toObjectId(organizationId) }).lean();
+    org = mongo.toPlain(org);
 
     if (!org) {
         res.status(404).send({ code: 'ORGANIZATION_NOT_FOUND', message: 'Organization not found.' });
         return;
     }
 
-    var existing = await prisma.organizationReview.findUnique({
-        where: {
-            organizationId_userId: {
-                organizationId: organizationId,
-                userId: authUser.userId,
-            },
-        },
-    });
+    var existing = await models.organizationReview.findOne({
+        organizationId: mongo.toObjectId(organizationId),
+        userId: mongo.toObjectId(authUser.userId),
+    }).lean();
+    existing = mongo.toPlain(existing);
 
     if (!existing) {
-        existing = await prisma.organizationReview.create({
-            data: {
-                organizationId: organizationId,
-                userId: authUser.userId,
-                rating: rating,
-                title: title,
-                content: content,
-                status: 'Pending',
-            },
+        existing = await models.organizationReview.create({
+            organizationId: mongo.toObjectId(organizationId),
+            userId: mongo.toObjectId(authUser.userId),
+            rating: rating,
+            title: title,
+            content: content,
+            status: 'Pending',
         });
+        existing = mongo.toPlain(existing.toObject());
     } else {
-        existing = await prisma.organizationReview.update({
-            where: {
-                id: existing.id,
+        existing = await models.organizationReview.findOneAndUpdate(
+            {
+                _id: mongo.toObjectId(existing.id),
             },
-            data: {
-                rating: rating,
-                title: title,
-                content: content,
-                status: 'Pending',
+            {
+                $set: {
+                    rating: rating,
+                    title: title,
+                    content: content,
+                    status: 'Pending',
+                },
             },
-        });
+            { new: true }
+        ).lean();
+        existing = mongo.toPlain(existing);
     }
 
     res.status(201).send(existing);
@@ -220,26 +204,22 @@ router.post('/events/:id/reports', authHandler.requireAuth, function (req, res, 
         return;
     }
 
-    var event = await prisma.event.findUnique({
-        where: {
-            id: eventId,
-        },
-    });
+    var event = await models.event.findOne({ _id: mongo.toObjectId(eventId) }).lean();
+    event = mongo.toPlain(event);
 
     if (!event) {
         res.status(404).send({ code: 'EVENT_NOT_FOUND', message: 'Event not found.' });
         return;
     }
 
-    var row = await prisma.eventReport.create({
-        data: {
-            eventId: eventId,
-            reporterUserId: authUser.userId,
-            reason: reason,
-            details: details,
-            status: 'Pending',
-        },
+    var row = await models.eventReport.create({
+        eventId: mongo.toObjectId(eventId),
+        reporterUserId: mongo.toObjectId(authUser.userId),
+        reason: reason,
+        details: details,
+        status: 'Pending',
     });
+    row = mongo.toPlain(row.toObject());
 
     res.status(201).send(row);
         })

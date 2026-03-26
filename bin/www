@@ -7,6 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('nnptud-s4:server');
 var http = require('http');
+var mongoConnection = require('../utils/mongo-connection');
 
 /**
  * Get port from environment and store in Express.
@@ -22,12 +23,22 @@ app.set('port', port);
 var server = http.createServer(app);
 
 /**
- * Listen on provided port, on all network interfaces.
+ * Connect DB then listen on provided port, on all network interfaces.
  */
 
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
+startServer();
+
+async function startServer() {
+  try {
+    await mongoConnection.connectToDatabase();
+    server.listen(port);
+    server.on('error', onError);
+    server.on('listening', onListening);
+  } catch (error) {
+    console.error('Failed to connect to MongoDB:', error.message);
+    process.exit(1);
+  }
+}
 
 /**
  * Normalize a port into a number, string, or false.

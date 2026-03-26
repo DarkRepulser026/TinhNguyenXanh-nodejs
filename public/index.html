@@ -3,41 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VolunteerHub Sample Frontend</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <title>TinhNguyenXanh Frontend</title>
 </head>
 <body>
-  <main class="container">
-    <header class="hero">
-      <h1>VolunteerHub Sample Frontend</h1>
-      <p>Aligned route map and API flow for the current VolunteerHub codebase.</p>
-    </header>
-
-    <section class="panel">
-      <h2>Backend Health</h2>
-      <button id="healthBtn">Check /api/v1/health</button>
-      <pre id="healthOutput">Click the button to test API.</pre>
-    </section>
-
-    <section class="panel">
-      <h2>Auth Quick Test</h2>
-      <form id="loginForm">
-        <label>Email</label>
-        <input id="email" value="admin@volunteerhub.local" />
-        <label>Password</label>
-        <input id="password" type="password" value="Password123!" />
-        <button type="submit">Login</button>
-      </form>
-      <button id="meBtn">Get /api/v1/auth/me</button>
-      <pre id="authOutput">Use login then /auth/me.</pre>
-    </section>
-
-    <section class="panel">
-      <h2>Frontend Route Surface</h2>
-      <ul id="routeList"></ul>
-    </section>
-  </main>
-
-  <script src="/app.js"></script>
+  <div id="root"></div>
+  <script type="module" src="/main.tsx"></script>
 </body>
 </html>

@@ -1,9 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var authHandler = require('../utils/authHandler');
-var db = require('../utils/db');
-
-var prisma = db.prisma;
+var models = require('../utils/models');
+var mongo = require('../utils/mongo');
 
 router.use('/organizer', authHandler.requireAuth, authHandler.requireRole('Organizer', 'Admin'));
 
@@ -14,11 +13,11 @@ function toPageParams(query, defaultPageSize) {
 }
 
 async function getOwnedOrganization(userId) {
-    return prisma.organization.findFirst({
-        where: {
-            ownerUserId: userId,
-        },
-    });
+    var organization = await models.organization.findOne({
+        ownerUserId: mongo.toObjectId(userId),
+    }).lean();
+
+    return mongo.toPlain(organization);
 }
 
 router.get('/organizer/dashboard', function (req, res, next) {
@@ -32,27 +31,24 @@ router.get('/organizer/dashboard', function (req, res, next) {
                 return;
             }
 
-            var events = await prisma.event.findMany({
-                where: {
-                    organizationId: organization.id,
-                },
-                select: {
-                    id: true,
-                    status: true,
-                },
-            });
+            var events = await models.event
+                .find({
+                    organizationId: mongo.toObjectId(organization.id),
+                })
+                .select('_id status')
+                .lean();
+            events = mongo.toPlain(events);
 
             var eventIds = events.map(function (item) { return item.id; });
-            var relatedRegistrations = await prisma.eventRegistration.findMany({
-                where: {
+            var relatedRegistrations = await models.eventRegistration
+                .find({
                     eventId: {
-                        in: eventIds,
+                        $in: eventIds.map(function (id) { return mongo.toObjectId(id); }),
                     },
-                },
-                select: {
-                    status: true,
-                },
-            });
+                })
+                .select('status')
+                .lean();
+            relatedRegistrations = mongo.toPlain(relatedRegistrations);
 
             res.send({
                 organization: {
@@ -117,12 +113,16 @@ router.patch('/organizer/organization', function (req, res, next) {
                 return;
             }
 
-            var updated = await prisma.organization.update({
-                where: {
-                    id: organization.id,
+            var updated = await models.organization.findOneAndUpdate(
+                {
+                    _id: mongo.toObjectId(organization.id),
                 },
-                data: payload,
-            });
+                {
+                    $set: payload,
+                },
+                { new: true }
+            ).lean();
+            updated = mongo.toPlain(updated);
 
             res.send(updated);
         })
@@ -140,21 +140,26 @@ router.post('/organizer/organization/claim', function (req, res, next) {
                 return;
             }
 
-            var org = await prisma.organization.findUnique({ where: { id: organizationId } });
+            var org = await models.organization.findOne({ _id: mongo.toObjectId(organizationId) }).lean();
+            org = mongo.toPlain(org);
 
             if (!org) {
                 res.status(404).send({ message: 'Organization not found.' });
                 return;
             }
 
-            org = await prisma.organization.update({
-                where: {
-                    id: org.id,
+            org = await models.organization.findOneAndUpdate(
+                {
+                    _id: mongo.toObjectId(org.id),
                 },
-                data: {
-                    ownerUserId: authUser.userId,
+                {
+                    $set: {
+                        ownerUserId: mongo.toObjectId(authUser.userId),
+                    },
                 },
-            });
+                { new: true }
+            ).lean();
+            org = mongo.toPlain(org);
 
             res.send(org);
         })
@@ -176,19 +181,33 @@ router.get('/organizer/events', function (req, res, next) {
             var status = typeof req.query.status === 'string' ? req.query.status.trim().toLowerCase() : '';
             var paging = toPageParams(req.query, 10);
 
-            var rows = await prisma.event.findMany({
-                where: {
-                    organizationId: organization.id,
-                },
-                include: {
-                    category: true,
-                    registrations: {
-                        select: {
-                            status: true,
-                        },
+            var rows = await models.event
+                .find({
+                    organizationId: mongo.toObjectId(organization.id),
+                })
+                .populate('categoryId')
+                .lean();
+
+            var registrationRows = await models.eventRegistration
+                .find({
+                    eventId: {
+                        $in: rows.map(function (item) { return item._id; }),
                     },
-                },
+                })
+                .select('eventId status')
+                .lean();
+
+            var registrationCountByEvent = {};
+            registrationRows.forEach(function (item) {
+                if (item.status !== 'Pending' && item.status !== 'Confirmed') {
+                    return;
+                }
+
+                var key = String(item.eventId);
+                registrationCountByEvent[key] = (registrationCountByEvent[key] || 0) + 1;
             });
+
+            rows = mongo.toPlain(rows);
 
             rows = rows.filter(function (event) {
                 var searchOk = !search ||
@@ -201,9 +220,7 @@ router.get('/organizer/events', function (req, res, next) {
 
             var totalCount = rows.length;
             var items = rows.slice((paging.page - 1) * paging.pageSize, (paging.page - 1) * paging.pageSize + paging.pageSize).map(function (event) {
-                var registrationCount = event.registrations.filter(function (item) {
-                    return item.status === 'Pending' || item.status === 'Confirmed';
-                }).length;
+                var registrationCount = registrationCountByEvent[event.id] || 0;
 
                 return {
                     id: event.id,
@@ -215,7 +232,7 @@ router.get('/organizer/events', function (req, res, next) {
                     status: event.status,
                     maxVolunteers: event.maxVolunteers,
                     categoryId: event.categoryId,
-                    categoryName: event.category ? event.category.name : null,
+                    categoryName: event.categoryId && event.categoryId.name ? event.categoryId.name : null,
                     registrationCount: registrationCount,
                 };
             });
@@ -248,15 +265,14 @@ router.get('/organizer/events/:id', function (req, res, next) {
                 return;
             }
 
-            var event = await prisma.event.findFirst({
-                where: {
-                    id: id,
-                    organizationId: organization.id,
-                },
-                include: {
-                    category: true,
-                },
-            });
+            var event = await models.event
+                .findOne({
+                    _id: mongo.toObjectId(id),
+                    organizationId: mongo.toObjectId(organization.id),
+                })
+                .populate('categoryId')
+                .lean();
+            event = mongo.toPlain(event);
 
             if (!event) {
                 res.status(404).send({ message: 'Event not found.' });
@@ -274,7 +290,7 @@ router.get('/organizer/events/:id', function (req, res, next) {
                 maxVolunteers: event.maxVolunteers,
                 images: event.images,
                 categoryId: event.categoryId,
-                categoryName: event.category ? event.category.name : null,
+                categoryName: event.categoryId && event.categoryId.name ? event.categoryId.name : null,
             });
         })
         .catch(next);
@@ -309,21 +325,20 @@ router.post('/organizer/events', function (req, res, next) {
                 return;
             }
 
-            var event = await prisma.event.create({
-                data: {
-                    title: title,
-                    description: description,
-                    location: location,
-                    categoryId: categoryId || null,
-                    maxVolunteers: Number.isFinite(maxVolunteers) && maxVolunteers >= 0 ? maxVolunteers : 0,
-                    startTime: startTime,
-                    endTime: endTime,
-                    organizationId: organization.id,
-                    status: 'draft',
-                    images: null,
-                    isHidden: false,
-                },
+            var event = await models.event.create({
+                title: title,
+                description: description,
+                location: location,
+                categoryId: categoryId ? mongo.toObjectId(categoryId) : null,
+                maxVolunteers: Number.isFinite(maxVolunteers) && maxVolunteers >= 0 ? maxVolunteers : 0,
+                startTime: startTime,
+                endTime: endTime,
+                organizationId: mongo.toObjectId(organization.id),
+                status: 'draft',
+                images: null,
+                isHidden: false,
             });
+            event = mongo.toPlain(event.toObject());
 
             res.status(201).send(event);
         })
@@ -347,12 +362,11 @@ router.patch('/organizer/events/:id', function (req, res, next) {
                 return;
             }
 
-            var event = await prisma.event.findFirst({
-                where: {
-                    id: id,
-                    organizationId: organization.id,
-                },
-            });
+            var event = await models.event.findOne({
+                _id: mongo.toObjectId(id),
+                organizationId: mongo.toObjectId(organization.id),
+            }).lean();
+            event = mongo.toPlain(event);
 
             if (!event) {
                 res.status(404).send({ message: 'Event not found.' });
@@ -382,12 +396,20 @@ router.patch('/organizer/events/:id', function (req, res, next) {
                 data.endTime = new Date(req.body.endTime);
             }
 
-            event = await prisma.event.update({
-                where: {
-                    id: event.id,
+            if (Object.prototype.hasOwnProperty.call(data, 'categoryId')) {
+                data.categoryId = data.categoryId ? mongo.toObjectId(data.categoryId) : null;
+            }
+
+            event = await models.event.findOneAndUpdate(
+                {
+                    _id: mongo.toObjectId(event.id),
                 },
-                data: data,
-            });
+                {
+                    $set: data,
+                },
+                { new: true }
+            ).lean();
+            event = mongo.toPlain(event);
 
             res.send(event);
         })
@@ -406,19 +428,23 @@ router.post('/organizer/events/:id/hide', function (req, res, next) {
                 return;
             }
 
-            var event = await prisma.event.findFirst({
-                where: {
-                    id: id,
-                    organizationId: organization.id,
-                },
-            });
+            var event = await models.event.findOne({
+                _id: mongo.toObjectId(id),
+                organizationId: mongo.toObjectId(organization.id),
+            }).lean();
+            event = mongo.toPlain(event);
 
             if (!event) {
                 res.status(404).send({ message: 'Event not found.' });
                 return;
             }
 
-            event = await prisma.event.update({ where: { id: event.id }, data: { isHidden: true } });
+            event = await models.event.findOneAndUpdate(
+                { _id: mongo.toObjectId(event.id) },
+                { $set: { isHidden: true } },
+                { new: true }
+            ).lean();
+            event = mongo.toPlain(event);
             res.send({ id: event.id, status: event.status, isHidden: event.isHidden });
         })
         .catch(next);
@@ -436,19 +462,23 @@ router.post('/organizer/events/:id/unhide', function (req, res, next) {
                 return;
             }
 
-            var event = await prisma.event.findFirst({
-                where: {
-                    id: id,
-                    organizationId: organization.id,
-                },
-            });
+            var event = await models.event.findOne({
+                _id: mongo.toObjectId(id),
+                organizationId: mongo.toObjectId(organization.id),
+            }).lean();
+            event = mongo.toPlain(event);
 
             if (!event) {
                 res.status(404).send({ message: 'Event not found.' });
                 return;
             }
 
-            event = await prisma.event.update({ where: { id: event.id }, data: { isHidden: false } });
+            event = await models.event.findOneAndUpdate(
+                { _id: mongo.toObjectId(event.id) },
+                { $set: { isHidden: false } },
+                { new: true }
+            ).lean();
+            event = mongo.toPlain(event);
             res.send({ id: event.id, status: event.status, isHidden: event.isHidden });
         })
         .catch(next);
@@ -470,30 +500,26 @@ router.get('/organizer/volunteers', function (req, res, next) {
             var status = typeof req.query.status === 'string' ? req.query.status.trim() : '';
             var paging = toPageParams(req.query, 10);
 
-            var ownedEvents = await prisma.event.findMany({
-                where: {
-                    organizationId: organization.id,
-                },
-                select: {
-                    id: true,
-                },
-            });
+            var ownedEvents = await models.event
+                .find({
+                    organizationId: mongo.toObjectId(organization.id),
+                })
+                .select('_id')
+                .lean();
+            ownedEvents = mongo.toPlain(ownedEvents);
             var ownedEventIds = ownedEvents.map(function (item) { return item.id; });
 
-            var rows = await prisma.eventRegistration.findMany({
-                where: {
+            var rows = await models.eventRegistration
+                .find({
                     eventId: {
-                        in: ownedEventIds,
+                        $in: ownedEventIds.map(function (item) { return mongo.toObjectId(item); }),
                     },
-                },
-                include: {
-                    event: true,
-                    volunteer: true,
-                },
-                orderBy: {
-                    registeredAt: 'desc',
-                },
-            });
+                })
+                .populate('eventId')
+                .populate('volunteerId')
+                .sort({ registeredAt: -1 })
+                .lean();
+            rows = mongo.toPlain(rows);
 
             rows = rows.filter(function (item) {
                 if (eventId && item.eventId !== eventId) {
@@ -515,8 +541,8 @@ router.get('/organizer/volunteers', function (req, res, next) {
 
             var totalCount = rows.length;
             var items = rows.slice((paging.page - 1) * paging.pageSize, (paging.page - 1) * paging.pageSize + paging.pageSize).map(function (item) {
-                var event = item.event;
-                var volunteer = item.volunteer;
+                var event = item.eventId;
+                var volunteer = item.volunteerId;
 
                 return {
                     id: item.id,
@@ -569,21 +595,20 @@ router.patch('/organizer/registrations/:id/status', function (req, res, next) {
                 return;
             }
 
-            var registration = await prisma.eventRegistration.findUnique({
-                where: {
-                    id: id,
-                },
-                include: {
-                    event: true,
-                },
-            });
+            var registration = await models.eventRegistration
+                .findOne({
+                    _id: mongo.toObjectId(id),
+                })
+                .populate('eventId')
+                .lean();
+            registration = mongo.toPlain(registration);
 
             if (!registration) {
                 res.status(404).send({ message: 'Registration not found.' });
                 return;
             }
 
-            var event = registration.event;
+            var event = registration.eventId;
 
             if (!event || event.organizationId !== organization.id) {
                 res.status(403).send({ message: 'You do not have access to this registration.' });
@@ -591,13 +616,23 @@ router.patch('/organizer/registrations/:id/status', function (req, res, next) {
             }
 
             if (action === 'approve') {
-                registration = await prisma.eventRegistration.update({ where: { id: registration.id }, data: { status: 'Confirmed' } });
+                registration = await models.eventRegistration.findOneAndUpdate(
+                    { _id: mongo.toObjectId(registration.id) },
+                    { $set: { status: 'Confirmed' } },
+                    { new: true }
+                ).lean();
             } else if (action === 'reject') {
-                registration = await prisma.eventRegistration.update({ where: { id: registration.id }, data: { status: 'Rejected' } });
+                registration = await models.eventRegistration.findOneAndUpdate(
+                    { _id: mongo.toObjectId(registration.id) },
+                    { $set: { status: 'Rejected' } },
+                    { new: true }
+                ).lean();
             } else {
                 res.status(400).send({ message: "action must be 'approve' or 'reject'." });
                 return;
             }
+
+            registration = mongo.toPlain(registration);
 
             res.send({ id: registration.id, status: registration.status });
         })

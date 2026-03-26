@@ -1,8 +1,7 @@
 var express = require('express');
 var router = express.Router();
-var db = require('../utils/db');
-
-var prisma = db.prisma;
+var models = require('../utils/models');
+var mongo = require('../utils/mongo');
 
 router.get('/organizations', function (req, res, next) {
     Promise.resolve()
@@ -12,7 +11,8 @@ router.get('/organizations', function (req, res, next) {
     var page = Math.max(1, Number(req.query.page || 1));
     var pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize || 12)));
 
-    var rows = await prisma.organization.findMany();
+    var rows = await models.organization.find({}).lean();
+    rows = mongo.toPlain(rows);
 
     rows = rows.filter(function (item) {
         var keywordOk = !keyword ||
@@ -45,11 +45,8 @@ router.get('/organizations/:id', function (req, res, next) {
         return;
     }
 
-    var row = await prisma.organization.findUnique({
-        where: {
-            id: id,
-        },
-    });
+    var row = await models.organization.findOne({ _id: mongo.toObjectId(id) }).lean();
+    row = mongo.toPlain(row);
 
     if (!row) {
         res.status(404).send({ message: 'Organization not found.' });

@@ -1,7 +1,7 @@
 let jwt = require('jsonwebtoken');
-let db = require('./db');
+let mongo = require('./mongo');
 
-let prisma = db.prisma;
+let models = require('./models');
 
 let AUTH_COOKIE_NAME = 'vh_session';
 let JWT_SECRET = 'volunteerhub-dev-secret-change-me';
@@ -26,11 +26,11 @@ async function readAuthUser(req) {
         }
 
         let payload = jwt.verify(token, JWT_SECRET);
-        let user = await prisma.appUser.findUnique({
-            where: {
-                id: payload.userId,
-            },
-        });
+        let user = await models.appUser.findOne({
+            _id: mongo.toObjectId(payload.userId),
+        }).lean();
+
+        user = mongo.toPlain(user);
 
         if (!user || !user.isActive) {
             return null;

@@ -1,0 +1,35 @@
+:root {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #f8f9fa;
+  color: #1f2937;
+}
+
+.sidebar-nav-link,
+.sidebar-nav-link:link,
+.sidebar-nav-link:visited,
+.sidebar-nav-link:hover,
+.sidebar-nav-link:active,
+.sidebar-nav-link:focus {
+  color: inherit !important;
+  text-decoration: none !important;
+}

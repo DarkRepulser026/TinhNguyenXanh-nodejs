@@ -1,8 +1,7 @@
 var express = require('express');
 var router = express.Router();
-var db = require('../utils/db');
-
-var prisma = db.prisma;
+var models = require('../utils/models');
+var mongo = require('../utils/mongo');
 
 function toPaymentMethod(value) {
     if (value === 'momo' || value === 'bank') {
@@ -27,18 +26,17 @@ router.post('/payments/momo/create', function (req, res, next) {
     }
 
     var transactionCode = 'VH_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
-    var donation = await prisma.donation.create({
-        data: {
-            donorName: donorName,
-            amount: amount,
-            phoneNumber: phoneNumber,
-            message: message,
-            paymentMethod: paymentMethod,
-            transactionCode: transactionCode,
-            status: 'Pending',
-            providerRef: null,
-        },
+    var donation = await models.donation.create({
+        donorName: donorName,
+        amount: amount,
+        phoneNumber: phoneNumber,
+        message: message,
+        paymentMethod: paymentMethod,
+        transactionCode: transactionCode,
+        status: 'Pending',
+        providerRef: null,
     });
+    donation = mongo.toPlain(donation.toObject());
 
     var paymentUrl = '/payment-result?status=pending&txn=' + encodeURIComponent(transactionCode) + '&amount=' + encodeURIComponent(String(amount)) + '&method=' + encodeURIComponent(paymentMethod);
 
@@ -65,26 +63,27 @@ router.post('/payments/momo/ipn', function (req, res, next) {
         return;
     }
 
-    var donation = await prisma.donation.findUnique({
-        where: {
-            transactionCode: transactionCode,
-        },
-    });
+    var donation = await models.donation.findOne({ transactionCode: transactionCode }).lean();
+    donation = mongo.toPlain(donation);
 
     if (!donation) {
         res.status(404).send({ message: 'Donation transaction not found.' });
         return;
     }
 
-    donation = await prisma.donation.update({
-        where: {
-            id: donation.id,
+    donation = await models.donation.findOneAndUpdate(
+        {
+            _id: mongo.toObjectId(donation.id),
         },
-        data: {
-            status: resultCode === '0' ? 'Success' : 'Failed',
-            providerRef: providerRef,
+        {
+            $set: {
+                status: resultCode === '0' ? 'Success' : 'Failed',
+                providerRef: providerRef,
+            },
         },
-    });
+        { new: true }
+    ).lean();
+    donation = mongo.toPlain(donation);
 
     res.send({
         transactionCode: donation.transactionCode,
@@ -106,11 +105,8 @@ router.get('/payments/:transactionCode', function (req, res, next) {
         return;
     }
 
-    var donation = await prisma.donation.findUnique({
-        where: {
-            transactionCode: transactionCode,
-        },
-    });
+    var donation = await models.donation.findOne({ transactionCode: transactionCode }).lean();
+    donation = mongo.toPlain(donation);
 
     if (!donation) {
         res.status(404).send({ message: 'Donation transaction not found.' });

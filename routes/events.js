@@ -1,15 +1,10 @@
 var express = require('express');
 var router = express.Router();
 var authHandler = require('../utils/authHandler');
-var db = require('../utils/db');
-
-var prisma = db.prisma;
+var models = require('../utils/models');
+var mongo = require('../utils/mongo');
 
 function toViewEvent(row) {
-    var registeredCount = row.registrations.filter(function (item) {
-        return item.status === 'Pending' || item.status === 'Confirmed';
-    }).length;
-
     return {
         id: row.id,
         title: row.title,
@@ -17,9 +12,9 @@ function toViewEvent(row) {
         startTime: row.startTime,
         endTime: row.endTime,
         location: row.location,
-        organizationName: row.organization ? row.organization.name : null,
-        categoryName: row.category ? row.category.name : null,
-        registeredCount: registeredCount,
+        organizationName: row.organizationName,
+        categoryName: row.categoryName,
+        registeredCount: row.registeredCount,
         maxVolunteers: row.maxVolunteers,
         images: row.images,
         status: row.status,
@@ -35,20 +30,47 @@ router.get('/events', function (req, res, next) {
     var page = Math.max(1, Number(req.query.page || 1));
     var pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize || 12)));
 
-    var rows = await prisma.event.findMany({
-        where: {
+    var docs = await models.event
+        .find({
             status: 'approved',
             isHidden: false,
-        },
-        include: {
-            organization: true,
-            category: true,
-            registrations: {
-                select: {
-                    status: true,
-                },
-            },
-        },
+        })
+        .populate('organizationId')
+        .populate('categoryId')
+        .lean();
+
+    var eventIds = docs.map(function (item) { return item._id; });
+    var registrationRows = await models.eventRegistration
+        .find({
+            eventId: { $in: eventIds },
+            status: { $in: ['Pending', 'Confirmed'] },
+        })
+        .select('eventId')
+        .lean();
+
+    var registrationCountByEventId = {};
+    registrationRows.forEach(function (item) {
+        var key = String(item.eventId);
+        registrationCountByEventId[key] = (registrationCountByEventId[key] || 0) + 1;
+    });
+
+    var rows = mongo.toPlain(docs).map(function (item) {
+        return {
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            startTime: item.startTime,
+            endTime: item.endTime,
+            location: item.location,
+            status: item.status,
+            maxVolunteers: item.maxVolunteers,
+            images: item.images,
+            organizationId: item.organizationId && item.organizationId.id ? item.organizationId.id : item.organizationId,
+            organizationName: item.organizationId && item.organizationId.name ? item.organizationId.name : null,
+            categoryId: item.categoryId && item.categoryId.id ? item.categoryId.id : item.categoryId,
+            categoryName: item.categoryId && item.categoryId.name ? item.categoryId.name : null,
+            registeredCount: registrationCountByEventId[item.id] || 0,
+        };
     });
 
     rows = rows.filter(function (item) {
@@ -85,29 +107,22 @@ router.get('/events/:id', function (req, res, next) {
         return;
     }
 
-    var row = await prisma.event.findUnique({
-        where: {
-            id: id,
-        },
-        include: {
-            organization: true,
-            category: true,
-            registrations: {
-                select: {
-                    status: true,
-                },
-            },
-        },
-    });
+    var row = await models.event
+        .findOne({ _id: mongo.toObjectId(id) })
+        .populate('organizationId')
+        .populate('categoryId')
+        .lean();
+    row = mongo.toPlain(row);
 
     if (!row || row.isHidden || row.status !== 'approved') {
         res.status(404).send({ message: 'Event not found.' });
         return;
     }
 
-    var registeredCount = row.registrations.filter(function (item) {
-        return item.status === 'Pending' || item.status === 'Confirmed';
-    }).length;
+    var registeredCount = await models.eventRegistration.countDocuments({
+        eventId: mongo.toObjectId(row.id),
+        status: { $in: ['Pending', 'Confirmed'] },
+    });
 
     res.send({
         id: row.id,
@@ -116,10 +131,10 @@ router.get('/events/:id', function (req, res, next) {
         startTime: row.startTime,
         endTime: row.endTime,
         location: row.location,
-        organizationId: row.organizationId,
-        organizationName: row.organization ? row.organization.name : null,
-        categoryId: row.categoryId,
-        categoryName: row.category ? row.category.name : null,
+        organizationId: row.organizationId && row.organizationId.id ? row.organizationId.id : row.organizationId,
+        organizationName: row.organizationId && row.organizationId.name ? row.organizationId.name : null,
+        categoryId: row.categoryId && row.categoryId.id ? row.categoryId.id : row.categoryId,
+        categoryName: row.categoryId && row.categoryId.name ? row.categoryId.name : null,
         registeredCount: registeredCount,
         maxVolunteers: row.maxVolunteers,
         images: row.images,
@@ -140,54 +155,55 @@ router.post('/events/:id/register', authHandler.requireAuth, function (req, res,
                 return;
             }
 
-            var event = await prisma.event.findUnique({
-                where: {
-                    id: eventId,
-                },
-            });
+            var event = await models.event.findOne({ _id: mongo.toObjectId(eventId) }).lean();
+            event = mongo.toPlain(event);
 
             if (!event || event.status !== 'approved' || event.isHidden) {
                 res.status(404).send({ message: 'Event not available for registration.' });
                 return;
             }
 
-            var user = await prisma.appUser.findUnique({ where: { id: authUser.userId } });
+            var user = await models.appUser.findOne({ _id: mongo.toObjectId(authUser.userId) }).lean();
+            user = mongo.toPlain(user);
 
-            var volunteer = await prisma.volunteer.upsert({
-                where: {
-                    userId: authUser.userId,
+            var volunteer = await models.volunteer.findOneAndUpdate(
+                {
+                    userId: mongo.toObjectId(authUser.userId),
                 },
-                create: {
-                    userId: authUser.userId,
-                    fullName: typeof req.body.fullName === 'string' ? req.body.fullName : (user ? user.fullName : 'Volunteer'),
-                    phone: typeof req.body.phone === 'string' ? req.body.phone : (user ? user.phone : null),
-                },
-                update: {
-                    fullName: typeof req.body.fullName === 'string' ? req.body.fullName : (user ? user.fullName : 'Volunteer'),
-                    phone: typeof req.body.phone === 'string' ? req.body.phone : (user ? user.phone : null),
-                },
-            });
-
-            var existing = await prisma.eventRegistration.findUnique({
-                where: {
-                    eventId_volunteerId: {
-                        eventId: eventId,
-                        volunteerId: volunteer.id,
+                {
+                    $set: {
+                        fullName: typeof req.body.fullName === 'string' ? req.body.fullName : (user ? user.fullName : 'Volunteer'),
+                        phone: typeof req.body.phone === 'string' ? req.body.phone : (user ? user.phone : null),
                     },
                 },
-            });
+                { new: true }
+            ).lean();
+
+            if (!volunteer) {
+                volunteer = await models.volunteer.create({
+                    userId: mongo.toObjectId(authUser.userId),
+                    fullName: typeof req.body.fullName === 'string' ? req.body.fullName : (user ? user.fullName : 'Volunteer'),
+                    phone: typeof req.body.phone === 'string' ? req.body.phone : (user ? user.phone : null),
+                });
+                volunteer = volunteer.toObject();
+            }
+
+            volunteer = mongo.toPlain(volunteer);
+
+            var existing = await models.eventRegistration.findOne({
+                eventId: mongo.toObjectId(eventId),
+                volunteerId: mongo.toObjectId(volunteer.id),
+            }).lean();
 
             if (existing) {
                 res.status(409).send({ message: 'Already registered.' });
                 return;
             }
 
-            var activeCount = await prisma.eventRegistration.count({
-                where: {
-                    eventId: eventId,
-                    status: {
-                        in: ['Pending', 'Confirmed'],
-                    },
+            var activeCount = await models.eventRegistration.countDocuments({
+                eventId: mongo.toObjectId(eventId),
+                status: {
+                    $in: ['Pending', 'Confirmed'],
                 },
             });
 
@@ -196,15 +212,13 @@ router.post('/events/:id/register', authHandler.requireAuth, function (req, res,
                 return;
             }
 
-            await prisma.eventRegistration.create({
-                data: {
-                    eventId: eventId,
-                    volunteerId: volunteer.id,
-                    fullName: volunteer.fullName,
-                    phone: volunteer.phone,
-                    reason: typeof req.body.reason === 'string' ? req.body.reason.trim() : null,
-                    status: 'Pending',
-                },
+            await models.eventRegistration.create({
+                eventId: mongo.toObjectId(eventId),
+                volunteerId: mongo.toObjectId(volunteer.id),
+                fullName: volunteer.fullName,
+                phone: volunteer.phone,
+                reason: typeof req.body.reason === 'string' ? req.body.reason.trim() : null,
+                status: 'Pending',
             });
 
             res.status(201).send({ message: 'Registration created.' });
@@ -223,53 +237,53 @@ router.post('/events/:id/favorite', authHandler.requireAuth, function (req, res,
                 return;
             }
 
-            var event = await prisma.event.findUnique({
-                where: {
-                    id: eventId,
-                },
-            });
+            var event = await models.event.findOne({ _id: mongo.toObjectId(eventId) }).lean();
+            event = mongo.toPlain(event);
 
             if (!event || event.isHidden) {
                 res.status(404).send({ message: 'Event not found.' });
                 return;
             }
 
-            var volunteer = await prisma.volunteer.upsert({
-                where: {
-                    userId: authUser.userId,
+            var volunteer = await models.volunteer.findOneAndUpdate(
+                {
+                    userId: mongo.toObjectId(authUser.userId),
                 },
-                create: {
-                    userId: authUser.userId,
+                {
+                    $set: {
+                        fullName: 'Volunteer',
+                        phone: null,
+                    },
+                },
+                { new: true }
+            ).lean();
+
+            if (!volunteer) {
+                volunteer = await models.volunteer.create({
+                    userId: mongo.toObjectId(authUser.userId),
                     fullName: 'Volunteer',
                     phone: null,
-                },
-                update: {},
-            });
+                });
+                volunteer = volunteer.toObject();
+            }
 
-            var existing = await prisma.eventFavorite.findUnique({
-                where: {
-                    eventId_volunteerId: {
-                        eventId: eventId,
-                        volunteerId: volunteer.id,
-                    },
-                },
-            });
+            volunteer = mongo.toPlain(volunteer);
+
+            var existing = await models.eventFavorite.findOne({
+                eventId: mongo.toObjectId(eventId),
+                volunteerId: mongo.toObjectId(volunteer.id),
+            }).lean();
+            existing = mongo.toPlain(existing);
 
             if (existing) {
-                await prisma.eventFavorite.delete({
-                    where: {
-                        id: existing.id,
-                    },
-                });
+                await models.eventFavorite.findOneAndDelete({ _id: mongo.toObjectId(existing.id) });
                 res.send({ status: 'removed', isFavorited: false });
                 return;
             }
 
-            await prisma.eventFavorite.create({
-                data: {
-                    eventId: eventId,
-                    volunteerId: volunteer.id,
-                },
+            await models.eventFavorite.create({
+                eventId: mongo.toObjectId(eventId),
+                volunteerId: mongo.toObjectId(volunteer.id),
             });
 
             res.status(201).send({ status: 'added', isFavorited: true });

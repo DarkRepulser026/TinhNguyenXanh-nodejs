@@ -1,9 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var authHandler = require('../utils/authHandler');
-var db = require('../utils/db');
-
-var prisma = db.prisma;
+var models = require('../utils/models');
+var mongo = require('../utils/mongo');
 
 function toTrimmed(value) {
     if (Array.isArray(value)) {
@@ -33,28 +32,37 @@ router.get('/volunteers/:userId/profile', authHandler.requireAuth, function (req
         return;
     }
 
-    var user = await prisma.appUser.findUnique({
-        where: {
-            id: userId,
-        },
-    });
+    var user = await models.appUser.findOne({ _id: mongo.toObjectId(userId) }).lean();
+    user = mongo.toPlain(user);
 
-    var volunteer = await prisma.volunteer.upsert({
-        where: {
-            userId: userId,
+    var volunteer = await models.volunteer.findOneAndUpdate(
+        {
+            userId: mongo.toObjectId(userId),
         },
-        create: {
-            userId: userId,
+        {
+            $set: {
+                fullName: user ? user.fullName : 'Volunteer',
+                phone: user ? user.phone : null,
+            },
+        },
+        { new: true }
+    ).lean();
+
+    if (!volunteer) {
+        volunteer = await models.volunteer.create({
+            userId: mongo.toObjectId(userId),
             fullName: user ? user.fullName : 'Volunteer',
             phone: user ? user.phone : null,
-        },
-        update: {},
-    });
+        });
+        volunteer = volunteer.toObject();
+    }
 
-    var totalEvents = await prisma.eventRegistration.count({ where: { volunteerId: volunteer.id } });
-    var completedEvents = await prisma.eventRegistration.count({ where: { volunteerId: volunteer.id, status: 'Confirmed' } });
-    var pendingEvents = await prisma.eventRegistration.count({ where: { volunteerId: volunteer.id, status: 'Pending' } });
-    var favoriteEvents = await prisma.eventFavorite.count({ where: { volunteerId: volunteer.id } });
+    volunteer = mongo.toPlain(volunteer);
+
+    var totalEvents = await models.eventRegistration.countDocuments({ volunteerId: mongo.toObjectId(volunteer.id) });
+    var completedEvents = await models.eventRegistration.countDocuments({ volunteerId: mongo.toObjectId(volunteer.id), status: 'Confirmed' });
+    var pendingEvents = await models.eventRegistration.countDocuments({ volunteerId: mongo.toObjectId(volunteer.id), status: 'Pending' });
+    var favoriteEvents = await models.eventFavorite.countDocuments({ volunteerId: mongo.toObjectId(volunteer.id) });
 
     res.send({
         userId: volunteer.userId,
@@ -82,31 +90,23 @@ router.get('/volunteers/:userId/registrations', authHandler.requireAuth, functio
         return;
     }
 
-    var volunteer = await prisma.volunteer.findUnique({
-        where: {
-            userId: userId,
-        },
-    });
+    var volunteer = await models.volunteer.findOne({ userId: mongo.toObjectId(userId) }).lean();
+    volunteer = mongo.toPlain(volunteer);
     if (!volunteer) {
         res.send([]);
         return;
     }
 
-    var rows = await prisma.eventRegistration.findMany({
-        where: {
-            volunteerId: volunteer.id,
-        },
-        orderBy: {
-            registeredAt: 'desc',
-        },
-        include: {
-            event: true,
-        },
-    });
+    var rows = await models.eventRegistration
+        .find({ volunteerId: mongo.toObjectId(volunteer.id) })
+        .sort({ registeredAt: -1 })
+        .populate('eventId')
+        .lean();
+    rows = mongo.toPlain(rows);
 
     rows = rows
         .map(function (item) {
-            var event = item.event;
+            var event = item.eventId;
             if (!event) {
                 return null;
             }
@@ -141,29 +141,25 @@ router.delete('/volunteers/:userId/registrations/:registrationId', authHandler.r
         return;
     }
 
-    var volunteer = await prisma.volunteer.findUnique({ where: { userId: userId } });
+    var volunteer = await models.volunteer.findOne({ userId: mongo.toObjectId(userId) }).lean();
+    volunteer = mongo.toPlain(volunteer);
     if (!volunteer || !registrationId) {
         res.status(404).send({ message: 'Registration not found.' });
         return;
     }
 
-    var registration = await prisma.eventRegistration.findFirst({
-        where: {
-            id: registrationId,
-            volunteerId: volunteer.id,
-        },
-    });
+    var registration = await models.eventRegistration.findOne({
+        _id: mongo.toObjectId(registrationId),
+        volunteerId: mongo.toObjectId(volunteer.id),
+    }).lean();
+    registration = mongo.toPlain(registration);
 
     if (!registration) {
         res.status(404).send({ message: 'Registration not found.' });
         return;
     }
 
-    await prisma.eventRegistration.delete({
-        where: {
-            id: registration.id,
-        },
-    });
+    await models.eventRegistration.findOneAndDelete({ _id: mongo.toObjectId(registration.id) });
 
     res.send({ message: 'Registration removed.' });
         })
@@ -181,36 +177,33 @@ router.get('/volunteers/:userId/favorites', authHandler.requireAuth, function (r
         return;
     }
 
-    var volunteer = await prisma.volunteer.findUnique({ where: { userId: userId } });
+    var volunteer = await models.volunteer.findOne({ userId: mongo.toObjectId(userId) }).lean();
+    volunteer = mongo.toPlain(volunteer);
     if (!volunteer) {
         res.send([]);
         return;
     }
 
-    var rows = await prisma.eventFavorite.findMany({
-        where: {
-            volunteerId: volunteer.id,
-        },
-        orderBy: {
-            createdAt: 'desc',
-        },
-        include: {
-            event: {
-                include: {
-                    category: true,
-                },
+    var rows = await models.eventFavorite
+        .find({ volunteerId: mongo.toObjectId(volunteer.id) })
+        .sort({ createdAt: -1 })
+        .populate({
+            path: 'eventId',
+            populate: {
+                path: 'categoryId',
             },
-        },
-    });
+        })
+        .lean();
+    rows = mongo.toPlain(rows);
 
     rows = rows
         .map(function (item) {
-            var event = item.event;
+            var event = item.eventId;
             if (!event) {
                 return null;
             }
 
-            var category = event.category;
+            var category = event.categoryId;
 
             return {
                 id: event.id,
@@ -241,31 +234,25 @@ router.delete('/volunteers/:userId/favorites/:eventId', authHandler.requireAuth,
         return;
     }
 
-    var volunteer = await prisma.volunteer.findUnique({ where: { userId: userId } });
+    var volunteer = await models.volunteer.findOne({ userId: mongo.toObjectId(userId) }).lean();
+    volunteer = mongo.toPlain(volunteer);
     if (!volunteer || !eventId) {
         res.status(404).send({ message: 'Favorite not found.' });
         return;
     }
 
-    var favorite = await prisma.eventFavorite.findUnique({
-        where: {
-            eventId_volunteerId: {
-                eventId: eventId,
-                volunteerId: volunteer.id,
-            },
-        },
-    });
+    var favorite = await models.eventFavorite.findOne({
+        eventId: mongo.toObjectId(eventId),
+        volunteerId: mongo.toObjectId(volunteer.id),
+    }).lean();
+    favorite = mongo.toPlain(favorite);
 
     if (!favorite) {
         res.status(404).send({ message: 'Favorite not found.' });
         return;
     }
 
-    await prisma.eventFavorite.delete({
-        where: {
-            id: favorite.id,
-        },
-    });
+    await models.eventFavorite.findOneAndDelete({ _id: mongo.toObjectId(favorite.id) });
 
     res.send({ message: 'Favorite removed.' });
         })

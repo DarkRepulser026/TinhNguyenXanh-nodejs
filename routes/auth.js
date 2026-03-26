@@ -1,9 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var authHandler = require('../utils/authHandler');
-var db = require('../utils/db');
-
-var prisma = db.prisma;
+var models = require('../utils/models');
+var mongo = require('../utils/mongo');
 
 function toRole(value) {
     if (value === 'Admin' || value === 'Organizer' || value === 'Volunteer') {
@@ -32,43 +31,42 @@ router.post('/auth/register', function (req, res, next) {
             return;
         }
 
-        var existing = await prisma.appUser.findUnique({
-            where: {
-                email: email,
-            },
-        });
+        var existing = await models.appUser.findOne({ email: email }).lean();
 
         if (existing) {
             res.status(409).send({ message: 'Email is already registered.' });
             return;
         }
 
-        var user = await prisma.appUser.create({
-            data: {
-                email: email,
-                fullName: fullName,
-                phone: phone,
-                role: role,
-                passwordHash: password,
-                isActive: true,
-            },
+        var user = await models.appUser.create({
+            email: email,
+            fullName: fullName,
+            phone: phone,
+            role: role,
+            passwordHash: password,
+            isActive: true,
         });
+        user = mongo.toPlain(user.toObject());
 
         if (role === 'Volunteer') {
-            await prisma.volunteer.upsert({
-                where: {
-                    userId: user.id,
+            var volunteer = await models.volunteer.findOneAndUpdate(
+                { userId: mongo.toObjectId(user.id) },
+                {
+                    $set: {
+                        fullName: fullName,
+                        phone: phone,
+                    },
                 },
-                create: {
-                    userId: user.id,
+                { new: true }
+            ).lean();
+
+            if (!volunteer) {
+                volunteer = await models.volunteer.create({
+                    userId: mongo.toObjectId(user.id),
                     fullName: fullName,
                     phone: phone,
-                },
-                update: {
-                    fullName: fullName,
-                    phone: phone,
-                },
-            });
+                });
+            }
         }
 
         var token = authHandler.createAuthToken({
@@ -108,11 +106,8 @@ router.post('/auth/login', function (req, res, next) {
         return;
     }
 
-    var user = await prisma.appUser.findUnique({
-        where: {
-            email: email,
-        },
-    });
+    var user = await models.appUser.findOne({ email: email }).lean();
+    user = mongo.toPlain(user);
 
     if (!user || !user.isActive || user.passwordHash !== password) {
         res.status(401).send({ message: 'Invalid credentials.' });
@@ -154,11 +149,8 @@ router.get('/auth/me', authHandler.requireAuth, function (req, res, next) {
     Promise.resolve()
         .then(async function () {
             var authUser = req.authUser;
-            var user = await prisma.appUser.findUnique({
-                where: {
-                    id: authUser.userId,
-                },
-            });
+            var user = await models.appUser.findOne({ _id: mongo.toObjectId(authUser.userId) }).lean();
+            user = mongo.toPlain(user);
 
             if (!user || !user.isActive) {
                 res.status(401).send({ message: 'Session is no longer valid.' });
@@ -191,36 +183,37 @@ router.patch('/auth/me', authHandler.requireAuth, function (req, res, next) {
         return;
     }
 
-    var user = await prisma.appUser.findUnique({
-        where: {
-            id: authUser.userId,
-        },
-    });
+    var user = await models.appUser.findOne({ _id: mongo.toObjectId(authUser.userId) }).lean();
+    user = mongo.toPlain(user);
 
     if (!user || !user.isActive) {
         res.status(404).send({ message: 'User not found.' });
         return;
     }
 
-    user = await prisma.appUser.update({
-        where: {
-            id: user.id,
+    user = await models.appUser.findOneAndUpdate(
+        { _id: mongo.toObjectId(user.id) },
+        {
+            $set: {
+                fullName: fullName,
+                phone: phone,
+            },
         },
-        data: {
-            fullName: fullName,
-            phone: phone,
-        },
-    });
+        { new: true }
+    ).lean();
+    user = mongo.toPlain(user);
 
-    await prisma.volunteer.updateMany({
-        where: {
-            userId: user.id,
+    await models.volunteer.updateMany(
+        {
+            userId: mongo.toObjectId(user.id),
         },
-        data: {
-            fullName: fullName,
-            phone: phone,
-        },
-    });
+        {
+            $set: {
+                fullName: fullName,
+                phone: phone,
+            },
+        }
+    );
 
     res.send({
         user: {

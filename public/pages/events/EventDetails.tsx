@@ -1,0 +1,304 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { 
+  Calendar, 
+  MapPin, 
+  Users, 
+  Clock, 
+  Share2, 
+  Heart, 
+  ArrowLeft,
+  Building2,
+  CheckCircle2,
+  MessageSquare
+} from 'lucide-react';
+import { eventService, getApiErrorMessage, type EventItem, volunteerService } from '../../services/api';
+import { useAuth } from '../../contexts/useAuth';
+
+const EventDetails: React.FC = () => {
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const [event, setEvent] = useState<EventItem | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState<string | null>(null);
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      if (!id) {
+        return;
+      }
+
+      try {
+        const eventResponse = await eventService.getById(id);
+
+        setEvent(eventResponse.data);
+
+        if (user?.id) {
+          const favoritesResponse = await volunteerService.getFavorites(user.id);
+          setIsFavorited(favoritesResponse.data.some((item) => item.id === Number(id)));
+        } else {
+          setIsFavorited(false);
+        }
+      } catch (e) {
+        setMessage(getApiErrorMessage(e, 'Khong tai duoc du lieu su kien.'));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void load();
+  }, [id, user?.id]);
+
+  const progress = useMemo(() => {
+    if (!event) {
+      return 0;
+    }
+
+    return Math.min(100, (event.registeredCount / Math.max(1, event.maxVolunteers)) * 100);
+  }, [event]);
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const formatTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const handleRegister = async () => {
+    if (!event) {
+      return;
+    }
+
+    if (!user?.id) {
+      navigate(`/login?redirect=${encodeURIComponent(`/events/${event.id}`)}`);
+      return;
+    }
+
+    try {
+      await eventService.register(event.id, {
+        userId: user.id,
+        fullName: user.fullName,
+        phone: user.phone ?? undefined,
+      });
+      const refreshed = await eventService.getById(event.id);
+      setEvent(refreshed.data);
+      setMessage('Dang ky thanh cong.');
+    } catch (e) {
+      setMessage(getApiErrorMessage(e, 'Dang ky that bai.'));
+    }
+  };
+
+  const handleFavorite = async () => {
+    if (!event) {
+      return;
+    }
+
+    if (!user?.id) {
+      navigate(`/login?redirect=${encodeURIComponent(`/events/${event.id}`)}`);
+      return;
+    }
+
+    try {
+      await eventService.toggleFavorite(event.id, user.id);
+      setIsFavorited((value) => !value);
+      setMessage(isFavorited ? 'Da xoa khoi yeu thich.' : 'Da them vao yeu thich.');
+    } catch (e) {
+      setMessage(getApiErrorMessage(e, 'Cap nhat yeu thich that bai.'));
+    }
+  };
+
+  if (loading) {
+    return <div className="alert alert-info">Dang tai chi tiet su kien...</div>;
+  }
+
+  if (!event) {
+    return <div className="alert alert-danger">Khong tim thay su kien.</div>;
+  }
+
+  return (
+    <div className="event-detail-page bg-light min-vh-100 py-4">
+      <div className="container">
+        {message && <div className="alert alert-info">{message}</div>}
+        {/* Navigation */}
+        <nav className="mb-4">
+          <Link to="/events" className="text-success text-decoration-none d-flex align-items-center gap-2 fw-500">
+            <ArrowLeft size={20} /> Quay lại danh sách
+          </Link>
+        </nav>
+
+        <div className="row g-4">
+          {/* Main Content */}
+          <div className="col-lg-8">
+            <div className="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+              <div className="ratio ratio-21x9 bg-secondary">
+                <img 
+                  src={event.images || 'https://images.unsplash.com/photo-1618477471363-92a18d350e94?auto=format&fit=crop&q=80&w=1000'}
+                  className="object-fit-cover" 
+                  alt={event.title} 
+                />
+              </div>
+              <div className="card-body p-4 p-md-5">
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <span className="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-600">
+                    {event.categoryName ?? 'Chung'}
+                  </span>
+                  <span className="text-muted small">•</span>
+                  <span className="text-muted small d-flex align-items-center gap-1">
+                    <Clock size={14} /> Đăng tải 2 ngày trước
+                  </span>
+                </div>
+
+                <h1 className="display-6 fw-bold text-dark mb-3">{event.title}</h1>
+                
+                <div className="d-flex align-items-center gap-3 mb-4">
+                  <div className="bg-success-subtle p-2 rounded-3 border border-success-subtle">
+                    <Building2 className="text-success" size={24} />
+                  </div>
+                  <div>
+                    <p className="mb-0 text-muted small uppercase fw-bold tracking-wider">Tổ chức bởi</p>
+                    <Link to={`/organizations/1`} className="text-dark fw-bold text-decoration-none h5 mb-0">
+                      {event.organizationName ?? 'Chua cap nhat'}
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="row g-3 mb-5">
+                  <div className="col-sm-4">
+                    <div className="p-3 bg-light rounded-4 text-center border border-white h-100">
+                      <Calendar className="text-success mb-2" size={24} />
+                      <p className="mb-0 small text-muted">Ngày bắt đầu</p>
+                      <p className="mb-0 fw-bold">{formatDate(event.startTime)}</p>
+                    </div>
+                  </div>
+                  <div className="col-sm-4">
+                    <div className="p-3 bg-light rounded-4 text-center border border-white h-100">
+                      <Clock className="text-success mb-2" size={24} />
+                      <p className="mb-0 small text-muted">Thời gian</p>
+                      <p className="mb-0 fw-bold">{formatTime(event.startTime)} - {formatTime(event.endTime)}</p>
+                    </div>
+                  </div>
+                  <div className="col-sm-4">
+                    <div className="p-3 bg-light rounded-4 text-center border border-white h-100">
+                      <Users className="text-success mb-2" size={24} />
+                      <p className="mb-0 small text-muted">Tình nguyện viên</p>
+                      <p className="mb-0 fw-bold">{event.registeredCount}/{event.maxVolunteers}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="section-title mb-3">
+                  <h4 className="fw-bold d-flex align-items-center gap-2">
+                    <CheckCircle2 className="text-success" size={22} /> Mô tả sự kiện
+                  </h4>
+                </div>
+                <div className="event-description text-muted mb-5" style={{ whiteSpace: 'pre-line' }}>
+                  {event.description}
+                </div>
+
+                <div className="section-title mb-3">
+                  <h4 className="fw-bold d-flex align-items-center gap-2">
+                    <MapPin className="text-success" size={22} /> Địa điểm
+                  </h4>
+                </div>
+                <div className="p-3 bg-light rounded-4 mb-3 d-flex align-items-center gap-2">
+                  <MapPin className="text-success" size={20} />
+                  <span className="fw-500">{event.location ?? 'Khong ro dia diem'}</span>
+                </div>
+                {/* Map Placeholder */}
+                <div className="ratio ratio-16x9 bg-secondary-subtle rounded-4 overflow-hidden mb-4 border border-white">
+                  <div className="d-flex align-items-center justify-content-center text-muted">
+                    Bản đồ (Google Maps)
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Comments Placeholder */}
+            <div className="card border-0 shadow-sm rounded-4 p-4 p-md-5">
+               <h4 className="fw-bold mb-4 d-flex align-items-center gap-2">
+                 <MessageSquare size={22} className="text-success" /> Thảo luận (12)
+               </h4>
+               <div className="d-flex gap-3 mb-4">
+                  <div className="rounded-circle bg-success text-white d-flex align-items-center justify-content-center shrink-0" style={{ width: '45px', height: '45px' }}>
+                    T
+                  </div>
+                  <div className="grow">
+                    <textarea className="form-control rounded-4 border-light-subtle bg-light p-3" rows={3} placeholder="Chia sẻ cảm nghĩ của bạn..."></textarea>
+                    <div className="mt-2 text-end">
+                      <button className="btn btn-success rounded-pill px-4 fw-bold">Gửi bình luận</button>
+                    </div>
+                  </div>
+               </div>
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="col-lg-4">
+            <div className="register-card sticky-top border-0 shadow-sm rounded-4 bg-white p-4" style={{ top: '6rem' }}>
+               <h5 className="fw-bold mb-4">Đăng ký tham gia</h5>
+               
+               <div className="mb-4">
+                  <div className="d-flex justify-content-between mb-2">
+                    <span className="text-muted small">Tiến độ tuyển dụng</span>
+                    <span className="fw-bold small">{Math.round(progress)}%</span>
+                  </div>
+                  <div className="progress rounded-pill" style={{ height: '8px' }}>
+                    <div 
+                      className="progress-bar bg-success" 
+                      role="progressbar" 
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                  <p className="mt-2 text-muted x-small mb-0">Con {Math.max(0, event.maxVolunteers - event.registeredCount)} cho trong su kien nay.</p>
+               </div>
+
+               <div className="d-grid gap-2">
+                 <button onClick={handleRegister} className="btn btn-success btn-lg rounded-pill fw-bold py-3 shadow-sm border-0 transition-hover">
+                   Đăng ký ngay
+                 </button>
+                 <button onClick={handleFavorite} className="btn btn-outline-light text-dark btn-lg rounded-pill fw-bold py-3 border-light-subtle transition-hover d-flex align-items-center justify-content-center gap-2">
+                   <Heart size={20} className="text-danger" /> {isFavorited ? 'Bo yeu thich' : 'Luu vao yeu thich'}
+                 </button>
+                 <button className="btn btn-outline-light text-secondary btn-lg rounded-pill fw-bold py-3 border-light-subtle transition-hover d-flex align-items-center justify-content-center gap-2">
+                   <Share2 size={20} /> Chia sẻ
+                 </button>
+               </div>
+
+               <div className="mt-5 p-3 rounded-4 bg-light border border-white">
+                  <h6 className="fw-bold mb-3">Lợi ích khi tham gia</h6>
+                  <ul className="list-unstyled small d-grid gap-2 mb-0">
+                    <li className="d-flex align-items-start gap-2">
+                      <CheckCircle2 size={16} className="text-success mt-1" />
+                      Nhận giấy chứng nhận tình nguyện điện tử
+                    </li>
+                    <li className="d-flex align-items-start gap-2">
+                      <CheckCircle2 size={16} className="text-success mt-1" />
+                      Tích lũy 4 giờ hoạt động xã hội
+                    </li>
+                    <li className="d-flex align-items-start gap-2">
+                      <CheckCircle2 size={16} className="text-success mt-1" />
+                      Giao lưu, kết nối với cộng đồng sống xanh
+                    </li>
+                  </ul>
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default EventDetails;
+
