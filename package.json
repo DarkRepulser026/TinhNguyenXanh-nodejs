@@ -6,8 +6,8 @@
     "start": "nodemon ./bin/www",
     "dev:backend": "nodemon ./bin/www",
     "dev:frontend": "node -e \"console.log('Sample frontend served from /public by Express app')\"",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
+    "db:generate": "node scripts/db-generate.js",
+    "db:push": "node scripts/db-generate.js",
     "db:seed": "node prisma/seed.js"
   },
   "dependencies": {
