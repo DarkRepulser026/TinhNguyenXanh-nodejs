@@ -3,15 +3,18 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-let mongoose = require('mongoose')
-
-
+var indexRouter = require('./routes/index');
+var authRouter = require('./routes/auth');
+var healthRouter = require('./routes/health');
+var eventsRouter = require('./routes/events');
+var organizationsRouter = require('./routes/organizations');
+var volunteersRouter = require('./routes/volunteers');
+var paymentsRouter = require('./routes/payments');
+var moderationRouter = require('./routes/moderation');
+var adminRouter = require('./routes/admin');
+var organizerRouter = require('./routes/organizer');
 
 var app = express();
-
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -19,21 +22,16 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-app.use('/api/v1/users', require('./routes/users'));
-app.use('/api/v1/roles', require('./routes/roles'));
-app.use('/api/v1/products', require('./routes/products'));
-app.use('/api/v1/categories', require('./routes/categories'));
-app.use('/api/v1/auth', require('./routes/auth'));
-app.use('/api/v1/carts', require('./routes/carts'));
-//connect
-mongoose.connect('mongodb://localhost:27017/NNPTUD-S4');
-mongoose.connection.on('connected', function () {
-  console.log("connected");
-})
-mongoose.connection.on('disconnected', function () {
-  console.log("connected");
-})
+app.use('/', indexRouter);
+app.use('/api/v1', healthRouter);
+app.use('/api/v1', authRouter);
+app.use('/api/v1', eventsRouter);
+app.use('/api/v1', organizationsRouter);
+app.use('/api/v1', volunteersRouter);
+app.use('/api/v1', paymentsRouter);
+app.use('/api/v1', moderationRouter);
+app.use('/api/v1', adminRouter);
+app.use('/api/v1', organizerRouter);
 
 
 // catch 404 and forward to error handler
@@ -49,7 +47,9 @@ app.use(function (err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  res.send(err.message);
+  res.json({
+    message: err.message,
+  });
 });
 
 module.exports = app;
