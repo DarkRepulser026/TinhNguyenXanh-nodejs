@@ -1,33 +1,56 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BarChart2, 
   Calendar, 
   CheckCircle2, 
   Clock, 
   Settings, 
-  LogOut, 
   User as UserIcon,
   Heart,
   TrendingUp,
-  Award
+  Award,
+  Layers // Đã thêm Layers vào import để không bị lỗi giao diện
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/useAuth';
+import { volunteerService } from '../../services/api';
 
 const VolunteerDashboard: React.FC = () => {
-    // Placeholder Data
-    const stats = {
-        totalEvents: 12,
-        completedEvents: 8,
-        pendingEvents: 4,
-        totalHours: 48,
-        rank: "Silver Volunteer",
-        points: 1250
-    };
+    const { user } = useAuth();
+    const [dashboardData, setDashboardData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-    const upcomingEvents = [
-        { id: 1, title: "Làm sạch bãi biển", date: "15/06/2026", status: "Chờ xác nhận" },
-        { id: 2, title: "Dạy học vùng cao", date: "10/07/2026", status: "Đã xác nhận" }
-    ];
+    // Bắt đầu gọi API lấy dữ liệu thật
+    useEffect(() => {
+        const fetchDashboard = async () => {
+            if (!user?.id) return;
+            try {
+                const response = await volunteerService.getDashboard(user.id);
+                setDashboardData(response.data);
+            } catch (error) {
+                console.error("Lỗi khi tải Dashboard:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        void fetchDashboard();
+    }, [user?.id]);
+
+    if (loading) {
+        return <div className="d-flex justify-content-center align-items-center min-vh-100">Đang tải bảng điều khiển...</div>;
+    }
+    
+    // Ráp dữ liệu từ API hoặc dùng mặc định nếu chưa có
+    const stats = dashboardData?.stats || { 
+        totalEvents: 0, 
+        completedEvents: 0, 
+        pendingEvents: 0, 
+        totalHours: 0, 
+        rank: "Tân binh", 
+        points: 0 
+    };
+    const upcomingEvents = dashboardData?.upcomingEvents || [];
 
     return (
         <div className="volunteer-dashboard py-4 bg-light min-vh-100">
@@ -37,136 +60,144 @@ const VolunteerDashboard: React.FC = () => {
                     <div className="col-lg-3">
                         <div className="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
                             <div className="text-center mb-4">
-                               <div className="rounded-circle bg-success shadow-sm mx-auto d-flex align-items-center justify-content-center text-white display-5 fw-bold mb-3" style={{ width: '80px', height: '80px' }}>
-                                 TV
-                               </div>
-                               <h5 className="fw-bold mb-1">Tình Nguyện Viên</h5>
-                               <p className="text-muted small">Thành viên từ 2024</p>
-                               <div className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-600 mb-0">
-                                  <Award size={16} className="me-1 mb-1" /> {stats.rank}
-                               </div>
+                                <div className="avatar-placeholder bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '80px', height: '80px', fontSize: '2rem' }}>
+                                    <UserIcon size={40} />
+                                </div>
+                                <h5 className="fw-bold mb-1">{user?.fullName || 'Tình nguyện viên'}</h5>
+                                <p className="text-muted small mb-0">{stats.rank}</p>
                             </div>
-
-                            <hr className="my-4 border-light-subtle" />
-
-                            <div className="nav flex-column gap-2">
-                                <Link to="/dashboard" className="nav-link active bg-success text-white rounded-3 p-3 fw-600 d-flex align-items-center gap-2">
-                                    <BarChart2 size={20} /> Tổng quan
+                            <hr className="text-muted opacity-25" />
+                            <div className="nav flex-column nav-pills gap-2">
+                                <Link to="/volunteer/dashboard" className="nav-link active bg-success text-white rounded-3 px-3 py-2 d-flex align-items-center">
+                                    <BarChart2 size={18} className="me-2" /> Tổng quan
                                 </Link>
-                                <Link to="/my-events" className="nav-link text-muted rounded-3 p-3 fw-500 d-flex align-items-center gap-2 hover-bg-light">
-                                    <Calendar size={20} /> Hoạt động của tôi
+                                <Link to="/volunteer/profile" className="nav-link text-dark hover-success rounded-3 px-3 py-2 d-flex align-items-center">
+                                    <UserIcon size={18} className="me-2" /> Hồ sơ cá nhân
                                 </Link>
-                                <Link to="/favorites" className="nav-link text-muted rounded-3 p-3 fw-500 d-flex align-items-center gap-2 hover-bg-light">
-                                    <Heart size={20} /> Danh sách yêu thích
+                                <Link to="/volunteer/registrations" className="nav-link text-dark hover-success rounded-3 px-3 py-2 d-flex align-items-center">
+                                    <Calendar size={18} className="me-2" /> Lịch sử đăng ký
                                 </Link>
-                                <hr className="my-4 border-light-subtle" />
-                                <Link to="/profile" className="nav-link text-muted rounded-3 p-3 fw-500 d-flex align-items-center gap-2 hover-bg-light">
-                                    <UserIcon size={20} /> Hồ sơ cá nhân
+                                <Link to="/volunteer/favorites" className="nav-link text-dark hover-success rounded-3 px-3 py-2 d-flex align-items-center">
+                                    <Heart size={18} className="me-2" /> Yêu thích
                                 </Link>
-                                <Link to="/settings" className="nav-link text-muted rounded-3 p-3 fw-500 d-flex align-items-center gap-2 hover-bg-light">
-                                    <Settings size={20} /> Cài đặt
+                                <Link to="/account/settings" className="nav-link text-dark hover-success rounded-3 px-3 py-2 d-flex align-items-center mt-2">
+                                    <Settings size={18} className="me-2" /> Cài đặt
                                 </Link>
-                                <button className="nav-link text-danger rounded-3 p-3 fw-600 d-flex align-items-center gap-2 mt-4 hover-bg-danger-subtle">
-                                    <LogOut size={20} /> Đăng xuất
-                                </button>
                             </div>
+                        </div>
+                        <div className="card border-0 shadow-sm rounded-4 p-4 bg-gradient-success text-white" style={{ background: 'linear-gradient(135deg, #198754 0%, #20c997 100%)' }}>
+                            <div className="d-flex align-items-center justify-content-between mb-3">
+                                <h6 className="fw-bold mb-0">Điểm tích lũy</h6>
+                                <Award size={24} />
+                            </div>
+                            <h2 className="fw-bold mb-0">{stats.points}</h2>
+                            <p className="small mb-0 opacity-75">Điểm sẽ được dùng để đổi quà tặng</p>
                         </div>
                     </div>
 
                     {/* Main Content */}
                     <div className="col-lg-9">
                         <div className="d-flex justify-content-between align-items-center mb-4">
-                            <h3 className="fw-bold mb-0">Xin chào, Trần Văn A</h3>
-                            <div className="text-muted small">Cập nhật lần cuối: 10 phút trước</div>
+                            <h3 className="fw-bold mb-0">Bảng điều khiển</h3>
+                            <Link to="/events" className="btn btn-outline-success rounded-pill px-4">
+                                Khám phá sự kiện mới
+                            </Link>
                         </div>
 
                         {/* Stats Cards */}
                         <div className="row g-4 mb-4">
-                            <div className="col-md-3">
-                                <div className="card border-0 shadow-sm rounded-4 p-4 bg-white h-100 position-relative overflow-hidden">
-                                    <div className="position-absolute end-0 top-0 p-3 opacity-10">
-                                      <Calendar size={60} />
+                            <div className="col-md-3 col-sm-6">
+                                <div className="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
+                                    <div className="d-flex align-items-center mb-2">
+                                        <div className="p-2 bg-success-subtle text-success rounded-3 me-3">
+                                            <Layers size={20} />
+                                        </div>
+                                        <span className="text-muted fw-medium small">Tổng sự kiện</span>
                                     </div>
-                                    <p className="text-muted small mb-2 fw-600">Tổng sự kiện</p>
-                                    <h2 className="fw-bold text-dark mb-0">{stats.totalEvents}</h2>
-                                    <span className="text-success small d-flex align-items-center gap-1 mt-2">
-                                        <TrendingUp size={14} /> +2 tháng này
-                                    </span>
+                                    <h3 className="fw-bold mb-0 ms-1">{stats.totalEvents}</h3>
                                 </div>
                             </div>
-                            <div className="col-md-3">
-                                <div className="card border-0 shadow-sm rounded-4 p-4 bg-white h-100 position-relative overflow-hidden">
-                                    <div className="position-absolute end-0 top-0 p-3 opacity-10">
-                                      <CheckCircle2 size={60} />
+                            <div className="col-md-3 col-sm-6">
+                                <div className="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
+                                    <div className="d-flex align-items-center mb-2">
+                                        <div className="p-2 bg-primary-subtle text-primary rounded-3 me-3">
+                                            <CheckCircle2 size={20} />
+                                        </div>
+                                        <span className="text-muted fw-medium small">Đã tham gia</span>
                                     </div>
-                                    <p className="text-muted small mb-2 fw-600">Đã hoàn thành</p>
-                                    <h2 className="fw-bold text-success mb-0">{stats.completedEvents}</h2>
-                                    <p className="text-muted x-small mt-2">Đã xác nhận sự tham gia</p>
+                                    <h3 className="fw-bold mb-0 ms-1">{stats.completedEvents}</h3>
                                 </div>
                             </div>
-                            <div className="col-md-3">
-                                <div className="card border-0 shadow-sm rounded-4 p-4 bg-white h-100 position-relative overflow-hidden">
-                                    <div className="position-absolute end-0 top-0 p-3 opacity-10">
-                                      <Clock size={60} />
+                            <div className="col-md-3 col-sm-6">
+                                <div className="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
+                                    <div className="d-flex align-items-center mb-2">
+                                        <div className="p-2 bg-warning-subtle text-warning rounded-3 me-3">
+                                            <Clock size={20} />
+                                        </div>
+                                        <span className="text-muted fw-medium small">Đang chờ</span>
                                     </div>
-                                    <p className="text-muted small mb-2 fw-600">Tổng số giờ</p>
-                                    <h2 className="fw-bold text-primary mb-0">{stats.totalHours}h</h2>
-                                    <p className="text-muted x-small mt-2">Giờ cống hiến thực tế</p>
+                                    <h3 className="fw-bold mb-0 ms-1">{stats.pendingEvents}</h3>
                                 </div>
                             </div>
-                            <div className="col-md-3">
-                                <div className="card border-0 shadow-sm rounded-4 p-4 bg-white h-100 position-relative overflow-hidden">
-                                    <div className="position-absolute end-0 top-0 p-3 opacity-10">
-                                      <Award size={60} />
+                            <div className="col-md-3 col-sm-6">
+                                <div className="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
+                                    <div className="d-flex align-items-center mb-2">
+                                        <div className="p-2 bg-info-subtle text-info rounded-3 me-3">
+                                            <TrendingUp size={20} />
+                                        </div>
+                                        <span className="text-muted fw-medium small">Giờ cống hiến</span>
                                     </div>
-                                    <p className="text-muted small mb-2 fw-600">Điểm cống hiến</p>
-                                    <h2 className="fw-bold text-warning mb-0">{stats.points}</h2>
-                                    <p className="text-muted x-small mt-2">Điểm thưởng BXH</p>
+                                    <h3 className="fw-bold mb-0 ms-1">{stats.totalHours}h</h3>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Activity Row */}
                         <div className="row g-4">
-                            <div className="col-md-7">
-                                <div className="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                            {/* Upcoming Events */}
+                            <div className="col-md-8">
+                                <div className="card border-0 shadow-sm rounded-4 p-4 h-100 bg-white">
                                     <div className="d-flex justify-content-between align-items-center mb-4">
-                                        <h5 className="fw-bold mb-0">Sự kiện sắp tới</h5>
-                                        <Link to="/my-events" className="text-success small text-decoration-none">Xem thêm</Link>
+                                        <h5 className="fw-bold mb-0">Hoạt động sắp tới</h5>
+                                        <Link to="/volunteer/registrations" className="text-success text-decoration-none small fw-medium">Xem tất cả</Link>
                                     </div>
-                                    <div className="d-grid gap-3">
-                                        {upcomingEvents.map(evt => (
-                                            <div key={evt.id} className="p-3 bg-light rounded-4 d-flex align-items-center justify-content-between border border-white">
-                                                <div className="d-flex align-items-center gap-3">
-                                                   <div className="p-2 bg-white rounded-3 shadow-sm">
-                                                      <Calendar className="text-success" size={24} />
-                                                   </div>
-                                                   <div>
-                                                      <h6 className="fw-bold mb-0">{evt.title}</h6>
-                                                      <p className="text-muted x-small mb-0">{evt.date}</p>
-                                                   </div>
+                                    {upcomingEvents.length > 0 ? (
+                                        <div className="list-group list-group-flush gap-2">
+                                            {upcomingEvents.map((event: any) => (
+                                                <div key={event.id} className="list-group-item list-group-item-action rounded-3 border bg-light d-flex justify-content-between align-items-center p-3">
+                                                    <div>
+                                                        <h6 className="fw-bold mb-1">{event.title}</h6>
+                                                        <span className="text-muted small d-flex align-items-center">
+                                                            <Calendar size={14} className="me-1" /> {new Date(event.date).toLocaleDateString('vi-VN')}
+                                                        </span>
+                                                    </div>
+                                                    <span className={`badge ${event.status === 'Confirmed' ? 'bg-success' : 'bg-warning text-dark'} rounded-pill px-3 py-2`}>
+                                                        {event.status === 'Confirmed' ? 'Đã xác nhận' : 'Chờ xác nhận'}
+                                                    </span>
                                                 </div>
-                                                <div className={`badge rounded-pill px-3 py-2 small fw-600 ${evt.status === 'Đã xác nhận' ? 'bg-success text-white' : 'bg-warning-subtle text-warning'}`}>
-                                                   {evt.status}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center text-muted py-4">
+                                            <Calendar size={48} className="mb-3 opacity-50 mx-auto" />
+                                            <p>Bạn chưa có hoạt động nào sắp tới.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                            
-                            <div className="col-md-5">
+
+                            {/* Recommended */}
+                            <div className="col-md-4">
                                 <div className="card border-0 shadow-sm rounded-4 p-4 bg-white">
                                     <h5 className="fw-bold mb-4">Đề xuất cho bạn</h5>
                                     <div className="p-3 bg-success-subtle rounded-4 mb-3 border border-success-subtle">
                                        <h6 className="fw-bold text-success mb-1 small">Chiến dịch mùa hè xanh</h6>
                                        <p className="text-muted x-small mb-2">Dành cho tình nguyện viên hệ Môi trường</p>
-                                       <button className="btn btn-success btn-sm rounded-pill px-3 fw-bold w-100">Khám phá</button>
+                                       <Link to="/events" className="btn btn-success btn-sm rounded-pill px-3 fw-bold w-100">Khám phá</Link>
                                     </div>
                                     <div className="p-3 bg-info-subtle rounded-4 border border-info-subtle">
                                        <h6 className="fw-bold text-info mb-1 small">Gia sư trực tuyến</h6>
                                        <p className="text-muted x-small mb-2">Phù hợp với kinh nghiệm dạy học của bạn</p>
-                                       <button className="btn btn-info btn-sm rounded-pill px-3 fw-bold w-100 text-white">Khám phá</button>
+                                       <Link to="/events" className="btn btn-info btn-sm rounded-pill px-3 fw-bold w-100 text-white">Khám phá</Link>
                                     </div>
                                 </div>
                             </div>
@@ -179,4 +210,3 @@ const VolunteerDashboard: React.FC = () => {
 };
 
 export default VolunteerDashboard;
-
