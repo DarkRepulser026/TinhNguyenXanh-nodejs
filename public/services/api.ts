@@ -306,6 +306,9 @@ export const volunteerService = {
     apiClient.delete(`/volunteers/${userId}/registrations/${registrationId}`),
   getFavorites: (userId: string) => apiClient.get<FavoriteItem[]>(`/volunteers/${userId}/favorites`),
   removeFavorite: (userId: string, eventId: number) => apiClient.delete(`/volunteers/${userId}/favorites/${eventId}`),
+    
+  getDashboard: (userId: string) => 
+    apiClient.get(`/volunteers/${userId}/dashboard`),
 };
 
 export const authService = {
