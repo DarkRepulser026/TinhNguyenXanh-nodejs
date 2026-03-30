@@ -55,11 +55,7 @@ async function connectWithRetry(uri, opts = {}, maxRetries = 5, delayMs = 2000) 
   let attempt = 0;
   while (attempt < maxRetries) {
     try {
-      await mongoose.connect(uri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        ...opts,
-      });
+      await mongoose.connect(uri, opts);
       console.log('MongoDB connected');
       return;
     } catch (err) {

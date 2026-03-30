@@ -86,7 +86,12 @@ async function connectToDatabase() {
     throw new Error('DATABASE_URL is required. Set it in .env or environment variables.');
   }
 
-  connectPromise = mongoose.connect(databaseUrl).finally(() => {
+  connectPromise = mongoose
+    .connect(databaseUrl, {
+      autoCreate: false,
+      autoIndex: false,
+    })
+    .finally(() => {
     if (mongoose.connection.readyState !== 1) {
       connectPromise = null;
     }
