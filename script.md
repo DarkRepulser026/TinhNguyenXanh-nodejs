@@ -17,6 +17,8 @@ npm run preview:frontend
 npm run smoke:test
 npm run db:generate
 npm run db:push
+npm run db:seed
+npm run db:reset
 ```
 
 ## What each script does
@@ -42,8 +44,19 @@ Runs reusable backend smoke test checks.
 7. `npm run db:generate`:
 Runs database generation script (`scripts/db-generate.js`).
 
-8. `npm run db:push`:
-Runs database push script (`scripts/db-generate.js`).
+8. `npm run db:seed`:
+Populates demo database records (`scripts/db-seed.js`).
+
+9. `npm run db:reset`:
+Drops the entire configured MongoDB database (`scripts/db-reset.js`).
+
+## Database reset and seed flow
+
+```bash
+npm run db:reset
+npm run db:generate
+npm run db:seed
+```
 
 ## Smoke test optional flags
 

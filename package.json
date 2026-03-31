@@ -10,7 +10,9 @@
     "preview:frontend": "vite preview",
     "smoke:test": "node scripts/smoke-test.js",
     "db:generate": "node scripts/db-generate.js",
-    "db:push": "node scripts/db-generate.js"
+    "db:push": "node scripts/db-generate.js",
+    "db:seed": "node scripts/db-seed.js",
+    "db:reset": "node scripts/db-reset.js"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
