@@ -10,10 +10,12 @@ import {
   ArrowLeft,
   Building2,
   CheckCircle2,
-  MessageSquare
 } from 'lucide-react';
 import { eventService, getApiErrorMessage, type EventItem, volunteerService } from '../../services/api';
 import { useAuth } from '../../contexts/useAuth';
+import EventComments from '../../components/EventComments';
+import EventReview from '../../components/EventReview';
+import EventRegistrationForm from '../../components/EventRegistrationForm';
 
 const EventDetails: React.FC = () => {
   const navigate = useNavigate();
@@ -23,6 +25,7 @@ const EventDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -84,18 +87,7 @@ const EventDetails: React.FC = () => {
       return;
     }
 
-    try {
-      await eventService.register(event.id, {
-        userId: user.id,
-        fullName: user.fullName,
-        phone: user.phone ?? undefined,
-      });
-      const refreshed = await eventService.getById(event.id);
-      setEvent(refreshed.data);
-      setMessage('Dang ky thanh cong.');
-    } catch (e) {
-      setMessage(getApiErrorMessage(e, 'Dang ky that bai.'));
-    }
+    setShowRegistrationForm(true);
   };
 
   const handleFavorite = async () => {
@@ -224,27 +216,28 @@ const EventDetails: React.FC = () => {
               </div>
             </div>
 
-            {/* Comments Placeholder */}
+            {/* Comments Section */}
+            <div className="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4">
+              <EventComments eventId={event.id} />
+            </div>
+
+            {/* Reviews Section */}
             <div className="card border-0 shadow-sm rounded-4 p-4 p-md-5">
-               <h4 className="fw-bold mb-4 d-flex align-items-center gap-2">
-                 <MessageSquare size={22} className="text-success" /> Thảo luận (12)
-               </h4>
-               <div className="d-flex gap-3 mb-4">
-                  <div className="rounded-circle bg-success text-white d-flex align-items-center justify-content-center shrink-0" style={{ width: '45px', height: '45px' }}>
-                    T
-                  </div>
-                  <div className="grow">
-                    <textarea className="form-control rounded-4 border-light-subtle bg-light p-3" rows={3} placeholder="Chia sẻ cảm nghĩ của bạn..."></textarea>
-                    <div className="mt-2 text-end">
-                      <button className="btn btn-success rounded-pill px-4 fw-bold">Gửi bình luận</button>
-                    </div>
-                  </div>
-               </div>
+              <EventReview eventId={event.id} />
             </div>
           </div>
 
           {/* Sidebar */}
           <div className="col-lg-4">
+            {showRegistrationForm ? (
+              <div className="sticky-top" style={{ top: '6rem' }}>
+                <EventRegistrationForm
+                  eventId={event.id}
+                  eventTitle={event.title}
+                  onSuccess={() => setShowRegistrationForm(false)}
+                />
+              </div>
+            ) : (
             <div className="register-card sticky-top border-0 shadow-sm rounded-4 bg-white p-4" style={{ top: '6rem' }}>
                <h5 className="fw-bold mb-4">Đăng ký tham gia</h5>
                
@@ -268,7 +261,7 @@ const EventDetails: React.FC = () => {
                    Đăng ký ngay
                  </button>
                  <button onClick={handleFavorite} className="btn btn-outline-light text-dark btn-lg rounded-pill fw-bold py-3 border-light-subtle transition-hover d-flex align-items-center justify-content-center gap-2">
-                   <Heart size={20} className="text-danger" /> {isFavorited ? 'Bo yeu thich' : 'Luu vao yeu thich'}
+                   <Heart size={20} className={isFavorited ? 'text-danger' : ''} fill={isFavorited ? 'currentColor' : 'none'} /> {isFavorited ? 'Bỏ yêu thích' : 'Lưu vào yêu thích'}
                  </button>
                  <button className="btn btn-outline-light text-secondary btn-lg rounded-pill fw-bold py-3 border-light-subtle transition-hover d-flex align-items-center justify-content-center gap-2">
                    <Share2 size={20} /> Chia sẻ
@@ -293,6 +286,7 @@ const EventDetails: React.FC = () => {
                   </ul>
                </div>
             </div>
+            )}
           </div>
         </div>
       </div>

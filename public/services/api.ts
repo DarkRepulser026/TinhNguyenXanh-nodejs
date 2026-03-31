@@ -107,8 +107,10 @@ export type OrganizationItem = {
 export type VolunteerProfile = {
   userId: string;
   fullName: string;
+  email?: string;
   phone: string | null;
-  stats: {
+  avatar?: string | null;
+  stats?: {
     totalEvents: number;
     completedEvents: number;
     pendingEvents: number;
@@ -135,6 +137,29 @@ export type FavoriteItem = {
   location: string | null;
   date: string;
   status: string;
+};
+
+export type CommentItem = {
+  id: string;
+  userId: string;
+  userName: string;
+  content: string;
+  createdAt: string;
+};
+
+export type RatingItem = {
+  id: string;
+  userId: string;
+  userName: string;
+  rating: number;
+  review: string | null;
+  createdAt: string;
+};
+
+export type RatingsResponse = {
+  averageRating: number;
+  totalRatings: number;
+  ratings: RatingItem[];
 };
 
 export type UserRole = 'Admin' | 'Organizer' | 'Volunteer';
@@ -280,6 +305,14 @@ export const eventService = {
   register: (eventId: number, body: { userId: string; fullName?: string; phone?: string }) =>
     apiClient.post(`/events/${eventId}/register`, body),
   toggleFavorite: (eventId: number, userId: string) => apiClient.post(`/events/${eventId}/favorite`, { userId }),
+  
+  // Comments
+  getComments: (eventId: number) => apiClient.get<CommentItem[]>(`/events/${eventId}/comments`),
+  createComment: (eventId: number, content: string) => apiClient.post<CommentItem>(`/events/${eventId}/comments`, { content }),
+  
+  // Ratings & Reviews
+  getRatings: (eventId: number) => apiClient.get<RatingsResponse>(`/events/${eventId}/ratings`),
+  createRating: (eventId: number, body: { rating: number; review?: string }) => apiClient.post<RatingItem>(`/events/${eventId}/ratings`, body),
 };
 
 export const organizationService = {
@@ -301,6 +334,10 @@ export const paymentService = {
 
 export const volunteerService = {
   getProfile: (userId: string) => apiClient.get<VolunteerProfile>(`/volunteers/${userId}/profile`),
+  updateProfile: (userId: string, body: { fullName: string; phone?: string }) =>
+    apiClient.put<VolunteerProfile>(`/volunteers/${userId}/profile`, body),
+  uploadAvatar: (userId: string, avatarData: string) =>
+    apiClient.post<{ avatar: string; message: string }>(`/volunteers/${userId}/avatar`, { avatarData }),
   getRegistrations: (userId: string) => apiClient.get<RegistrationItem[]>(`/volunteers/${userId}/registrations`),
   cancelRegistration: (userId: string, registrationId: number) =>
     apiClient.delete(`/volunteers/${userId}/registrations/${registrationId}`),

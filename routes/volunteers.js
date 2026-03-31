@@ -360,4 +360,301 @@ router.get('/volunteers/:userId/dashboard', authHandler.requireAuth, async funct
   }
 });
 
+// GET: Comments for an event
+router.get('/events/:eventId/comments', async function (req, res, next) {
+  try {
+    var eventId = toTrimmed(req.params.eventId);
+
+    if (!eventId) {
+      return res.status(400).send({ message: 'eventId is required.' });
+    }
+
+    if (!ensureModel('eventComment', res) || !ensureModel('appUser', res)) return;
+
+    var comments = await models.eventComment
+      .find({ eventId: safeObjectId(eventId), isHidden: false })
+      .populate('userId', 'fullName')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    comments = mongo.toPlain(comments || []);
+
+    res.send((comments || []).map(c => ({
+      id: c._id || c.id,
+      userId: c.userId ? (c.userId._id || c.userId.id) : null,
+      userName: c.userId ? c.userId.fullName : 'Anonymous',
+      content: c.content,
+      createdAt: c.createdAt,
+    })));
+  } catch (err) {
+    console.error('Error in GET /events/:eventId/comments', err.stack || err);
+    next(err);
+  }
+});
+
+// POST: Create a comment
+router.post('/events/:eventId/comments', authHandler.requireAuth, async function (req, res, next) {
+  try {
+    var eventId = toTrimmed(req.params.eventId);
+    var authUser = req.authUser;
+    var content = toTrimmed(req.body.content || '');
+
+    if (!eventId) {
+      return res.status(400).send({ message: 'eventId is required.' });
+    }
+
+    if (!content) {
+      return res.status(400).send({ message: 'Comment content is required.' });
+    }
+
+    if (!ensureModel('eventComment', res) || !ensureModel('event', res)) return;
+
+    var ev = await models.event.findOne({ _id: safeObjectId(eventId) }).lean();
+    if (!ev) {
+      return res.status(404).send({ message: 'Event not found.' });
+    }
+
+    var comment = await models.eventComment.create({
+      eventId: safeObjectId(eventId),
+      userId: safeObjectId(authUser.userId),
+      content: content,
+      isHidden: false,
+    });
+
+    res.status(201).send({
+      id: comment._id || comment.id,
+      userId: authUser.userId,
+      userName: authUser.fullName,
+      content: content,
+      createdAt: comment.createdAt,
+    });
+  } catch (err) {
+    console.error('Error in POST /events/:eventId/comments', err.stack || err);
+    next(err);
+  }
+});
+
+// GET: Ratings for an event
+router.get('/events/:eventId/ratings', async function (req, res, next) {
+  try {
+    var eventId = toTrimmed(req.params.eventId);
+
+    if (!eventId) {
+      return res.status(400).send({ message: 'eventId is required.' });
+    }
+
+    if (!ensureModel('eventRating', res) || !ensureModel('appUser', res)) return;
+
+    var ratings = await models.eventRating
+      .find({ eventId: safeObjectId(eventId), isHidden: false })
+      .populate('userId', 'fullName')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    ratings = mongo.toPlain(ratings || []);
+
+    var averageRating = ratings.length > 0
+      ? (ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length).toFixed(1)
+      : 0;
+
+    res.send({
+      averageRating: parseFloat(averageRating),
+      totalRatings: ratings.length,
+      ratings: (ratings || []).map(r => ({
+        id: r._id || r.id,
+        userId: r.userId ? (r.userId._id || r.userId.id) : null,
+        userName: r.userId ? r.userId.fullName : 'Anonymous',
+        rating: r.rating,
+        review: r.review,
+        createdAt: r.createdAt,
+      })),
+    });
+  } catch (err) {
+    console.error('Error in GET /events/:eventId/ratings', err.stack || err);
+    next(err);
+  }
+});
+
+// POST: Create or update a rating
+router.post('/events/:eventId/ratings', authHandler.requireAuth, async function (req, res, next) {
+  try {
+    var eventId = toTrimmed(req.params.eventId);
+    var authUser = req.authUser;
+    var rating = parseInt(req.body.rating || 0);
+    var review = toTrimmed(req.body.review || '');
+
+    if (!eventId) {
+      return res.status(400).send({ message: 'eventId is required.' });
+    }
+
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).send({ message: 'Rating must be between 1 and 5.' });
+    }
+
+    if (!ensureModel('eventRating', res) || !ensureModel('event', res)) return;
+
+    var ev = await models.event.findOne({ _id: safeObjectId(eventId) }).lean();
+    if (!ev) {
+      return res.status(404).send({ message: 'Event not found.' });
+    }
+
+    // Check if user already rated this event
+    var existingRating = await models.eventRating.findOne({
+      eventId: safeObjectId(eventId),
+      userId: safeObjectId(authUser.userId),
+    });
+
+    if (existingRating) {
+      // Update existing rating
+      existingRating.rating = rating;
+      existingRating.review = review || null;
+      await existingRating.save();
+
+      res.send({
+        id: existingRating._id || existingRating.id,
+        userId: authUser.userId,
+        userName: authUser.fullName,
+        rating: rating,
+        review: review,
+        createdAt: existingRating.createdAt,
+        updatedAt: existingRating.updatedAt,
+      });
+    } else {
+      // Create new rating
+      var newRating = await models.eventRating.create({
+        eventId: safeObjectId(eventId),
+        userId: safeObjectId(authUser.userId),
+        rating: rating,
+        review: review || null,
+        isHidden: false,
+      });
+
+      res.status(201).send({
+        id: newRating._id || newRating.id,
+        userId: authUser.userId,
+        userName: authUser.fullName,
+        rating: rating,
+        review: review,
+        createdAt: newRating.createdAt,
+      });
+    }
+  } catch (err) {
+    console.error('Error in POST /events/:eventId/ratings', err.stack || err);
+    next(err);
+  }
+});
+
+// PUT: Update volunteer profile
+router.put('/volunteers/:userId/profile', authHandler.requireAuth, async function (req, res, next) {
+  try {
+    var userId = toTrimmed(req.params.userId);
+    var authUser = req.authUser;
+    var { fullName, phone } = req.body;
+
+    if (!assertAccess(userId, authUser)) {
+      return res.status(403).send({ message: 'You do not have access to this profile.' });
+    }
+
+    if (!userId) {
+      return res.status(400).send({ message: 'userId is required.' });
+    }
+
+    var errors = {};
+    if (!fullName || !toTrimmed(fullName)) {
+      errors.fullName = 'Vui lòng nhập họ và tên.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return res.status(400).send({ message: 'Validation failed.', errors: errors });
+    }
+
+    if (!ensureModel('appUser', res) || !ensureModel('volunteer', res)) return;
+
+    // Update appUser
+    await models.appUser.findOneAndUpdate(
+      { _id: safeObjectId(userId) },
+      {
+        $set: {
+          fullName: toTrimmed(fullName),
+          phone: phone ? toTrimmed(phone) : null,
+        },
+      },
+      { new: true }
+    );
+
+    // Update volunteer
+    var volunteer = await models.volunteer.findOneAndUpdate(
+      { userId: safeObjectId(userId) },
+      {
+        $set: {
+          fullName: toTrimmed(fullName),
+          phone: phone ? toTrimmed(phone) : null,
+        },
+      },
+      { new: true }
+    ).lean();
+
+    if (!volunteer) {
+      return res.status(404).send({ message: 'Volunteer profile not found.' });
+    }
+
+    volunteer = mongo.toPlain(volunteer);
+
+    res.send({
+      userId: volunteer.userId,
+      fullName: volunteer.fullName,
+      phone: volunteer.phone,
+      message: 'Profile updated successfully.',
+    });
+  } catch (err) {
+    console.error('Error in PUT /volunteers/:userId/profile', err.stack || err);
+    next(err);
+  }
+});
+
+// POST: Upload avatar
+router.post('/volunteers/:userId/avatar', authHandler.requireAuth, async function (req, res, next) {
+  try {
+    var userId = toTrimmed(req.params.userId);
+    var authUser = req.authUser;
+    var { avatarData } = req.body; // base64 data URL
+
+    if (!assertAccess(userId, authUser)) {
+      return res.status(403).send({ message: 'You do not have access to upload avatar.' });
+    }
+
+    if (!userId || !avatarData) {
+      return res.status(400).send({ message: 'userId and avatarData are required.' });
+    }
+
+    // Validate base64 format
+    if (!avatarData.startsWith('data:image/')) {
+      return res.status(400).send({ message: 'Invalid image data format.' });
+    }
+
+    if (!ensureModel('volunteer', res)) return;
+
+    // Update volunteer with avatar base64 data (will be stored as-is)
+    var volunteer = await models.volunteer.findOneAndUpdate(
+      { userId: safeObjectId(userId) },
+      { $set: { avatar: avatarData } },
+      { new: true }
+    ).lean();
+
+    if (!volunteer) {
+      return res.status(404).send({ message: 'Volunteer profile not found.' });
+    }
+
+    volunteer = mongo.toPlain(volunteer);
+
+    res.send({
+      avatar: volunteer.avatar,
+      message: 'Avatar uploaded successfully.',
+    });
+  } catch (err) {
+    console.error('Error in POST /volunteers/:userId/avatar', err.stack || err);
+    next(err);
+  }
+});
+
 module.exports = router;

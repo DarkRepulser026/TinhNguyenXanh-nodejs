@@ -109,26 +109,28 @@ async function runSeed() {
         joinedAt: new Date(),
       },
     },
-    { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
+    { upsert: true }
   );
 
   const categoryNames = ['Environment', 'Education', 'Healthcare', 'Community Support'];
   const categories = [];
-  for (const categoryName of categoryNames) {
-    const category = await upsertCategory(categoryName);
+
+  for (const name of categoryNames) {
+    const category = await upsertCategory(name);
     categories.push(category);
   }
 
   const now = new Date();
+
   const seedEvents = [
     {
       title: 'Urban Park Clean-up Day',
       description: 'Join us to clean up city park areas and plant more trees.',
       location: 'Le Van Tam Park',
-      categoryId: categories.find((item) => item.name === 'Environment')._id,
+      categoryId: categories.find(c => c.name === 'Environment')._id,
       startTime: toDate(3, 7, 30),
       endTime: toDate(3, 11, 30),
-      status: 'published',
+      status: 'approved', // ✅ FIX
       maxVolunteers: 30,
       isHidden: false,
     },
@@ -136,10 +138,10 @@ async function runSeed() {
       title: 'Weekend Reading Class',
       description: 'Support children with reading and basic English activities.',
       location: 'Thanh Da Community House',
-      categoryId: categories.find((item) => item.name === 'Education')._id,
+      categoryId: categories.find(c => c.name === 'Education')._id,
       startTime: toDate(6, 8, 0),
       endTime: toDate(6, 11, 0),
-      status: 'published',
+      status: 'approved', // ✅ FIX
       maxVolunteers: 20,
       isHidden: false,
     },
@@ -147,10 +149,10 @@ async function runSeed() {
       title: 'Community Food Distribution',
       description: 'Package and distribute meals to nearby families in need.',
       location: 'Binh Thanh District Center',
-      categoryId: categories.find((item) => item.name === 'Community Support')._id,
+      categoryId: categories.find(c => c.name === 'Community Support')._id,
       startTime: toDate(10, 13, 30),
       endTime: toDate(10, 17, 30),
-      status: 'published',
+      status: 'approved', // ✅ FIX
       maxVolunteers: 25,
       isHidden: false,
     },
@@ -161,21 +163,8 @@ async function runSeed() {
   for (const eventInput of seedEvents) {
     const event = await models.event.findOneAndUpdate(
       { title: eventInput.title, organizationId: organization._id },
-      {
-        $set: {
-          description: eventInput.description,
-          startTime: eventInput.startTime,
-          endTime: eventInput.endTime,
-          location: eventInput.location,
-          status: eventInput.status,
-          maxVolunteers: eventInput.maxVolunteers,
-          images: null,
-          isHidden: eventInput.isHidden,
-          categoryId: eventInput.categoryId,
-          organizationId: organization._id,
-        },
-      },
-      { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
+      { $set: { ...eventInput, organizationId: organization._id } },
+      { upsert: true, returnDocument: 'after' }
     ).lean();
 
     createdEvents.push(event);
@@ -195,35 +184,18 @@ async function runSeed() {
         registeredAt: now,
       },
     },
-    { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
+    { upsert: true }
   );
 
-  const totalUsers = await models.appUser.countDocuments({});
-  const totalOrganizations = await models.organization.countDocuments({});
-  const totalCategories = await models.eventCategory.countDocuments({});
-  const totalEvents = await models.event.countDocuments({});
-  const totalRegistrations = await models.eventRegistration.countDocuments({});
-
-  console.log('Seed completed.');
-  console.log('Demo credentials:');
-  console.log('  Admin: admin@tinhnguyenxanh.local / Admin12345');
-  console.log('  Organizer: organizer@tinhnguyenxanh.local / Organizer12345');
-  console.log('  Volunteer: volunteer@tinhnguyenxanh.local / Volunteer12345');
-  console.log('Collection counts:');
-  console.log(`  AppUser: ${totalUsers}`);
-  console.log(`  Organization: ${totalOrganizations}`);
-  console.log(`  EventCategory: ${totalCategories}`);
-  console.log(`  Event: ${totalEvents}`);
-  console.log(`  EventRegistration: ${totalRegistrations}`);
+  console.log('✅ Seed completed!');
 }
 
 runSeed()
   .catch((error) => {
-    console.error('Seeding failed:', error.stack || error.message);
-    process.exitCode = 1;
+    console.error('❌ Seeding failed:', error);
   })
   .finally(async () => {
-    if (mongoose.connection && mongoose.connection.readyState === 1) {
+    if (mongoose.connection.readyState === 1) {
       await mongoose.disconnect();
     }
   });
