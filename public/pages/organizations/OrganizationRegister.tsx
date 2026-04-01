@@ -243,17 +243,55 @@ const OrganizationRegister = () => {
             return;
         }
 
-        await Swal.fire({
-            title: 'Đăng ký thành công!',
-            text: 'Hồ sơ của bạn đã được ghi nhận. Bạn có thể tiếp tục xem trang xác nhận.',
-            icon: 'success',
-            confirmButtonColor: '#16a34a',
-            confirmButtonText: 'Tiếp tục',
-        });
+        try {
+            setSubmitting(true);
 
-        window.location.href = '/organizations/success';
+            await organizationService.register({
+                name: form.name.trim(),
+                organizationType: form.organizationType,
+                description: form.description.trim(),
+                contactEmail: form.contactEmail.trim(),
+                phoneNumber: form.phoneNumber.trim(),
+                website: form.website.trim() || undefined,
+                city: form.city,
+                district: form.district,
+                ward: form.ward.trim() || undefined,
+                address: form.address.trim(),
+                taxCode: form.taxCode.trim() || undefined,
+                foundedDate: form.foundedDate || undefined,
+                legalRepresentative: form.legalRepresentative.trim() || undefined,
+                documentType: form.documentType || undefined,
+                verificationDocsUrl: form.verificationDocsUrl.trim() || undefined,
+                facebookUrl: form.facebookUrl.trim() || undefined,
+                zaloNumber: form.zaloNumber.trim() || undefined,
+                achievements: form.achievements.trim() || undefined,
+                memberCount: Number(form.memberCount || 0),
+                eventsOrganized: Number(form.eventsOrganized || 0),
+                focusAreas: form.focusAreas,
+                avatarUrl: logoPreview || undefined,
+            });
+
+            await Swal.fire({
+                title: 'Đăng ký thành công!',
+                text: 'Hồ sơ tổ chức của bạn đã được tạo.',
+                icon: 'success',
+                confirmButtonColor: '#16a34a',
+                confirmButtonText: 'Tiếp tục',
+            });
+
+            window.location.href = '/organizations/success';
+        } catch (error) {
+            await Swal.fire({
+                title: 'Đăng ký thất bại',
+                text: getApiErrorMessage(error, 'Không thể gửi hồ sơ đăng ký tổ chức.'),
+                icon: 'error',
+                confirmButtonColor: '#dc2626',
+            });
+        } finally {
+            setSubmitting(false);
+        }
     };
-
+    const [submitting, setSubmitting] = useState(false);
     return (
         <div
             style={{
@@ -829,6 +867,7 @@ const OrganizationRegister = () => {
 
                             <button
                                 className="w-100"
+                                disabled={submitting}
                                 style={{
                                     background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
                                     border: 'none',
@@ -838,10 +877,11 @@ const OrganizationRegister = () => {
                                     fontWeight: 700,
                                     borderRadius: '10px',
                                     boxShadow: '0 4px 15px rgba(22, 163, 74, 0.3)',
+                                    opacity: submitting ? 0.7 : 1,
                                 }}
                                 type="submit"
                             >
-                                Đăng ký ngay
+                                {submitting ? 'Đang gửi hồ sơ...' : 'Đăng ký ngay'}
                             </button>
 
                             <div className="text-center mt-3">
@@ -855,6 +895,7 @@ const OrganizationRegister = () => {
             </div>
         </div>
     );
+
 };
 
 export default OrganizationRegister;

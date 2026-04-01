@@ -113,6 +113,14 @@ export type OrganizationItem = {
   averageRating: number;
   totalReviews: number;
   verified: boolean;
+  events?: {
+    id: string;
+    title: string;
+    startTime: string | null;
+    endTime: string | null;
+    location: string | null;
+    status: string | null;
+  }[];
 };
 
 export type VolunteerEvaluationItem = {

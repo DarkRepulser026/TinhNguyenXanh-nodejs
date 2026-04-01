@@ -118,6 +118,14 @@ function App() {
               }
             />
             <Route
+              path="/organizer/overview"
+              element={
+                <RequireAuth roles={ORGANIZER_ROLES}>
+                  <OrganizerOverview />
+                </RequireAuth>
+              }
+            />
+            <Route
               path="/organizer/events"
               element={
                 <RequireAuth roles={ORGANIZER_ROLES}>

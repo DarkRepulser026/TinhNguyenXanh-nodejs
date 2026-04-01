@@ -194,10 +194,36 @@ const OrganizationList = () => {
                           padding: '16px',
                         }}
                       >
-                        <Building2 size={54} />
-                        <div style={{ marginTop: '10px', fontWeight: 700, textAlign: 'center' }}>
-                          {org.name}
-                        </div>
+                        {org.avatarUrl ? (
+                          <img
+                            alt={org.name}
+                            src={org.avatarUrl}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              borderRadius: '0',
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#16a34a',
+                              padding: '16px',
+                              width: '100%',
+                              height: '100%',
+                            }}
+                          >
+                            <Building2 size={54} />
+                            <div style={{ marginTop: '10px', fontWeight: 700, textAlign: 'center' }}>
+                              {org.name}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -399,7 +425,20 @@ const OrganizationList = () => {
                           flexShrink: 0,
                         }}
                       >
-                        <Building2 size={28} />
+                        {org.avatarUrl ? (
+                          <img
+                            alt={org.name}
+                            src={org.avatarUrl}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              borderRadius: '10px',
+                            }}
+                          />
+                        ) : (
+                          <Building2 size={28} />
+                        )}
                       </div>
 
                       <div style={{ flex: 1 }}>

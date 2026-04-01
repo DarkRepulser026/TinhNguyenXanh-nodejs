@@ -1,42 +1,141 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react';
+import {
+  BadgeCheck,
+  Building2,
+  FileText,
+  Globe,
+  Mail,
+  MapPin,
+  Phone,
+  Save,
+  ShieldCheck,
+} from 'lucide-react';
 import { getApiErrorMessage, organizerService, type OrganizationItem } from '../../services/api';
 
-const emptyOrg: OrganizationItem = {
+const emptyOrganization: OrganizationItem = {
   id: '',
   name: '',
   description: '',
   city: '',
   district: '',
+  ward: '',
   address: '',
   contactEmail: '',
   phoneNumber: '',
   website: '',
   organizationType: '',
+  taxCode: '',
+  foundedDate: '',
+  legalRepresentative: '',
+  documentType: '',
+  verificationDocsUrl: '',
+  facebookUrl: '',
+  zaloNumber: '',
+  achievements: '',
+  focusAreas: [],
+  avatarUrl: '',
   memberCount: 0,
   eventsOrganized: 0,
   averageRating: 0,
   totalReviews: 0,
   verified: false,
+  events: [],
+};
+
+const sectionTitleStyle: CSSProperties = {
+  color: '#0f172a',
+  fontSize: '1.2rem',
+  fontWeight: 700,
+  marginBottom: '1.25rem',
+  paddingBottom: '0.75rem',
+  borderBottom: '2px solid #e5e7eb',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+};
+
+const cardStyle: CSSProperties = {
+  background: '#ffffff',
+  border: '1px solid #e5e7eb',
+  borderRadius: '16px',
+  padding: '1.75rem',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+  marginBottom: '1.5rem',
+};
+
+const inputStyle: CSSProperties = {
+  border: '2px solid #e2e8f0',
+  borderRadius: '10px',
+  padding: '12px 14px',
+  fontSize: '0.95rem',
+};
+
+const labelStyle: CSSProperties = {
+  fontWeight: 600,
+  color: '#0f172a',
+  marginBottom: '8px',
+  display: 'block',
+  fontSize: '0.95rem',
+};
+
+const infoBoxStyle: CSSProperties = {
+  background: '#f8fafc',
+  border: '1px solid #e5e7eb',
+  borderRadius: '14px',
+  padding: '16px',
+  height: '100%',
 };
 
 const OrganizerOrganizationManagement = () => {
-  const [organization, setOrganization] = useState<OrganizationItem>(emptyOrg);
+  const [organization, setOrganization] = useState<OrganizationItem>(emptyOrganization);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [claiming, setClaiming] = useState(false);
+  const [claimId, setClaimId] = useState('');
+
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [claimId, setClaimId] = useState('');
+
+  const [form, setForm] = useState({
+    name: '',
+    description: '',
+    contactEmail: '',
+    phoneNumber: '',
+    website: '',
+    city: '',
+    district: '',
+    ward: '',
+    address: '',
+    organizationType: '',
+    legalRepresentative: '',
+    achievements: '',
+  });
 
   const load = async () => {
     try {
       setLoading(true);
       setError(null);
+
       const response = await organizerService.getOrganization();
-      setOrganization(response.data);
+      const item = response.data;
+
+      setOrganization(item);
+      setForm({
+        name: item.name || '',
+        description: item.description || '',
+        contactEmail: item.contactEmail || '',
+        phoneNumber: item.phoneNumber || '',
+        website: item.website || '',
+        city: item.city || '',
+        district: item.district || '',
+        ward: item.ward || '',
+        address: item.address || '',
+        organizationType: item.organizationType || '',
+        legalRepresentative: item.legalRepresentative || '',
+        achievements: item.achievements || '',
+      });
     } catch (err) {
-      setOrganization(emptyOrg);
-      setError(getApiErrorMessage(err, 'Không tìm thấy tổ chức của tài khoản tổ chức này.'));
+      setError(getApiErrorMessage(err, 'Không thể tải hồ sơ tổ chức.'));
     } finally {
       setLoading(false);
     }
@@ -46,18 +145,21 @@ const OrganizerOrganizationManagement = () => {
     void load();
   }, []);
 
-  const updateField = (key: keyof OrganizationItem, value: string) => {
-    setOrganization((prev) => ({ ...prev, [key]: value }));
+  const summary = useMemo(() => {
+    return {
+      verifiedText: organization.verified ? 'Đã xác minh' : 'Chưa xác minh',
+      eventCount: organization.eventsOrganized ?? 0,
+      reviewCount: organization.totalReviews ?? 0,
+      rating: Number(organization.averageRating ?? 0).toFixed(1),
+    };
+  }, [organization]);
+
+  const updateField = (key: keyof typeof form, value: string) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const save = async (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-
-    if (!organization.name?.trim()) {
-      setError('Tên tổ chức không được để trống.');
-      setSuccess(null);
-      return;
-    }
 
     try {
       setSaving(true);
@@ -65,32 +167,31 @@ const OrganizerOrganizationManagement = () => {
       setSuccess(null);
 
       const response = await organizerService.updateOrganization({
-        name: organization.name?.trim(),
-        description: organization.description?.trim() || '',
-        city: organization.city?.trim() || '',
-        district: organization.district?.trim() || '',
-        address: organization.address?.trim() || '',
-        contactEmail: organization.contactEmail?.trim() || '',
-        phoneNumber: organization.phoneNumber?.trim() || '',
-        website: organization.website?.trim() || '',
-        organizationType: organization.organizationType?.trim() || '',
+        name: form.name.trim() || undefined,
+        description: form.description.trim() || undefined,
+        contactEmail: form.contactEmail.trim() || undefined,
+        phoneNumber: form.phoneNumber.trim() || undefined,
+        website: form.website.trim() || undefined,
+        city: form.city.trim() || undefined,
+        district: form.district.trim() || undefined,
+        ward: form.ward.trim() || undefined,
+        address: form.address.trim() || undefined,
+        organizationType: form.organizationType.trim() || undefined,
+        legalRepresentative: form.legalRepresentative.trim() || undefined,
+        achievements: form.achievements.trim() || undefined,
       });
 
       setOrganization(response.data);
       setSuccess('Cập nhật hồ sơ tổ chức thành công.');
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Không thể cập nhật tổ chức.'));
-      setSuccess(null);
+      setError(getApiErrorMessage(err, 'Không thể cập nhật hồ sơ tổ chức.'));
     } finally {
       setSaving(false);
     }
   };
 
-  const claim = async (e: FormEvent) => {
-    e.preventDefault();
-    const id = claimId.trim();
-
-    if (!id) {
+  const onClaim = async () => {
+    if (!claimId.trim()) {
       setError('Vui lòng nhập Organization ID để liên kết.');
       setSuccess(null);
       return;
@@ -101,203 +202,383 @@ const OrganizerOrganizationManagement = () => {
       setError(null);
       setSuccess(null);
 
-      const response = await organizerService.claimOrganization(id);
-      setOrganization(response.data);
-      setClaimId('');
+      await organizerService.claimOrganization(claimId.trim());
       setSuccess('Liên kết tổ chức thành công.');
+      setClaimId('');
+      await load();
     } catch (err) {
       setError(getApiErrorMessage(err, 'Không thể liên kết tổ chức.'));
-      setSuccess(null);
     } finally {
       setClaiming(false);
     }
   };
 
   return (
-    <section>
-      <div className="mb-6">
-        <h1 className="mb-2 text-2xl font-semibold tracking-tight">Quản lý hồ sơ tổ chức</h1>
-        <p className="text-muted-foreground text-sm">
-          Cập nhật thông tin tổ chức của bạn để quản lý sự kiện và tình nguyện viên tốt hơn.
-        </p>
-      </div>
+    <div
+      style={{
+        background: '#ffffff',
+        minHeight: '100vh',
+        padding: '3rem 0',
+      }}
+    >
+      <div className="container">
+        <div
+          style={{
+            background: '#ffffff',
+            border: '1px solid #e5e7eb',
+            borderRadius: '16px',
+            padding: '2rem',
+            marginBottom: '2rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '4px',
+              background: 'linear-gradient(90deg, #16a34a, #10b981)',
+            }}
+          />
 
-      {loading ? <div className="rounded-xl border bg-card p-4 text-sm">Đang tải dữ liệu tổ chức...</div> : null}
+          <h1
+            style={{
+              color: '#0f172a',
+              fontSize: '1.75rem',
+              fontWeight: 700,
+              marginBottom: '0.5rem',
+            }}
+          >
+            Quản lý hồ sơ{' '}
+            <span style={{ color: '#16a34a' }}>tổ chức</span>
+          </h1>
 
-      {error ? (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
-        </div>
-      ) : null}
-
-      {success ? (
-        <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-          {success}
-        </div>
-      ) : null}
-
-      {!loading && !organization.id ? (
-        <form className="rounded-2xl border bg-card p-6 shadow-sm" onSubmit={claim}>
-          <h2 className="mb-2 text-lg font-semibold">Liên kết tổ chức</h2>
-          <p className="text-muted-foreground mb-4 text-sm">
-            Tài khoản này chưa sở hữu tổ chức nào. Nhập Organization ID để nhận quyền quản lý.
+          <p
+            style={{
+              color: '#64748b',
+              fontSize: '1rem',
+              marginBottom: 0,
+            }}
+          >
+            Cập nhật thông tin tổ chức của bạn để quản lý sự kiện và tình nguyện viên hiệu quả hơn.
           </p>
+        </div>
 
-          <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-            <input
-              className="rounded-lg border px-3 py-2 text-sm"
-              placeholder="Nhập Organization ID"
-              value={claimId}
-              onChange={(e) => setClaimId(e.target.value)}
-            />
-            <button
-              className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-              disabled={claiming}
-              type="submit"
-            >
-              {claiming ? 'Đang liên kết...' : 'Liên kết tổ chức'}
-            </button>
-          </div>
-        </form>
-      ) : null}
+        {loading ? (
+          <div className="alert alert-info rounded-4">Đang tải hồ sơ tổ chức...</div>
+        ) : null}
 
-      {!loading && organization.id ? (
-        <>
-          <div className="mb-6 grid gap-4 md:grid-cols-4">
-            <div className="rounded-2xl border bg-card p-4 shadow-sm">
-              <p className="text-muted-foreground text-xs uppercase">Trạng thái xác minh</p>
-              <p className={`mt-2 text-base font-semibold ${organization.verified ? 'text-emerald-600' : 'text-amber-600'}`}>
-                {organization.verified ? 'Đã xác minh' : 'Chưa xác minh'}
-              </p>
+        {error ? (
+          <div className="alert alert-danger rounded-4">{error}</div>
+        ) : null}
+
+        {success ? (
+          <div className="alert alert-success rounded-4">{success}</div>
+        ) : null}
+
+        {!loading ? (
+          <>
+            <div className="row g-4">
+              <div className="col-lg-8">
+                <div style={cardStyle}>
+                  <div style={sectionTitleStyle}>
+                    <Building2 size={22} color="#16a34a" />
+                    <span>Thông tin tổ chức</span>
+                  </div>
+
+                  <form onSubmit={onSubmit}>
+                    <div className="row">
+                      <div className="col-md-8 mb-3">
+                        <label style={labelStyle}>Tên tổ chức</label>
+                        <input
+                          className="form-control"
+                          style={inputStyle}
+                          value={form.name}
+                          onChange={(e) => updateField('name', e.target.value)}
+                          placeholder="Nhập tên tổ chức"
+                        />
+                      </div>
+
+                      <div className="col-md-4 mb-3">
+                        <label style={labelStyle}>Loại tổ chức</label>
+                        <input
+                          className="form-control"
+                          style={inputStyle}
+                          value={form.organizationType}
+                          onChange={(e) => updateField('organizationType', e.target.value)}
+                          placeholder="VD: Cộng đồng, NGO..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-3">
+                      <label style={labelStyle}>Mô tả tổ chức</label>
+                      <textarea
+                        className="form-control"
+                        rows={4}
+                        style={inputStyle}
+                        value={form.description}
+                        onChange={(e) => updateField('description', e.target.value)}
+                        placeholder="Giới thiệu ngắn về tổ chức"
+                      />
+                    </div>
+
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <label style={labelStyle}>Email liên hệ</label>
+                        <input
+                          className="form-control"
+                          style={inputStyle}
+                          value={form.contactEmail}
+                          onChange={(e) => updateField('contactEmail', e.target.value)}
+                          placeholder="contact@organization.vn"
+                        />
+                      </div>
+
+                      <div className="col-md-6 mb-3">
+                        <label style={labelStyle}>Số điện thoại</label>
+                        <input
+                          className="form-control"
+                          style={inputStyle}
+                          value={form.phoneNumber}
+                          onChange={(e) => updateField('phoneNumber', e.target.value)}
+                          placeholder="0901234567"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-3">
+                      <label style={labelStyle}>Website</label>
+                      <input
+                        className="form-control"
+                        style={inputStyle}
+                        value={form.website}
+                        onChange={(e) => updateField('website', e.target.value)}
+                        placeholder="https://example.com"
+                      />
+                    </div>
+
+                    <div className="row">
+                      <div className="col-md-4 mb-3">
+                        <label style={labelStyle}>Thành phố</label>
+                        <input
+                          className="form-control"
+                          style={inputStyle}
+                          value={form.city}
+                          onChange={(e) => updateField('city', e.target.value)}
+                          placeholder="TP. Hồ Chí Minh"
+                        />
+                      </div>
+
+                      <div className="col-md-4 mb-3">
+                        <label style={labelStyle}>Quận/Huyện</label>
+                        <input
+                          className="form-control"
+                          style={inputStyle}
+                          value={form.district}
+                          onChange={(e) => updateField('district', e.target.value)}
+                          placeholder="Quận 1"
+                        />
+                      </div>
+
+                      <div className="col-md-4 mb-3">
+                        <label style={labelStyle}>Phường/Xã</label>
+                        <input
+                          className="form-control"
+                          style={inputStyle}
+                          value={form.ward}
+                          onChange={(e) => updateField('ward', e.target.value)}
+                          placeholder="Phường Bến Nghé"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-3">
+                      <label style={labelStyle}>Địa chỉ chi tiết</label>
+                      <input
+                        className="form-control"
+                        style={inputStyle}
+                        value={form.address}
+                        onChange={(e) => updateField('address', e.target.value)}
+                        placeholder="Số nhà, tên đường..."
+                      />
+                    </div>
+
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <label style={labelStyle}>Người đại diện</label>
+                        <input
+                          className="form-control"
+                          style={inputStyle}
+                          value={form.legalRepresentative}
+                          onChange={(e) => updateField('legalRepresentative', e.target.value)}
+                          placeholder="Nguyễn Văn A"
+                        />
+                      </div>
+
+                      <div className="col-md-6 mb-3">
+                        <label style={labelStyle}>Thành tích nổi bật</label>
+                        <input
+                          className="form-control"
+                          style={inputStyle}
+                          value={form.achievements}
+                          onChange={(e) => updateField('achievements', e.target.value)}
+                          placeholder="Giải thưởng, hoạt động nổi bật..."
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      disabled={saving}
+                      type="submit"
+                      style={{
+                        background: '#16a34a',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '12px 20px',
+                        borderRadius: '10px',
+                        fontWeight: 700,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        opacity: saving ? 0.75 : 1,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Save size={18} />
+                      {saving ? 'Đang lưu...' : 'Lưu hồ sơ tổ chức'}
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              <div className="col-lg-4">
+                <div style={cardStyle}>
+                  <div style={sectionTitleStyle}>
+                    <ShieldCheck size={22} color="#16a34a" />
+                    <span>Thông tin nhanh</span>
+                  </div>
+
+                  <div className="row g-3">
+                    <div className="col-12">
+                      <div style={infoBoxStyle}>
+                        <div className="text-muted small mb-2">Trạng thái xác minh</div>
+                        <div style={{ fontWeight: 700, color: organization.verified ? '#166534' : '#92400e' }}>
+                          {summary.verifiedText}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="col-12">
+                      <div style={infoBoxStyle}>
+                        <div className="text-muted small mb-2">Sự kiện đã tổ chức</div>
+                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1.25rem' }}>
+                          {summary.eventCount}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="col-12">
+                      <div style={infoBoxStyle}>
+                        <div className="text-muted small mb-2">Điểm đánh giá</div>
+                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1.25rem' }}>
+                          {summary.rating}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="col-12">
+                      <div style={infoBoxStyle}>
+                        <div className="text-muted small mb-2">Tổng lượt đánh giá</div>
+                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1.25rem' }}>
+                          {summary.reviewCount}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={cardStyle}>
+                  <div style={sectionTitleStyle}>
+                    <BadgeCheck size={22} color="#16a34a" />
+                    <span>Liên kết tổ chức</span>
+                  </div>
+
+                  <p style={{ color: '#64748b', lineHeight: 1.7 }}>
+                    Nếu tài khoản này chưa sở hữu tổ chức nào, bạn có thể nhập Organization ID để nhận quyền quản lý.
+                  </p>
+
+                  <div className="mb-3">
+                    <input
+                      className="form-control"
+                      style={inputStyle}
+                      value={claimId}
+                      onChange={(e) => setClaimId(e.target.value)}
+                      placeholder="Nhập Organization ID"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={claiming}
+                    onClick={() => void onClaim()}
+                    style={{
+                      background: '#0f172a',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '12px 20px',
+                      borderRadius: '10px',
+                      fontWeight: 700,
+                      width: '100%',
+                      opacity: claiming ? 0.75 : 1,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {claiming ? 'Đang liên kết...' : 'Liên kết tổ chức'}
+                  </button>
+                </div>
+
+                <div style={cardStyle}>
+                  <div style={sectionTitleStyle}>
+                    <FileText size={22} color="#16a34a" />
+                    <span>Thông tin hiển thị</span>
+                  </div>
+
+                  <div className="d-flex flex-column gap-3">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#64748b' }}>
+                      <Mail size={16} color="#16a34a" />
+                      <span>{organization.contactEmail || 'Chưa có email'}</span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#64748b' }}>
+                      <Phone size={16} color="#16a34a" />
+                      <span>{organization.phoneNumber || 'Chưa có số điện thoại'}</span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#64748b' }}>
+                      <MapPin size={16} color="#16a34a" />
+                      <span>
+                        {organization.city || 'Chưa có thành phố'}
+                        {organization.district ? `, ${organization.district}` : ''}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#64748b' }}>
+                      <Globe size={16} color="#16a34a" />
+                      <span>{organization.website || 'Chưa có website'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-
-            <div className="rounded-2xl border bg-card p-4 shadow-sm">
-              <p className="text-muted-foreground text-xs uppercase">Sự kiện đã tổ chức</p>
-              <p className="mt-2 text-2xl font-semibold">{organization.eventsOrganized ?? 0}</p>
-            </div>
-
-            <div className="rounded-2xl border bg-card p-4 shadow-sm">
-              <p className="text-muted-foreground text-xs uppercase">Điểm đánh giá</p>
-              <p className="mt-2 text-2xl font-semibold">{organization.averageRating ?? 0}</p>
-            </div>
-
-            <div className="rounded-2xl border bg-card p-4 shadow-sm">
-              <p className="text-muted-foreground text-xs uppercase">Tổng đánh giá</p>
-              <p className="mt-2 text-2xl font-semibold">{organization.totalReviews ?? 0}</p>
-            </div>
-          </div>
-
-          <form className="grid gap-4 rounded-2xl border bg-card p-6 shadow-sm md:grid-cols-2" onSubmit={save}>
-            <div className="md:col-span-2">
-              <label className="mb-1 block text-sm font-medium">Tên tổ chức</label>
-              <input
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-                placeholder="Nhập tên tổ chức"
-                value={organization.name || ''}
-                onChange={(e) => updateField('name', e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium">Email liên hệ</label>
-              <input
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-                placeholder="contact@example.com"
-                value={organization.contactEmail || ''}
-                onChange={(e) => updateField('contactEmail', e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium">Số điện thoại</label>
-              <input
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-                placeholder="Nhập số điện thoại"
-                value={organization.phoneNumber || ''}
-                onChange={(e) => updateField('phoneNumber', e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium">Loại tổ chức</label>
-              <select
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-                value={organization.organizationType || ''}
-                onChange={(e) => updateField('organizationType', e.target.value)}
-              >
-                <option value="">Chọn loại tổ chức</option>
-                <option value="Trường học">Trường học</option>
-                <option value="CLB">CLB</option>
-                <option value="Doanh nghiệp">Doanh nghiệp</option>
-                <option value="Phi lợi nhuận">Phi lợi nhuận</option>
-                <option value="Cộng đồng">Cộng đồng</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium">Website</label>
-              <input
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-                placeholder="https://example.org"
-                value={organization.website || ''}
-                onChange={(e) => updateField('website', e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium">Thành phố</label>
-              <input
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-                placeholder="Nhập thành phố"
-                value={organization.city || ''}
-                onChange={(e) => updateField('city', e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium">Quận / Huyện</label>
-              <input
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-                placeholder="Nhập quận / huyện"
-                value={organization.district || ''}
-                onChange={(e) => updateField('district', e.target.value)}
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="mb-1 block text-sm font-medium">Địa chỉ</label>
-              <input
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-                placeholder="Nhập địa chỉ đầy đủ"
-                value={organization.address || ''}
-                onChange={(e) => updateField('address', e.target.value)}
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="mb-1 block text-sm font-medium">Mô tả tổ chức</label>
-              <textarea
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-                placeholder="Giới thiệu ngắn về tổ chức của bạn"
-                rows={5}
-                value={organization.description || ''}
-                onChange={(e) => updateField('description', e.target.value)}
-              />
-            </div>
-
-            <div className="md:col-span-2 flex justify-end">
-              <button
-                className="rounded-lg bg-slate-900 px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
-                disabled={saving}
-                type="submit"
-              >
-                {saving ? 'Đang lưu...' : 'Lưu hồ sơ tổ chức'}
-              </button>
-            </div>
-          </form>
-        </>
-      ) : null}
-    </section>
+          </>
+        ) : null}
+      </div>
+    </div>
   );
 };
 

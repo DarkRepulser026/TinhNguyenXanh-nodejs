@@ -47,6 +47,7 @@ router.get('/organizations/:id', function (req, res, next) {
             }
 
             var row = await models.organization.findOne({ _id: mongo.toObjectId(id) }).lean();
+
             row = mongo.toPlain(row);
 
             if (!row) {
@@ -54,7 +55,23 @@ router.get('/organizations/:id', function (req, res, next) {
                 return;
             }
 
-            res.send(row);
+            var approvedEvents = await models.event
+                .find({
+                    organizationId: mongo.toObjectId(id),
+                    status: 'approved',
+                    isHidden: { $ne: true },
+                })
+                .select('title startTime endTime location status')
+                .sort({ startTime: 1 })
+                .limit(5)
+                .lean();
+
+            approvedEvents = mongo.toPlain(approvedEvents);
+
+            res.send({
+                ...row,
+                events: approvedEvents,
+            });
         })
         .catch(next);
 });

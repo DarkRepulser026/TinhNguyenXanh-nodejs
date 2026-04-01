@@ -196,10 +196,36 @@ const OrganizationDetails = () => {
                         textAlign: 'center',
                       }}
                     >
-                      <Building2 size={72} />
-                      <div style={{ marginTop: '14px', fontWeight: 700, fontSize: '1rem' }}>
-                        {item.name}
-                      </div>
+                      {item.avatarUrl ? (
+                        <img
+                          alt={item.name}
+                          src={item.avatarUrl}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#16a34a',
+                            padding: '24px',
+                            textAlign: 'center',
+                            width: '100%',
+                            height: '100%',
+                          }}
+                        >
+                          <Building2 size={72} />
+                          <div style={{ marginTop: '14px', fontWeight: 700, fontSize: '1rem' }}>
+                            {item.name}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -354,6 +380,118 @@ const OrganizationDetails = () => {
                   </div>
                 </div>
               </div>
+              <div style={sectionCard}>
+                <div style={titleStyle}>
+                  <BadgeCheck size={20} color="#16a34a" />
+                  <span>Lĩnh vực hoạt động</span>
+                </div>
+
+                {item.focusAreas && item.focusAreas.length > 0 ? (
+                  <div className="d-flex flex-wrap gap-2">
+                    {item.focusAreas.map((area) => (
+                      <span
+                        key={area}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          padding: '8px 14px',
+                          borderRadius: '999px',
+                          background: '#f0fdf4',
+                          color: '#166534',
+                          fontWeight: 600,
+                          fontSize: '0.9rem',
+                          border: '1px solid #bbf7d0',
+                        }}
+                      >
+                        {area}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: '#64748b', marginBottom: 0 }}>
+                    Tổ chức này chưa cập nhật lĩnh vực hoạt động.
+                  </p>
+                )}
+              </div>
+
+              <div style={sectionCard}>
+                <div style={titleStyle}>
+                  <FileText size={20} color="#16a34a" />
+                  <span>Thông tin mở rộng</span>
+                </div>
+
+                <div className="row">
+                  <div className="col-md-6 mb-3">
+                    <div style={{ color: '#64748b', fontSize: '0.88rem', marginBottom: '6px' }}>Mã số thuế / ĐKKD</div>
+                    <div style={{ color: '#0f172a', fontWeight: 600 }}>{item.taxCode || 'Chưa cập nhật'}</div>
+                  </div>
+
+                  <div className="col-md-6 mb-3">
+                    <div style={{ color: '#64748b', fontSize: '0.88rem', marginBottom: '6px' }}>Ngày thành lập</div>
+                    <div style={{ color: '#0f172a', fontWeight: 600 }}>
+                      {item.foundedDate ? new Date(item.foundedDate).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
+                    </div>
+                  </div>
+
+                  <div className="col-md-6 mb-3">
+                    <div style={{ color: '#64748b', fontSize: '0.88rem', marginBottom: '6px' }}>Người đại diện pháp luật</div>
+                    <div style={{ color: '#0f172a', fontWeight: 600 }}>{item.legalRepresentative || 'Chưa cập nhật'}</div>
+                  </div>
+
+                  <div className="col-md-6 mb-3">
+                    <div style={{ color: '#64748b', fontSize: '0.88rem', marginBottom: '6px' }}>Loại tài liệu xác minh</div>
+                    <div style={{ color: '#0f172a', fontWeight: 600 }}>{item.documentType || 'Chưa cập nhật'}</div>
+                  </div>
+
+                  <div className="col-md-6 mb-3">
+                    <div style={{ color: '#64748b', fontSize: '0.88rem', marginBottom: '6px' }}>Facebook</div>
+                    <div style={{ color: '#0f172a', fontWeight: 600, wordBreak: 'break-word' }}>
+                      {item.facebookUrl ? (
+                        <a
+                          href={item.facebookUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ color: '#16a34a', textDecoration: 'none' }}
+                        >
+                          {item.facebookUrl}
+                        </a>
+                      ) : (
+                        'Chưa cập nhật'
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="col-md-6 mb-3">
+                    <div style={{ color: '#64748b', fontSize: '0.88rem', marginBottom: '6px' }}>Zalo</div>
+                    <div style={{ color: '#0f172a', fontWeight: 600 }}>{item.zaloNumber || 'Chưa cập nhật'}</div>
+                  </div>
+
+                  <div className="col-md-12 mb-3">
+                    <div style={{ color: '#64748b', fontSize: '0.88rem', marginBottom: '6px' }}>Tài liệu xác minh</div>
+                    <div style={{ color: '#0f172a', fontWeight: 600, wordBreak: 'break-word' }}>
+                      {item.verificationDocsUrl ? (
+                        <a
+                          href={item.verificationDocsUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ color: '#16a34a', textDecoration: 'none' }}
+                        >
+                          {item.verificationDocsUrl}
+                        </a>
+                      ) : (
+                        'Chưa cập nhật'
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="col-md-12">
+                    <div style={{ color: '#64748b', fontSize: '0.88rem', marginBottom: '6px' }}>Thành tích nổi bật</div>
+                    <div style={{ color: '#0f172a', lineHeight: 1.7 }}>
+                      {item.achievements || 'Tổ chức này chưa cập nhật thành tích nổi bật.'}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <div style={sectionCard}>
                 <div style={titleStyle}>
@@ -438,6 +576,53 @@ const OrganizationDetails = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+                <div style={sectionCard}>
+                  <div style={titleStyle}>
+                    <CalendarDays size={20} color="#16a34a" />
+                    <span>Sự kiện của tổ chức</span>
+                  </div>
+
+                  {item.events && item.events.length > 0 ? (
+                    <div className="d-flex flex-column gap-3">
+                      {item.events.map((event) => (
+                        <div
+                          key={event.id}
+                          style={{
+                            background: '#f8fafc',
+                            borderRadius: '12px',
+                            padding: '14px',
+                            border: '1px solid #e5e7eb',
+                          }}
+                        >
+                          <div
+                            style={{
+                              color: '#0f172a',
+                              fontWeight: 700,
+                              marginBottom: '8px',
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            {event.title}
+                          </div>
+
+                          <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '6px' }}>
+                            {event.location || 'Chưa cập nhật địa điểm'}
+                          </div>
+
+                          <div style={{ color: '#64748b', fontSize: '0.85rem' }}>
+                            {event.startTime
+                              ? new Date(event.startTime).toLocaleString('vi-VN')
+                              : '-'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ color: '#64748b', marginBottom: 0 }}>
+                      Tổ chức này chưa có sự kiện nào đang hiển thị.
+                    </p>
+                  )}
                 </div>
 
                 <div style={sectionCard}>
