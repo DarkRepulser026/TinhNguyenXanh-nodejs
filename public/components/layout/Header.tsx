@@ -16,7 +16,11 @@ import {
   Search,
   Sparkles,
   ChevronDown,
-  User
+  User,
+  BarChart2,
+  Settings,
+  LogOut,
+  HandCoins // Thêm icon HandCoins cho Đóng góp
 } from 'lucide-react';
 import { useAuth } from '../../contexts/useAuth';
 
@@ -129,11 +133,11 @@ const Header: React.FC = () => {
                   <PhoneCall size={16} /> Liên hệ
                 </NavLink>
               </li>
-              <li className="nav-item">
-                <NavLink to="/organizations/register" className="nav-link main-nav-link d-flex align-items-center gap-1">
-                  <ClipboardPen size={16} /> Đăng ký Tổ chức
-                </NavLink>
-              </li>
+             <li className="nav-item">
+               <NavLink to="/donate" className="nav-link main-nav-link d-flex align-items-center gap-1">
+                 <HandCoins size={16} /> Đóng góp
+               </NavLink>
+             </li>
             </ul>
 
             <div className="d-flex align-items-center gap-2 justify-content-lg-end auth-actions">
@@ -146,43 +150,71 @@ const Header: React.FC = () => {
                     aria-expanded="false"
                   >
                     <User size={16} />
-                    <span className="profile-name">{user?.fullName || 'Hồ sơ'}</span>
+                    <span className="profile-name">{user?.fullName || 'Tình nguyện viên'}</span>
                     <ChevronDown size={14} />
                   </button>
 
                   <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 auth-dropdown-menu">
-                    {user?.role === 'Admin' ? (
+                    {user?.role === 'Admin' && (
                       <li>
                         <Link to="/admin" className="dropdown-item d-flex align-items-center gap-2">
-                          <Shield size={15} /> Admin
+                          <Shield size={15} /> Trang Quản trị
                         </Link>
                       </li>
-                    ) : null}
-                    {user?.role === 'Organizer' ? (
+                    )}
+                    
+                    {user?.role === 'Organizer' && (
                       <li>
                         <Link to="/organizer" className="dropdown-item d-flex align-items-center gap-2">
-                          <BriefcaseBusiness size={15} /> Organizer
+                          <BriefcaseBusiness size={15} /> Quản lý Tổ chức
                         </Link>
                       </li>
-                    ) : null}
-                    <li>
-                      <Link to="/profile" className="dropdown-item d-flex align-items-center gap-2">
-                        <User size={15} /> Hồ sơ
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/registrations" className="dropdown-item d-flex align-items-center gap-2">
-                        <Calendar size={15} /> Hoạt động của tôi
-                      </Link>
-                    </li>
+                    )}
+
+                    {(!user?.role || user?.role === 'Volunteer') && (
+                      <>
+                        <li>
+                          <Link to="/volunteer/dashboard" className="dropdown-item d-flex align-items-center gap-2">
+                            <BarChart2 size={15} /> Tổng quan
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to="/volunteer/profile" className="dropdown-item d-flex align-items-center gap-2">
+                            <User size={15} /> Hồ sơ cá nhân
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to="/volunteer/registrations" className="dropdown-item d-flex align-items-center gap-2">
+                            <Calendar size={15} /> Lịch sử đăng ký
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to="/volunteer/favorites" className="dropdown-item d-flex align-items-center gap-2">
+                            <Heart size={15} /> Yêu thích
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to="/organizations/register" className="dropdown-item d-flex align-items-center gap-2">
+                            <ClipboardPen size={15} /> Đăng ký Tổ chức
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to="/account/settings" className="dropdown-item d-flex align-items-center gap-2">
+                            <Settings size={15} /> Cài đặt
+                          </Link>
+                        </li>
+                      </>
+                    )}
+
                     <li><hr className="dropdown-divider" /></li>
+                    
                     <li>
                       <button
                         type="button"
                         onClick={handleLogout}
-                        className="dropdown-item text-danger"
+                        className="dropdown-item text-danger d-flex align-items-center gap-2"
                       >
-                        Đăng xuất
+                        <LogOut size={15} /> Đăng xuất
                       </button>
                     </li>
                   </ul>
@@ -256,7 +288,7 @@ const Header: React.FC = () => {
                     onChange={(e) => setSearchLocation(e.target.value)}
                   >
                     <option value="">Tất cả khu vực</option>
-                    <option value="TP.HCM">TP. Ho Chi Minh</option>
+                    <option value="TP.HCM">TP. Hồ Chí Minh</option>
                     <option value="Ha Noi">Hà Nội</option>
                     <option value="Da Nang">Đà Nẵng</option>
                     <option value="Can Tho">Cần Thơ</option>
@@ -278,4 +310,3 @@ const Header: React.FC = () => {
 };
 
 export default Header;
-

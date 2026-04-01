@@ -62,7 +62,7 @@ function App() {
             <Route path="/events" element={<EventList />} />
             <Route path="/events/:id" element={<EventDetails />} />
             <Route
-              path="/dashboard"
+              path="/volunteer/dashboard"
               element={
                 <RequireAuth>
                   <VolunteerDashboard />
@@ -70,7 +70,7 @@ function App() {
               }
             />
             <Route
-              path="/favorites"
+              path="/volunteer/favorites"
               element={
                 <RequireAuth>
                   <FavoriteEvents />
@@ -78,7 +78,7 @@ function App() {
               }
             />
             <Route
-              path="/registrations"
+              path="/volunteer/registrations"
               element={
                 <RequireAuth>
                   <MyRegistrations />
@@ -86,7 +86,7 @@ function App() {
               }
             />
             <Route
-              path="/profile"
+              path="/volunteer/profile"
               element={
                 <RequireAuth>
                   <VolunteerProfile />
@@ -94,7 +94,7 @@ function App() {
               }
             />
             <Route
-              path="/settings"
+              path="/account/settings"
               element={
                 <RequireAuth roles={VOLUNTEER_ROLES}>
                   <AccountSettings />
