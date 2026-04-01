@@ -4,7 +4,7 @@ import { getApiErrorMessage, organizerService, type OrganizerDashboard } from '.
 
 const defaultDashboard: OrganizerDashboard = {
   organization: {
-    id: 0,
+    id: '',
     name: '',
   },
   metrics: {

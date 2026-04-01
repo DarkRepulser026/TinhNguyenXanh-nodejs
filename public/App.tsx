@@ -39,6 +39,8 @@ const OrganizerOverview = lazy(() => import('./pages/organizer/OrganizerOverview
 const OrganizerEventManagementPage = lazy(() => import('./pages/organizer/OrganizerEventManagementPage'));
 const OrganizerOrganizationManagementPage = lazy(() => import('./pages/organizer/OrganizerOrganizationManagementPage'));
 const OrganizerVolunteersPage = lazy(() => import('./pages/organizer/OrganizerVolunteersPage'));
+const OrganizerVolunteerDetails = lazy(() => import('./pages/organizer/OrganizerVolunteerDetails'));
+const OrganizerVolunteerHistory = lazy(() => import('./pages/organizer/OrganizerVolunteerHistory'));
 const OrganizationSuccess = lazy(() => import('./pages/organizations/OrganizationSuccess'));
 
 // Minimal loading spinner
@@ -136,6 +138,23 @@ function App() {
               element={
                 <RequireAuth roles={ORGANIZER_ROLES}>
                   <OrganizerVolunteersPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/organizer/registrations/:id"
+              element={
+                <RequireAuth roles={ORGANIZER_ROLES}>
+                  <OrganizerVolunteerDetails />
+                </RequireAuth>
+              }
+            />
+
+            <Route
+              path="/organizer/volunteers/:id/history"
+              element={
+                <RequireAuth roles={ORGANIZER_ROLES}>
+                  <OrganizerVolunteerHistory />
                 </RequireAuth>
               }
             />

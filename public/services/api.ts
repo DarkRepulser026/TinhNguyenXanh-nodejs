@@ -87,21 +87,43 @@ export type EventItem = {
 };
 
 export type OrganizationItem = {
-  id: number;
+  id: string;
   name: string;
   description: string | null;
   city: string | null;
   district: string | null;
+  ward?: string | null;
   address: string | null;
   contactEmail: string | null;
   phoneNumber: string | null;
   website: string | null;
   organizationType: string | null;
+  taxCode?: string | null;
+  foundedDate?: string | null;
+  legalRepresentative?: string | null;
+  documentType?: string | null;
+  verificationDocsUrl?: string | null;
+  facebookUrl?: string | null;
+  zaloNumber?: string | null;
+  achievements?: string | null;
+  focusAreas?: string[];
+  avatarUrl?: string | null;
   memberCount: number;
   eventsOrganized: number;
   averageRating: number;
   totalReviews: number;
   verified: boolean;
+};
+
+export type VolunteerEvaluationItem = {
+  id: string;
+  registrationId: string;
+  volunteerId: string;
+  organizerUserId: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type VolunteerProfile = {
@@ -218,7 +240,7 @@ export type AdminModerationReport = {
 
 export type OrganizerDashboard = {
   organization: {
-    id: number;
+    id: string;
     name: string;
   };
   metrics: {
@@ -233,37 +255,76 @@ export type OrganizerDashboard = {
 };
 
 export type OrganizerEventItem = {
-  id: number;
+  id: string;
   title: string;
   description: string | null;
   startTime: string;
   endTime: string;
   location: string | null;
   status: string;
+  isHidden: boolean;
   maxVolunteers: number;
-  categoryId: number | null;
+  categoryId: string | null;
   categoryName: string | null;
   registrationCount: number;
 };
 
 export type OrganizerRegistrationItem = {
-  id: number;
+  id: string;
   status: string;
   fullName: string;
   phone: string | null;
   reason: string | null;
   registeredAt: string;
   event: {
-    id: number;
+    id: string;
     title: string;
     startTime: string;
     location: string | null;
   };
   volunteer: {
-    id: number;
-    userId: string;
+    id: string | null;
+    userId: string | null;
     fullName: string;
     phone: string | null;
+  };
+};
+
+export type OrganizerRegistrationDetail = {
+  id: string;
+  status: string;
+  fullName: string;
+  phone: string | null;
+  reason: string | null;
+  registeredAt: string;
+  event: {
+    id: string;
+    title: string;
+    startTime: string;
+    endTime: string;
+    location: string | null;
+    status: string;
+  };
+  volunteer: {
+    id: string | null;
+    userId: string | null;
+    fullName: string;
+    phone: string | null;
+  };
+};
+
+export type OrganizerVolunteerHistoryItem = {
+  id: string;
+  status: string;
+  reason: string | null;
+  registeredAt: string;
+  event: {
+    id: string | null;
+    title: string;
+    location: string | null;
+    startTime: string | null;
+    endTime: string | null;
+    status: string | null;
   };
 };
 
@@ -283,6 +344,30 @@ export const eventService = {
 };
 
 export const organizationService = {
+  register: (body: {
+    name: string;
+    organizationType: string;
+    description: string;
+    contactEmail: string;
+    phoneNumber: string;
+    website?: string;
+    city: string;
+    district: string;
+    ward?: string;
+    address: string;
+    taxCode?: string;
+    foundedDate?: string;
+    legalRepresentative?: string;
+    documentType?: string;
+    verificationDocsUrl?: string;
+    facebookUrl?: string;
+    zaloNumber?: string;
+    achievements?: string;
+    memberCount?: number;
+    eventsOrganized?: number;
+    focusAreas: string[];
+    avatarUrl?: string;
+  }) => apiClient.post<{ message: string; item: OrganizationItem }>('/organizations/register', body),
   getAll: (params?: { keyword?: string; city?: string; page?: number; pageSize?: number }) =>
     apiClient.get<PaginatedResponse<OrganizationItem>>(
       '/organizations',
@@ -344,41 +429,51 @@ export const adminService = {
 };
 
 export const organizerService = {
+  getRegistrationEvaluation: (id: string) =>
+    apiClient.get<{ item: VolunteerEvaluationItem | null }>(`/organizer/registrations/${id}/evaluation`),
+
+  saveRegistrationEvaluation: (id: string, body: { rating: number; comment?: string }) =>
+    apiClient.post<VolunteerEvaluationItem>(`/organizer/registrations/${id}/evaluation`, body),
+  getRegistrationById: (id: string) =>
+    apiClient.get<OrganizerRegistrationDetail>(`/organizer/registrations/${id}`),
+
+  getVolunteerHistory: (volunteerId: string) =>
+    apiClient.get<{ items: OrganizerVolunteerHistoryItem[] }>(`/organizer/volunteers/${volunteerId}/history`),
   getDashboard: () => apiClient.get<OrganizerDashboard>('/organizer/dashboard'),
   getOrganization: () => apiClient.get<OrganizationItem>('/organizer/organization'),
   updateOrganization: (body: Partial<OrganizationItem>) => apiClient.patch<OrganizationItem>('/organizer/organization', body),
-  claimOrganization: (organizationId: number) => apiClient.post<OrganizationItem>('/organizer/organization/claim', { organizationId }),
+  claimOrganization: (organizationId: string) => apiClient.post<OrganizationItem>('/organizer/organization/claim', { organizationId }),
   getEvents: (params?: { search?: string; status?: string; page?: number; pageSize?: number }) =>
     apiClient.get<PaginatedResponse<OrganizerEventItem>>('/organizer/events', { params }),
-  getEventById: (id: number) => apiClient.get<OrganizerEventItem>(`/organizer/events/${id}`),
+  getEventById: (id: string) => apiClient.get<OrganizerEventItem>(`/organizer/events/${id}`),
   createEvent: (body: {
     title: string;
     description?: string;
     location?: string;
-    categoryId?: number;
+    categoryId?: string;
     maxVolunteers?: number;
     startTime: string;
     endTime: string;
   }) => apiClient.post('/organizer/events', body),
   updateEvent: (
-    id: number,
+    id: string,
     body: {
       title?: string;
       description?: string;
       location?: string;
-      categoryId?: number;
+      categoryId?: string;
       maxVolunteers?: number;
       startTime?: string;
       endTime?: string;
     },
   ) => apiClient.patch(`/organizer/events/${id}`, body),
-  hideEvent: (id: number) => apiClient.post<{ id: number; status: string; isHidden: boolean }>(`/organizer/events/${id}/hide`),
-  unhideEvent: (id: number) =>
-    apiClient.post<{ id: number; status: string; isHidden: boolean }>(`/organizer/events/${id}/unhide`),
-  getVolunteers: (params?: { eventId?: number; search?: string; status?: string; page?: number; pageSize?: number }) =>
+  hideEvent: (id: string) => apiClient.post<{ id: string; status: string; isHidden: boolean }>(`/organizer/events/${id}/hide`),
+  unhideEvent: (id: string) =>
+    apiClient.post<{ id: string; status: string; isHidden: boolean }>(`/organizer/events/${id}/unhide`),
+  getVolunteers: (params?: { eventId?: string; search?: string; status?: string; page?: number; pageSize?: number }) =>
     apiClient.get<PaginatedResponse<OrganizerRegistrationItem>>('/organizer/volunteers', { params }),
-  updateRegistrationStatus: (id: number, action: 'approve' | 'reject') =>
-    apiClient.patch<{ id: number; status: string }>(`/organizer/registrations/${id}/status`, { action }),
+  updateRegistrationStatus: (id: string, action: 'approve' | 'reject') =>
+    apiClient.patch<{ id: string; status: string }>(`/organizer/registrations/${id}/status`, { action }),
 };
 
 export default apiClient;
