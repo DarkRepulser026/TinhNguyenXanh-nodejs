@@ -17,6 +17,7 @@ const modelNames = {
   organizationMember: 'OrganizationMember',
   organizationReview: 'OrganizationReview',
   volunteer: 'Volunteer',
+  volunteerEvaluation: 'VolunteerEvaluation',
   volunteerSkill: 'VolunteerSkill',
 };
 
