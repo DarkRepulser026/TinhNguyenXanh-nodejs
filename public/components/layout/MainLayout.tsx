@@ -10,7 +10,11 @@ interface LayoutProps {
 const MainLayout: React.FC<LayoutProps> = ({ children }) => {
   const { pathname } = useLocation();
 
-  const hideShellRoute = pathname.startsWith('/admin') || pathname.startsWith('/organizer');
+  const hideShellRoute =
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/organizer') ||
+    pathname === '/login' ||
+    pathname === '/register';
 
   const isPublicRoute =
     pathname === '/' ||

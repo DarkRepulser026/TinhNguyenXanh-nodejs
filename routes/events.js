@@ -64,7 +64,7 @@ router.get('/events', function (req, res, next) {
             location: item.location,
             status: item.status,
             maxVolunteers: item.maxVolunteers,
-            images: item.images,
+            images: item.images || item.image || null,
             organizationId: item.organizationId && item.organizationId.id ? item.organizationId.id : item.organizationId,
             organizationName: item.organizationId && item.organizationId.name ? item.organizationId.name : null,
             categoryId: item.categoryId && item.categoryId.id ? item.categoryId.id : item.categoryId,

@@ -7,6 +7,10 @@ const EventList: React.FC = () => {
    const [events, setEvents] = useState<EventItem[]>([]);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState<string | null>(null);
+   const [page, setPage] = useState(1);
+   const [totalPages, setTotalPages] = useState(1);
+   const [totalCount, setTotalCount] = useState(0);
+   const pageSize = 6;
 
    const keyword = searchParams.get('keyword')?.trim() || '';
    const location = searchParams.get('location')?.trim() || '';
@@ -14,16 +18,22 @@ const EventList: React.FC = () => {
    const category = categoryRaw ? Number(categoryRaw) : undefined;
 
    useEffect(() => {
+      setPage(1);
+   }, [keyword, location, category]);
+
+   useEffect(() => {
       const load = async () => {
          try {
             const response = await eventService.getAll({
-              page: 1,
-              pageSize: 20,
+              page,
+              pageSize,
               keyword: keyword || undefined,
               location: location || undefined,
               category: Number.isFinite(category) ? category : undefined,
             });
             setEvents(response.data.items);
+            setTotalCount(response.data.totalCount || 0);
+            setTotalPages(response.data.totalPages || 1);
          } catch (e) {
             setError(e instanceof Error ? e.message : 'Failed to load events');
          } finally {
@@ -32,7 +42,7 @@ const EventList: React.FC = () => {
       };
 
       void load();
-   }, [keyword, location, category]);
+   }, [keyword, location, category, page]);
 
    const formatDate = (value: string) => new Date(value).toLocaleDateString('vi-VN');
 
@@ -41,7 +51,7 @@ const EventList: React.FC = () => {
       <div className="container">
             <div className="mb-4">
                <h2 className="fw-bold mb-1 display-6">Khám phá hoạt động</h2>
-               <p className="text-muted small mb-0">Tìm thấy {events.length} hoạt động đang diễn ra.</p>
+               <p className="text-muted small mb-0">Tìm thấy {totalCount} hoạt động đang diễn ra.</p>
         </div>
 
             {loading && <div className="alert alert-info">Đang tải dữ liệu sự kiện...</div>}
@@ -56,6 +66,9 @@ const EventList: React.FC = () => {
                                      src={event.images || 'https://images.unsplash.com/photo-1618477471363-92a18d350e94?auto=format&fit=crop&q=80&w=1000'}
                                      className="w-100 h-100 object-fit-cover shadow-inner"
                                      alt={event.title}
+                                     onError={(e) => {
+                                       (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=1000';
+                                     }}
                                   />
                        <div className="position-absolute top-0 inset-e-0 p-3">
                           <span className="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-600 shadow-sm">
@@ -98,6 +111,36 @@ const EventList: React.FC = () => {
               </div>
            ))}
         </div>
+        {totalPages > 1 && (
+          <div className="d-flex justify-content-center align-items-center gap-2 mt-4">
+            <button
+              type="button"
+              className="btn btn-outline-success btn-sm rounded-pill"
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={page === 1}
+            >
+              Trước
+            </button>
+            {Array.from({ length: totalPages }, (_, index) => (
+              <button
+                key={index + 1}
+                type="button"
+                className={`btn btn-sm rounded-pill ${page === index + 1 ? 'btn-success text-white' : 'btn-outline-success'}`}
+                onClick={() => setPage(index + 1)}
+              >
+                {index + 1}
+              </button>
+            ))}
+            <button
+              type="button"
+              className="btn btn-outline-success btn-sm rounded-pill"
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={page === totalPages}
+            >
+              Sau
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
