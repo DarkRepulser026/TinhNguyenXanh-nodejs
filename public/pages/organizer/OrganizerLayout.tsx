@@ -1,141 +1,288 @@
-import type { ComponentType, ReactNode } from 'react';
-import { Bell, Building2, CalendarDays, Menu, Users } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
-
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import { type CSSProperties, type ReactNode } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { cn } from '@/lib/utils';
+  Building2,
+  CalendarDays,
+  ClipboardList,
+  History,
+  LayoutDashboard,
+  LogOut,
+  Users,
+} from 'lucide-react';
 
 type OrganizerLayoutProps = {
   children: ReactNode;
 };
 
-type NavItem = {
-  label: string;
-  path: string;
-  icon: ComponentType<{ className?: string }>;
+const shellStyle: CSSProperties = {
+  minHeight: '100vh',
+  background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)',
 };
 
-const NAV_ITEMS: NavItem[] = [
-  { label: 'Overview', path: '/organizer', icon: CalendarDays },
-  { label: 'Events', path: '/organizer/events', icon: CalendarDays },
-  { label: 'Organization', path: '/organizer/organization', icon: Building2 },
-  { label: 'Volunteers', path: '/organizer/volunteers', icon: Users },
-];
+const sidebarStyle: CSSProperties = {
+  width: '280px',
+  background: '#ffffff',
+  borderRight: '1px solid #e5e7eb',
+  padding: '24px 18px',
+  position: 'sticky',
+  top: 0,
+  height: '100vh',
+  boxShadow: '4px 0 16px rgba(0,0,0,0.03)',
+};
 
-function SidebarContent() {
-  const navigate = useNavigate();
-  const location = useLocation();
+const brandBoxStyle: CSSProperties = {
+  border: '1px solid #e5e7eb',
+  borderRadius: '18px',
+  padding: '18px 16px',
+  marginBottom: '24px',
+  background: 'linear-gradient(135deg, #dcfce7 0%, #ffffff 100%)',
+};
 
-  return (
-    <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex h-16 items-center border-b border-sidebar-border px-5">
-        <p className="text-base font-semibold tracking-tight">VolunteerHub Organizer</p>
-      </div>
+const mainStyle: CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+};
 
-      <nav className="flex-1 space-y-1 p-3">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const isActive =
-            item.path === '/organizer'
-              ? location.pathname === '/organizer'
-              : location.pathname.startsWith(item.path);
+const topbarStyle: CSSProperties = {
+  background: '#ffffff',
+  borderBottom: '1px solid #e5e7eb',
+  padding: '18px 28px',
+  position: 'sticky',
+  top: 0,
+  zIndex: 10,
+};
 
-          return (
-            <Button
-              key={item.path}
-              type="button"
-              variant="ghost"
-              className={cn(
-                'flex w-full items-center justify-start gap-3 rounded-md px-3 py-2 text-sm',
-                isActive
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                  : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-              )}
-              onClick={() => navigate(item.path)}
-            >
-                <Icon className="size-4" />
-                <span>{item.label}</span>
-            </Button>
-          );
-        })}
-      </nav>
-    </div>
-  );
-}
+const contentWrapStyle: CSSProperties = {
+  padding: '28px',
+};
+
+const sectionLabelStyle: CSSProperties = {
+  fontSize: '0.78rem',
+  color: '#64748b',
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  marginBottom: '10px',
+  paddingLeft: '10px',
+};
+
+const menuContainerStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '8px',
+  marginBottom: '24px',
+};
+
+const baseLinkStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '12px',
+  padding: '12px 14px',
+  borderRadius: '12px',
+  textDecoration: 'none',
+  fontWeight: 600,
+  fontSize: '0.95rem',
+  transition: 'all 0.2s ease',
+};
+
+const getLinkStyle = (active: boolean): CSSProperties => ({
+  ...baseLinkStyle,
+  background: active ? '#16a34a' : '#ffffff',
+  color: active ? '#ffffff' : '#0f172a',
+  border: active ? '1px solid #16a34a' : '1px solid #e5e7eb',
+  boxShadow: active ? '0 8px 18px rgba(22,163,74,0.18)' : 'none',
+});
+
+const quickCardStyle: CSSProperties = {
+  border: '1px solid #e5e7eb',
+  borderRadius: '16px',
+  padding: '16px',
+  background: '#ffffff',
+};
 
 const OrganizerLayout = ({ children }: OrganizerLayoutProps) => {
+  const location = useLocation();
+
+  const isActive = (path: string) => {
+    if (path === '/organizer/overview') {
+      return location.pathname === '/organizer/overview' || location.pathname === '/organizer';
+    }
+    return location.pathname.startsWith(path);
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-sidebar-border md:block">
-        <SidebarContent />
-      </aside>
-
-      <div className="md:pl-60">
-        <header className="sticky top-0 z-20 h-16 border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/70 sm:px-6">
-          <div className="mx-auto flex h-full max-w-400 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="icon" className="md:hidden" aria-label="Open organizer menu">
-                    <Menu className="size-4" />
-                  </Button>
-                </SheetTrigger>
-
-                <SheetContent side="left" className="w-60 p-0">
-                  <SheetHeader className="sr-only">
-                    <SheetTitle>Organizer navigation</SheetTitle>
-                    <SheetDescription>Open the organizer sidebar navigation links.</SheetDescription>
-                  </SheetHeader>
-                  <SidebarContent />
-                </SheetContent>
-              </Sheet>
-
-              <p className="text-sm font-medium text-muted-foreground">Organizer Workspace</p>
+    <div style={shellStyle}>
+      <div style={{ display: 'flex', minHeight: '100vh' }}>
+        <aside style={sidebarStyle}>
+          <div style={brandBoxStyle}>
+            <div
+              style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: '14px',
+                background: '#16a34a',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '12px',
+              }}
+            >
+              <Building2 size={28} />
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" aria-label="Open notifications">
-                <Bell className="size-4" />
-              </Button>
+            <div
+              style={{
+                fontSize: '1.1rem',
+                fontWeight: 800,
+                color: '#0f172a',
+                marginBottom: '4px',
+              }}
+            >
+              Organizer Panel
+            </div>
 
-              <Separator orientation="vertical" className="mx-1 hidden h-6 sm:block" />
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-10 gap-2 rounded-full px-2">
-                    <Avatar className="size-8">
-                      <AvatarImage src="https://i.pravatar.cc/80?img=14" alt="Organizer user" />
-                      <AvatarFallback>OR</AvatarFallback>
-                    </Avatar>
-                    <span className="hidden text-sm font-medium sm:inline">Organizer</span>
-                  </Button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Profile</DropdownMenuItem>
-                  <DropdownMenuItem>Settings</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Sign out</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div
+              style={{
+                color: '#64748b',
+                fontSize: '0.9rem',
+                lineHeight: 1.6,
+              }}
+            >
+              Quản lý tổ chức, sự kiện và tình nguyện viên trong cùng một nơi.
             </div>
           </div>
-        </header>
 
-        <main className="mx-auto max-w-400 p-4 sm:p-6 lg:p-8">{children}</main>
+          <div style={sectionLabelStyle}>Điều hướng</div>
+
+          <div style={menuContainerStyle}>
+            <Link to="/organizer/overview" style={getLinkStyle(isActive('/organizer/overview'))}>
+              <LayoutDashboard size={18} />
+              <span>Tổng quan</span>
+            </Link>
+
+            <Link to="/organizer/organization" style={getLinkStyle(isActive('/organizer/organization'))}>
+              <Building2 size={18} />
+              <span>Hồ sơ tổ chức</span>
+            </Link>
+
+            <Link to="/organizer/events" style={getLinkStyle(isActive('/organizer/events'))}>
+              <CalendarDays size={18} />
+              <span>Quản lý sự kiện</span>
+            </Link>
+
+            <Link to="/organizer/volunteers" style={getLinkStyle(isActive('/organizer/volunteers'))}>
+              <Users size={18} />
+              <span>Duyệt volunteer</span>
+            </Link>
+          </div>
+
+          <div style={sectionLabelStyle}>Truy cập nhanh</div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={quickCardStyle}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px',
+                  color: '#0f172a',
+                  fontWeight: 700,
+                }}
+              >
+                <ClipboardList size={16} color="#16a34a" />
+                Công việc chính
+              </div>
+              <div style={{ color: '#64748b', fontSize: '0.88rem', lineHeight: 1.6 }}>
+                Tạo sự kiện, duyệt đăng ký và cập nhật hồ sơ tổ chức.
+              </div>
+            </div>
+
+            <div style={quickCardStyle}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px',
+                  color: '#0f172a',
+                  fontWeight: 700,
+                }}
+              >
+                <History size={16} color="#16a34a" />
+                Gợi ý
+              </div>
+              <div style={{ color: '#64748b', fontSize: '0.88rem', lineHeight: 1.6 }}>
+                Kiểm tra lại các đơn chờ duyệt mỗi ngày để không bỏ lỡ volunteer mới.
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <main style={mainStyle}>
+          <div style={topbarStyle}>
+            <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+              <div>
+                <div
+                  style={{
+                    color: '#0f172a',
+                    fontSize: '1.1rem',
+                    fontWeight: 800,
+                    marginBottom: '2px',
+                  }}
+                >
+                  Dashboard Organizer
+                </div>
+                <div
+                  style={{
+                    color: '#64748b',
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  Khu vực quản trị dành cho ban tổ chức
+                </div>
+              </div>
+
+              <div className="d-flex align-items-center gap-2">
+                <Link
+                  to="/"
+                  style={{
+                    textDecoration: 'none',
+                    color: '#0f172a',
+                    border: '1px solid #e5e7eb',
+                    background: '#ffffff',
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    fontWeight: 600,
+                  }}
+                >
+                  Về trang chủ
+                </Link>
+
+                <Link
+                  to="/login"
+                  style={{
+                    textDecoration: 'none',
+                    color: '#ffffff',
+                    background: '#0f172a',
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <LogOut size={16} />
+                  Đăng xuất
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div style={contentWrapStyle}>{children}</div>
+        </main>
       </div>
     </div>
   );

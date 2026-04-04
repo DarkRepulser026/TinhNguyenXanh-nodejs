@@ -230,6 +230,7 @@ router.get('/organizer/events', function (req, res, next) {
                     endTime: event.endTime,
                     location: event.location,
                     status: event.status,
+                    isHidden: Boolean(event.isHidden),
                     maxVolunteers: event.maxVolunteers,
                     categoryId: event.categoryId,
                     categoryName: event.categoryId && event.categoryId.name ? event.categoryId.name : null,
@@ -287,6 +288,7 @@ router.get('/organizer/events/:id', function (req, res, next) {
                 endTime: event.endTime,
                 location: event.location,
                 status: event.status,
+                isHidden: Boolean(event.isHidden),
                 maxVolunteers: event.maxVolunteers,
                 images: event.images,
                 categoryId: event.categoryId,
@@ -441,7 +443,7 @@ router.post('/organizer/events/:id/hide', function (req, res, next) {
 
             event = await models.event.findOneAndUpdate(
                 { _id: mongo.toObjectId(event.id) },
-                { $set: { isHidden: true } },
+                { $set: { isHidden: true, status: 'hidden' } },
                 { new: true }
             ).lean();
             event = mongo.toPlain(event);
@@ -475,7 +477,7 @@ router.post('/organizer/events/:id/unhide', function (req, res, next) {
 
             event = await models.event.findOneAndUpdate(
                 { _id: mongo.toObjectId(event.id) },
-                { $set: { isHidden: false } },
+                { $set: { isHidden: false, status: 'pending' } },
                 { new: true }
             ).lean();
             event = mongo.toPlain(event);
@@ -638,5 +640,173 @@ router.patch('/organizer/registrations/:id/status', function (req, res, next) {
         })
         .catch(next);
 });
+router.get('/organizer/registrations/:id', function (req, res, next) {
+    Promise.resolve()
+        .then(async function () {
+            var authUser = req.authUser;
+            var organization = await getOwnedOrganization(authUser.userId);
+            var id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
 
+            if (!organization) {
+                res.status(404).send({ message: 'Organizer organization profile not found.' });
+                return;
+            }
+
+            if (!id) {
+                res.status(400).send({ message: 'Invalid registration id.' });
+                return;
+            }
+
+            var row = await models.eventRegistration
+                .findOne({ _id: mongo.toObjectId(id) })
+                .populate('eventId')
+                .populate('volunteerId')
+                .lean();
+
+            row = mongo.toPlain(row);
+
+            if (!row) {
+                res.status(404).send({ message: 'Registration not found.' });
+                return;
+            }
+
+            var event = row.eventId;
+            var volunteer = row.volunteerId;
+
+            if (!event || event.organizationId !== organization.id) {
+                res.status(403).send({ message: 'You do not have access to this registration.' });
+                return;
+            }
+
+            res.send({
+                id: row.id,
+                status: row.status,
+                fullName: row.fullName,
+                phone: row.phone,
+                reason: row.reason,
+                registeredAt: row.registeredAt,
+                event: {
+                    id: event.id,
+                    title: event.title,
+                    startTime: event.startTime,
+                    endTime: event.endTime,
+                    location: event.location,
+                    status: event.status,
+                },
+                volunteer: {
+                    id: volunteer ? volunteer.id : null,
+                    userId: volunteer ? volunteer.userId : null,
+                    fullName: volunteer ? volunteer.fullName : row.fullName,
+                    phone: volunteer ? volunteer.phone : row.phone,
+                },
+            });
+        })
+        .catch(next);
+});
+router.get('/organizer/volunteers/:id/history', function (req, res, next) {
+    Promise.resolve()
+        .then(async function () {
+            var authUser = req.authUser;
+            var organization = await getOwnedOrganization(authUser.userId);
+            var volunteerId = typeof req.params.id === 'string' ? req.params.id.trim() : '';
+
+            if (!organization) {
+                res.status(404).send({ message: 'Organizer organization profile not found.' });
+                return;
+            }
+
+            if (!volunteerId) {
+                res.status(400).send({ message: 'Invalid volunteer id.' });
+                return;
+            }
+
+            var ownedEvents = await models.event
+                .find({
+                    organizationId: mongo.toObjectId(organization.id),
+                })
+                .select('_id')
+                .lean();
+
+            ownedEvents = mongo.toPlain(ownedEvents);
+            var ownedEventIds = ownedEvents.map(function (item) { return mongo.toObjectId(item.id); });
+
+            var rows = await models.eventRegistration
+                .find({
+                    volunteerId: mongo.toObjectId(volunteerId),
+                    eventId: { $in: ownedEventIds },
+                })
+                .populate('eventId')
+                .sort({ registeredAt: -1 })
+                .lean();
+
+            rows = mongo.toPlain(rows);
+
+            var items = rows.map(function (row) {
+                var event = row.eventId;
+
+                return {
+                    id: row.id,
+                    status: row.status,
+                    reason: row.reason,
+                    registeredAt: row.registeredAt,
+                    event: {
+                        id: event ? event.id : null,
+                        title: event ? event.title : '',
+                        location: event ? event.location : null,
+                        startTime: event ? event.startTime : null,
+                        endTime: event ? event.endTime : null,
+                        status: event ? event.status : null,
+                    },
+                };
+            });
+
+            res.send({ items: items });
+        })
+        .catch(next);
+});
+router.get('/organizer/registrations/:id/evaluation', function (req, res, next) {
+    Promise.resolve()
+        .then(async function () {
+            var authUser = req.authUser;
+            var organization = await getOwnedOrganization(authUser.userId);
+            var id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
+
+            if (!organization) {
+                res.status(404).send({ message: 'Organizer organization profile not found.' });
+                return;
+            }
+
+            if (!id) {
+                res.status(400).send({ message: 'Invalid registration id.' });
+                return;
+            }
+
+            var registration = await models.eventRegistration
+                .findOne({ _id: mongo.toObjectId(id) })
+                .populate('eventId')
+                .lean();
+
+            registration = mongo.toPlain(registration);
+
+            if (!registration) {
+                res.status(404).send({ message: 'Registration not found.' });
+                return;
+            }
+
+            var event = registration.eventId;
+            if (!event || event.organizationId !== organization.id) {
+                res.status(403).send({ message: 'You do not have access to this registration.' });
+                return;
+            }
+
+            var evaluation = await models.volunteerEvaluation
+                .findOne({ registrationId: mongo.toObjectId(id) })
+                .lean();
+
+            evaluation = mongo.toPlain(evaluation);
+
+            res.send({ item: evaluation || null });
+        })
+        .catch(next);
+});
 module.exports = router;
