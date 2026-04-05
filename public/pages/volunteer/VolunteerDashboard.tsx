@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
-import { volunteerService } from '../../services/api';
+import { volunteerService } from '../../lib/api';
 
 const VolunteerDashboard: React.FC = () => {
     const { user } = useAuth();
@@ -53,8 +53,18 @@ const VolunteerDashboard: React.FC = () => {
     const upcomingEvents = dashboardData?.upcomingEvents || [];
 
     return (
-        <div className="volunteer-dashboard py-4 bg-light min-vh-100">
+        <div className="volunteer-page volunteer-dashboard py-5">
             <div className="container">
+                <div className="section-header d-flex flex-column flex-md-row align-items-start justify-content-between gap-3 mb-4">
+                    <div>
+                        <span className="badge bg-success-soft text-success rounded-pill py-2 px-3 mb-3">Trang tình nguyện viên</span>
+                        <h1 className="section-title mb-2">Xin chào, {user?.fullName?.split(' ')[0] || 'Tình nguyện viên'}!</h1>
+                        <p className="section-subtitle">Xem nhanh kết quả hoạt động, hồ sơ và sự kiện phù hợp với bạn.</p>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                        <Link to="/events" className="btn btn-success btn-pill px-4 py-3 shadow-sm">Khám phá sự kiện mới</Link>
+                    </div>
+                </div>
                 <div className="row g-4">
                     {/* Left Sidebar */}
                     <div className="col-lg-3">

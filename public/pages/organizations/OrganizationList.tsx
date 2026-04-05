@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { Building2, MapPin, Search, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getApiErrorMessage, organizationService, type OrganizationItem } from '../../services/api';
+import { getApiErrorMessage, organizationService, type OrganizationItem } from '../../lib/api';
 
 const cities = ['Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ', 'Hải Phòng'];
 

@@ -5,7 +5,7 @@ import {
   getApiErrorMessage,
   type AuthUser,
   type UserRole,
-} from '../services/api';
+} from '../lib/api';
 import { AuthContext, type AuthContextValue } from './auth-context';
 
 export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {

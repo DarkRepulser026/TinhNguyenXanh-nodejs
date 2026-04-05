@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getApiErrorMessage, paymentService } from '../../services/api';
+import { getApiErrorMessage, paymentService } from '../../lib/api';
 
 const DonatePage: React.FC = () => {
   const navigate = useNavigate();

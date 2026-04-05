@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/useAuth';
-import { getApiErrorMessage } from '../../services/api';
+import { getApiErrorMessage } from '../../lib/api';
 
 const AccountSettings: React.FC = () => {
   const { user, updateProfile } = useAuth();

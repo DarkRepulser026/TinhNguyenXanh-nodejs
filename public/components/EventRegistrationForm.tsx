@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { eventService, getApiErrorMessage } from '../services/api';
+import { eventService, getApiErrorMessage } from '../lib/api';
 import { useAuth } from '../contexts/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, User, Phone, FileText } from 'lucide-react';

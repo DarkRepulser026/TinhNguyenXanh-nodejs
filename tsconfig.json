@@ -12,7 +12,11 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": false,
-    "types": ["vite/client"]
+    "types": ["vite/client", "react", "react-dom"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["public/*"]
+    }
   },
   "include": ["public/**/*.ts", "public/**/*.tsx", "vite.config.mjs"]
 }

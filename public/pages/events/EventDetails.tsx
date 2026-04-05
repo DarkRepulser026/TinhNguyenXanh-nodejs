@@ -11,7 +11,7 @@ import {
   Building2,
   CheckCircle2,
 } from 'lucide-react';
-import { eventService, getApiErrorMessage, type EventItem, volunteerService } from '../../services/api';
+import { eventService, getApiErrorMessage, type EventItem, volunteerService } from '../../lib/api';
 import { useAuth } from '../../contexts/useAuth';
 import EventComments from '../../components/EventComments';
 import EventReview from '../../components/EventReview';
@@ -25,6 +25,8 @@ const EventDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [registrationStatus, setRegistrationStatus] = useState<string | null>(null);
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
 
   useEffect(() => {
@@ -39,10 +41,32 @@ const EventDetails: React.FC = () => {
         setEvent(eventResponse.data);
 
         if (user?.id) {
-          const favoritesResponse = await volunteerService.getFavorites(user.id);
-          setIsFavorited(favoritesResponse.data.some((item) => item.id === Number(id)));
+          try {
+            const favoritesResponse = await volunteerService.getFavorites(user.id);
+            setIsFavorited(favoritesResponse.data.some((item) => item.id === Number(id)));
+          } catch {
+            setIsFavorited(false);
+          }
+
+          try {
+            const registrationsResponse = await volunteerService.getRegistrations(user.id);
+            const registration = registrationsResponse.data.find((item) =>
+              item.eventId === Number(id) || String(item.eventId) === id
+            );
+            if (registration) {
+              setIsRegistered(true);
+              setRegistrationStatus(registration.status);
+            } else {
+              setIsRegistered(false);
+              setRegistrationStatus(null);
+            }
+          } catch {
+            setIsRegistered(false);
+            setRegistrationStatus(null);
+          }
         } else {
           setIsFavorited(false);
+          setIsRegistered(false);
         }
       } catch (e) {
         setMessage(getApiErrorMessage(e, 'Khong tai duoc du lieu su kien.'));
@@ -79,6 +103,15 @@ const EventDetails: React.FC = () => {
 
   const handleRegister = async () => {
     if (!event) {
+      return;
+    }
+
+    if (isRegistered) {
+      if (registrationStatus === 'Pending') {
+        setMessage('Bạn đã đăng ký sự kiện này. Đang chờ duyệt.');
+      } else {
+        setMessage('Bạn đã đăng ký sự kiện này.');
+      }
       return;
     }
 
@@ -137,6 +170,9 @@ const EventDetails: React.FC = () => {
                   src={event.images || 'https://images.unsplash.com/photo-1618477471363-92a18d350e94?auto=format&fit=crop&q=80&w=1000'}
                   className="object-fit-cover" 
                   alt={event.title} 
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=1000';
+                  }}
                 />
               </div>
               <div className="card-body p-4 p-md-5">
@@ -234,7 +270,13 @@ const EventDetails: React.FC = () => {
                 <EventRegistrationForm
                   eventId={event.id}
                   eventTitle={event.title}
-                  onSuccess={() => setShowRegistrationForm(false)}
+                  onSuccess={() => {
+                    setShowRegistrationForm(false);
+                    setIsRegistered(true);
+                    setRegistrationStatus('Pending');
+                    setEvent((prev) => prev ? { ...prev, registeredCount: prev.registeredCount + 1 } : prev);
+                    setMessage('Đăng ký thành công! Đơn của bạn đang chờ duyệt.');
+                  }}
                 />
               </div>
             ) : (
@@ -257,8 +299,18 @@ const EventDetails: React.FC = () => {
                </div>
 
                <div className="d-grid gap-2">
-                 <button onClick={handleRegister} className="btn btn-success btn-lg rounded-pill fw-bold py-3 shadow-sm border-0 transition-hover">
-                   Đăng ký ngay
+                 <button
+                   onClick={handleRegister}
+                   disabled={isRegistered || event.registeredCount >= event.maxVolunteers}
+                   className="btn btn-success btn-lg rounded-pill fw-bold py-3 shadow-sm border-0 transition-hover"
+                 >
+                   {registrationStatus === 'Pending'
+                     ? 'Đang chờ duyệt'
+                     : registrationStatus === 'Confirmed'
+                     ? 'Đã đăng ký'
+                     : event.registeredCount >= event.maxVolunteers
+                     ? 'Đã đủ chỗ'
+                     : 'Đăng ký ngay'}
                  </button>
                  <button onClick={handleFavorite} className="btn btn-outline-light text-dark btn-lg rounded-pill fw-bold py-3 border-light-subtle transition-hover d-flex align-items-center justify-content-center gap-2">
                    <Heart size={20} className={isFavorited ? 'text-danger' : ''} fill={isFavorited ? 'currentColor' : 'none'} /> {isFavorited ? 'Bỏ yêu thích' : 'Lưu vào yêu thích'}
@@ -267,6 +319,15 @@ const EventDetails: React.FC = () => {
                    <Share2 size={20} /> Chia sẻ
                  </button>
                </div>
+               {isRegistered && (
+                 <div className="mt-3 small text-success fw-medium">
+                   {registrationStatus === 'Pending'
+                     ? 'Bạn đã đăng ký sự kiện này. Đang chờ duyệt.'
+                     : registrationStatus === 'Confirmed'
+                     ? 'Bạn đã đăng ký sự kiện này. Đăng ký thành công.'
+                     : 'Bạn đã đăng ký sự kiện này.'}
+                 </div>
+               )}
 
                <div className="mt-5 p-3 rounded-4 bg-light border border-white">
                   <h6 className="fw-bold mb-3">Lợi ích khi tham gia</h6>

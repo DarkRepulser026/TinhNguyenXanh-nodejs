@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { User, Mail, Phone, Edit2, Save, X, Camera, Award, Target, Heart, CheckCircle2 } from 'lucide-react';
 import Swal from 'sweetalert2';
-import { getApiErrorMessage, type VolunteerProfile as VolunteerProfileType, volunteerService } from '../../services/api';
+import { getApiErrorMessage, type VolunteerProfile as VolunteerProfileType, volunteerService } from '../../lib/api';
 import { useAuth } from '../../contexts/useAuth';
 
 const VolunteerProfile: React.FC = () => {
