@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
-import { getApiErrorMessage } from '../../services/api';
+import { getApiErrorMessage } from '../../lib/api';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();

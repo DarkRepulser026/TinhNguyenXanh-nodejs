@@ -15,7 +15,7 @@ import {
   Star,
   Users,
 } from 'lucide-react';
-import { getApiErrorMessage, organizationService, type OrganizationItem } from '../../services/api';
+import { getApiErrorMessage, organizationService, type OrganizationItem } from '../../lib/api';
 
 const emptyOrg: OrganizationItem = {
   id: '',

@@ -10,7 +10,7 @@ import {
   Users,
 } from 'lucide-react';
 import OrganizerLayout from './OrganizerLayout';
-import { organizerService, getApiErrorMessage } from '../../services/api';
+import { organizerService, getApiErrorMessage } from '../../lib/api';
 
 const sectionTitleStyle: CSSProperties = {
   color: '#0f172a',

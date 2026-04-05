@@ -1,4 +1,4 @@
-import { organizationService, getApiErrorMessage } from '../../services/api';
+import { organizationService, getApiErrorMessage } from '../../lib/api';
 import { useMemo, useState, type ChangeEvent, type FormEvent, type CSSProperties } from 'react';
 import Swal from 'sweetalert2';
 import {

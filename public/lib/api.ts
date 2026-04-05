@@ -148,11 +148,12 @@ export const organizerService = {
   updateOrganization: (payload: Record<string, unknown>) => axios.put('/organizer/profile', payload),
   claimOrganization: (claimId: string) => axios.post('/organizer/claim', { claimId }),
   getEvents: (params?: Record<string, unknown>) => axios.get('/organizer/events', { params }),
-  getEventById: (id: string) => axios.get(`/organizer/events/${id}`),
+  getEventById: (id: string | number) => axios.get(`/organizer/registrations/${id}`),
   createEvent: (payload: Record<string, unknown>) => axios.post('/organizer/events', payload),
-  updateEvent: (id: string, payload: Record<string, unknown>) => axios.put(`/organizer/events/${id}`, payload),
-  hideEvent: (id: string) => axios.patch(`/organizer/events/${id}/hide`),
-  unhideEvent: (id: string) => axios.patch(`/organizer/events/${id}/unhide`),
+  updateEvent: (id: string | number, payload: Record<string, unknown>) =>
+    axios.put(`/organizer/events/${id}`, payload),
+  hideEvent: (id: string | number) => axios.patch(`/organizer/events/${id}/hide`),
+  unhideEvent: (id: string | number) => axios.patch(`/organizer/events/${id}/unhide`),
   getVolunteers: (params?: Record<string, unknown>) => axios.get('/organizer/volunteers', { params }),
   getRegistrationById: (id: string | number) => axios.get(`/organizer/registrations/${id}`),
   updateRegistrationStatus: (id: string | number, action: string | number) =>

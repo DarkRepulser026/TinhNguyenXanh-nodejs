@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { getApiErrorMessage, type FavoriteItem, volunteerService } from '../../services/api';
+import { getApiErrorMessage, type FavoriteItem, volunteerService } from '../../lib/api';
 import { useAuth } from '../../contexts/useAuth';
 
 const FavoriteEvents: React.FC = () => {

@@ -6,7 +6,7 @@ import {
   getApiErrorMessage,
   organizerService,
   type OrganizerVolunteerHistoryItem,
-} from '../../services/api';
+} from '../../lib/api';
 
 const sectionTitleStyle: CSSProperties = {
   color: '#0f172a',

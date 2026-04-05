@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { eventService, type EventItem } from '../../services/api';
+import { eventService, type EventItem } from '../../lib/api';
 
 const EventList: React.FC = () => {
    const [searchParams] = useSearchParams();
