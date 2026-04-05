@@ -1,132 +1,135 @@
-import React, { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../../contexts/useAuth'
-import './Auth.css'
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/useAuth';
+import { getApiErrorMessage } from '../../services/api';
 
-export default function Register() {
-  const [formData, setFormData] = useState({
-    email: '',
-    fullName: '',
-    phone: '',
-    password: '',
-    confirmPassword: ''
-  })
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
-  const { register } = useAuth()
+const Register: React.FC = () => {
+  const navigate = useNavigate();
+  const { register } = useAuth();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError(null);
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Mật khẩu không khớp')
-      return
+    if (password !== confirmPassword) {
+      setError('Mật khẩu xác nhận không khớp.');
+      return;
     }
 
-    if (formData.password.length < 8) {
-      setError('Mật khẩu phải có ít nhất 8 ký tự')
-      return
-    }
-
-    setLoading(true)
     try {
-      await register(
-        formData.email,
-        formData.fullName,
-        formData.password,
-        formData.phone
-      )
-      navigate('/')
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Đăng ký thất bại')
+      setIsSubmitting(true);
+      await register({
+        fullName,
+        email,
+        password,
+        phone: phone || undefined,
+        role: 'Volunteer',
+      });
+      navigate('/', { replace: true });
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Đăng ký thất bại.'));
     } finally {
-      setLoading(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
-    <div className="auth-container">
-      <div className="auth-form">
-        <h1>Đăng Ký Tài Khoản</h1>
-        
-        {error && <div className="error">{error}</div>}
+    <section className="auth-page">
+      <div className="auth-card">
+        <div className="auth-hero">
+          <div className="auth-hero-content">
+            <div className="auth-hero-badge">Bắt đầu hành trình</div>
+            <h2 className="auth-hero-title">Tham gia cộng đồng xanh</h2>
+            <p className="auth-hero-text">
+              Tạo tài khoản tình nguyện viên để đăng ký sự kiện, kết nối với tổ chức và góp phần tạo lỗi sống bền vững.
+            </p>
+          </div>
+        </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
+        <div className="auth-form-panel">
+          <div>
+            <h1 className="h3 fw-bold mb-2">Đăng ký tài khoản</h1>
+            <p className="text-muted mb-4">Tạo tài khoản tình nguyện viên để tham gia các chiến dịch cộng đồng.</p>
           </div>
 
-          <div className="form-group">
-            <label>Họ Tên</label>
-            <input
-              type="text"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
-          </div>
+          {error && <div className="alert alert-danger py-2">{error}</div>}
 
-          <div className="form-group">
-            <label>Số Điện Thoại</label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              disabled={loading}
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="d-grid gap-3">
+            <div>
+              <label className="form-label">Họ và tên</label>
+              <input
+                className="form-control"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+              />
+            </div>
 
-          <div className="form-group">
-            <label>Mật Khẩu</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
-          </div>
+            <div>
+              <label className="form-label">Email</label>
+              <input
+                type="email"
+                className="form-control"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
 
-          <div className="form-group">
-            <label>Xác Nhận Mật Khẩu</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
-          </div>
+            <div>
+              <label className="form-label">Số điện thoại</label>
+              <input
+                className="form-control"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </div>
 
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Đang Đăng Ký...' : 'Đăng Ký'}
-          </button>
-        </form>
+            <div>
+              <label className="form-label">Mật khẩu</label>
+              <input
+                type="password"
+                className="form-control"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={8}
+                required
+              />
+            </div>
 
-        <p className="link">
-          Đã có tài khoản? <Link to="/login">Đăng nhập ngay</Link>
-        </p>
+            <div>
+              <label className="form-label">Xác nhận mật khẩu</label>
+              <input
+                type="password"
+                className="form-control"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                minLength={8}
+                required
+              />
+            </div>
+
+            <button className="btn btn-success btn-auth" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Đang xử lý...' : 'Đăng ký'}
+            </button>
+          </form>
+
+          <p className="auth-actions">
+            Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
+          </p>
+        </div>
       </div>
-    </div>
-  )
-}
+    </section>
+  );
+};
+
+export default Register;
+
