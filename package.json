@@ -5,9 +5,9 @@
   "scripts": {
     "start": "nodemon ./bin/www",
     "dev:backend": "nodemon ./bin/www",
-    "dev:frontend": "vite",
-    "build:frontend": "vite build",
-    "preview:frontend": "vite preview",
+    "dev:frontend": "vite --config vite.config.mjs",
+    "build:frontend": "vite build --config vite.config.mjs",
+    "preview": "vite preview --config vite.config.mjs",
     "smoke:test": "node scripts/smoke-test.js",
     "db:generate": "node scripts/db-generate.js",
     "db:push": "node scripts/db-generate.js",

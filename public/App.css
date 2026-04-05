@@ -1,262 +1,122 @@
-#root {
-  width: 100%;
+* {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f5f5f5;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.main-content {
+  flex: 1;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+input, textarea, select {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #28a745;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.grid {
+  display: grid;
+  gap: 20px;
+}
+
+.grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 }
 
 .card {
-  padding: 2em;
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
 }
 
-.read-the-docs {
-  color: #888;
+.card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-.auth-page {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 2rem;
-  background: linear-gradient(180deg, #edf7f2 0%, #f8fafc 100%);
+.btn-primary {
+  background-color: #28a745;
+  color: white;
 }
 
-.auth-card {
-  width: min(100%, 1120px);
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  min-height: 640px;
-  background: #ffffff;
-  border-radius: 2rem;
-  overflow: hidden;
-  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.12);
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
 }
 
-.auth-hero {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  padding: 3rem;
-  background-image: linear-gradient(180deg, rgba(14, 107, 75, 0.92), rgba(37, 161, 133, 0.85)), url('/images/volunteer-login.jpg');
-  background-size: cover;
-  background-position: center;
-  color: #ffffff;
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
 }
 
-.auth-hero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.24), rgba(15, 23, 42, 0.48));
+.loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
 }
 
-.auth-hero-content {
-  position: relative;
-  z-index: 1;
-  max-width: 32rem;
+.error {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
 }
 
-.auth-hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.8rem 1.2rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  color: #f8fafc;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-}
-
-.auth-hero-title {
-  font-size: clamp(2rem, 2.4vw, 3rem);
-  line-height: 1.05;
-  margin-bottom: 1rem;
-}
-
-.auth-hero-text {
-  color: rgba(255, 255, 255, 0.88);
-  line-height: 1.8;
-  max-width: 28rem;
-}
-
-.auth-form-panel {
-  padding: 3rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 1.5rem;
-}
-
-.auth-form-panel h1 + p {
-  margin-bottom: 1.75rem;
-}
-
-.auth-form-panel .form-control {
-  min-height: 3.3rem;
-  border-radius: 0.9rem;
-}
-
-.btn-auth {
-  border-radius: 0.9rem;
-  padding: 1rem 1.2rem;
-  font-weight: 600;
-}
-
-.auth-actions {
-  color: #6b7280;
-  margin-top: 0.5rem;
-}
-
-.auth-actions a {
-  color: #0f766e;
-  font-weight: 600;
-}
-
-.volunteer-page {
-  background: linear-gradient(180deg, #f8fbf8 0%, #effcf5 100%);
-}
-
-.volunteer-page .section-header {
-  margin-bottom: 2rem;
-}
-
-.volunteer-page .section-title {
-  font-size: clamp(2rem, 2.4vw, 2.75rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-}
-
-.volunteer-page .section-subtitle {
-  color: #475569;
-  max-width: 640px;
-}
-
-.volunteer-page .page-hero {
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.06);
-  border-radius: 1.85rem;
-  padding: 2rem 2.25rem;
-}
-
-.volunteer-page .hero-number {
-  font-size: 2.75rem;
-  font-weight: 800;
-  color: #15803d;
-}
-
-.volunteer-page .hero-card {
-  border-radius: 1.5rem;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.05);
-}
-
-.volunteer-page .hero-card .card-body {
-  min-height: 155px;
-}
-
-.volunteer-page .favorite-card {
-  transition: transform 0.24s ease, box-shadow 0.24s ease;
-}
-
-.volunteer-page .favorite-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
-}
-
-.volunteer-page .object-fit-cover {
-  object-fit: cover;
-}
-
-.volunteer-page .transition-scale {
-  transition: transform 0.28s ease;
-}
-
-.volunteer-page .transition-scale:hover {
-  transform: scale(1.03);
-}
-
-.volunteer-page .line-clamp-2 {
-  display: -webkit-box;
-  line-clamp: 2;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.volunteer-page .grow {
-  flex-grow: 1;
-}
-
-.volunteer-page .badge-soft {
-  background: rgba(22, 163, 74, 0.1);
-  color: #14532d;
-}
-
-.volunteer-page .stats-card {
-  border-radius: 1.25rem;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-}
-
-.volunteer-page .table thead th {
-  border-bottom: 2px solid rgba(15, 23, 42, 0.08);
-}
-
-.volunteer-page .table tbody tr:hover {
-  background: rgba(22, 163, 74, 0.04);
-}
-
-.volunteer-page .record-card {
-  border-radius: 1.4rem;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-}
-
-.volunteer-page .btn-pill {
-  border-radius: 999px;
-}
-
-@media (max-width: 992px) {
-  .auth-card {
-    grid-template-columns: 1fr;
-    min-height: auto;
-  }
-
-  .auth-hero {
-    min-height: 320px;
-    align-items: flex-end;
-    padding: 2rem;
-  }
-
-  .auth-form-panel {
-    padding: 2rem;
-  }
+.success {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
 }

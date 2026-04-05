@@ -1,37 +1,17 @@
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/useAuth';
-import type { UserRole } from '../../services/api';
+import { ReactNode } from 'react'
+import { Navigate } from 'react-router-dom'
+import { useAuth } from '../../contexts/useAuth'
 
-type RequireAuthProps = {
-  children: React.ReactElement;
-  roles?: UserRole[];
-};
+export function RequireAuth({ children }: { children: ReactNode }) {
+  const { isAuthenticated, loading } = useAuth()
 
-const RequireAuth: React.FC<RequireAuthProps> = ({ children, roles }) => {
-  const { isAuthenticated, isLoading, user } = useAuth();
-  const location = useLocation();
-
-  if (isLoading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center py-5">
-        <div className="spinner-border text-success" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    );
+  if (loading) {
+    return <div className="loading">Đang tải...</div>
   }
 
   if (!isAuthenticated) {
-    const redirectTo = `${location.pathname}${location.search}`;
-    return <Navigate to={`/login?redirect=${encodeURIComponent(redirectTo)}`} replace />;
+    return <Navigate to="/login" />
   }
 
-  if (roles && user && !roles.includes(user.role)) {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
-};
-
-export default RequireAuth;
+  return <>{children}</>
+}

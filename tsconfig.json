@@ -5,14 +5,16 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
-    "moduleResolution": "Bundler",
-    "allowImportingTsExtensions": true,
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": false,
-    "types": ["vite/client"]
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "allowJs": true,
+    "types": ["vite/client", "react", "react-dom"],
+    "typeRoots": ["./node_modules/@types"]
   },
-  "include": ["public/**/*.ts", "public/**/*.tsx", "vite.config.mjs"]
+  "include": ["public"]
 }
