@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { adminService, getApiErrorMessage, type AdminUserItem, type UserRole } from '../../services/api';
+import { adminService, getApiErrorMessage, type AdminUserItem, type UserRole } from '../../lib/api';
 
 const AdminUsers = () => {
   const [search, setSearch] = useState('');

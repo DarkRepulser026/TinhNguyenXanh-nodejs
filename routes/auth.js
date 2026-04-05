@@ -1,231 +1,82 @@
-var express = require('express');
+﻿var express = require("express");
 var router = express.Router();
-var authHandler = require('../utils/authHandler');
-var models = require('../utils/models');
-var mongo = require('../utils/mongo');
+const authHandler = require("../utils/authHandler");
+const authController = require("../controllers/authController");
 
-function toRole(value) {
-    if (value === 'Admin' || value === 'Organizer' || value === 'Volunteer') {
-        return value;
-    }
-
-    return 'Volunteer';
-}
-
-router.post('/auth/register', function (req, res, next) {
-    Promise.resolve()
-        .then(async function () {
-        var email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
-        var fullName = typeof req.body.fullName === 'string' ? req.body.fullName.trim() : '';
-        var phone = typeof req.body.phone === 'string' ? req.body.phone.trim() : null;
-        var password = typeof req.body.password === 'string' ? req.body.password : '';
-        var role = toRole(req.body.role);
-
-        if (!email || !fullName || !password) {
-            res.status(400).send({ message: 'email, fullName, and password are required.' });
-            return;
-        }
-
-        if (password.length < 8) {
-            res.status(400).send({ message: 'Password must be at least 8 characters.' });
-            return;
-        }
-
-        var existing = await models.appUser.findOne({ email: email }).lean();
-
-        if (existing) {
-            res.status(409).send({ message: 'Email is already registered.' });
-            return;
-        }
-
-        var user = await models.appUser.create({
-            email: email,
-            fullName: fullName,
-            phone: phone,
-            role: role,
-            passwordHash: password,
-            isActive: true,
-        });
-        user = mongo.toPlain(user.toObject());
-
-        if (role === 'Volunteer') {
-            var volunteer = await models.volunteer.findOneAndUpdate(
-                { userId: mongo.toObjectId(user.id) },
-                {
-                    $set: {
-                        fullName: fullName,
-                        phone: phone,
-                    },
-                },
-                { new: true }
-            ).lean();
-
-            if (!volunteer) {
-                volunteer = await models.volunteer.create({
-                    userId: mongo.toObjectId(user.id),
-                    fullName: fullName,
-                    phone: phone,
-                });
-            }
-        }
-
-        var token = authHandler.createAuthToken({
-            userId: user.id,
-            email: user.email,
-            role: user.role,
-        });
-
-        res.cookie(authHandler.AUTH_COOKIE_NAME, token, {
-            maxAge: 7 * 24 * 3600 * 1000,
-            httpOnly: true,
-            secure: false,
-            sameSite: 'lax',
-        });
-
-        res.status(201).send({
-            user: {
-                id: user.id,
-                email: user.email,
-                fullName: user.fullName,
-                phone: user.phone,
-                role: user.role,
-            },
-        });
-        })
-        .catch(next);
-});
-
-router.post('/auth/login', function (req, res, next) {
-    Promise.resolve()
-        .then(async function () {
-    var email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
-    var password = typeof req.body.password === 'string' ? req.body.password : '';
-
-    if (!email || !password) {
-        res.status(400).send({ message: 'email and password are required.' });
-        return;
-    }
-
-    var user = await models.appUser.findOne({ email: email }).lean();
-    user = mongo.toPlain(user);
-
-    if (!user || !user.isActive || user.passwordHash !== password) {
-        res.status(401).send({ message: 'Invalid credentials.' });
-        return;
-    }
-
-    var token = authHandler.createAuthToken({
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-    });
-
-    res.cookie(authHandler.AUTH_COOKIE_NAME, token, {
-        maxAge: 7 * 24 * 3600 * 1000,
-        httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
-    });
-
-    res.send({
-        user: {
-            id: user.id,
-            email: user.email,
-            fullName: user.fullName,
-            phone: user.phone,
-            role: user.role,
-        },
-    });
-        })
-        .catch(next);
-});
-
-router.post('/auth/logout', function (req, res) {
-    res.clearCookie(authHandler.AUTH_COOKIE_NAME);
-    res.send({ message: 'Logged out.' });
-});
-
-router.get('/auth/me', authHandler.requireAuth, function (req, res, next) {
-    Promise.resolve()
-        .then(async function () {
-            var authUser = req.authUser;
-            var user = await models.appUser.findOne({ _id: mongo.toObjectId(authUser.userId) }).lean();
-            user = mongo.toPlain(user);
-
-            if (!user || !user.isActive) {
-                res.status(401).send({ message: 'Session is no longer valid.' });
-                return;
-            }
-
-            res.send({
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    fullName: user.fullName,
-                    phone: user.phone,
-                    role: user.role,
-                },
-            });
-        })
-        .catch(next);
-});
-
-router.patch('/auth/me', authHandler.requireAuth, function (req, res, next) {
-    Promise.resolve()
-        .then(async function () {
-    var fullName = typeof req.body.fullName === 'string' ? req.body.fullName.trim() : '';
-    var phoneRaw = typeof req.body.phone === 'string' ? req.body.phone.trim() : undefined;
-    var phone = phoneRaw === '' ? null : phoneRaw;
-    var authUser = req.authUser;
-
-    if (!fullName) {
-        res.status(400).send({ message: 'fullName is required.' });
-        return;
-    }
-
-    var user = await models.appUser.findOne({ _id: mongo.toObjectId(authUser.userId) }).lean();
-    user = mongo.toPlain(user);
-
-    if (!user || !user.isActive) {
-        res.status(404).send({ message: 'User not found.' });
-        return;
-    }
-
-    user = await models.appUser.findOneAndUpdate(
-        { _id: mongo.toObjectId(user.id) },
-        {
-            $set: {
-                fullName: fullName,
-                phone: phone,
-            },
-        },
-        { new: true }
-    ).lean();
-    user = mongo.toPlain(user);
-
-    await models.volunteer.updateMany(
-        {
-            userId: mongo.toObjectId(user.id),
-        },
-        {
-            $set: {
-                fullName: fullName,
-                phone: phone,
-            },
-        }
+// Register
+router.post("/register", async function (req, res, next) {
+  try {
+    const result = await authController.Register(
+      req.body.email,
+      req.body.fullName,
+      req.body.phone,
+      req.body.password,
+      req.body.role
     );
 
-    res.send({
-        user: {
-            id: user.id,
-            email: user.email,
-            fullName: user.fullName,
-            phone: user.phone,
-            role: user.role,
-        },
+    res.cookie(authHandler.AUTH_COOKIE_NAME, result.token, {
+      maxAge: 7 * 24 * 3600 * 1000,
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
     });
-        })
-        .catch(next);
+
+    res.status(201).send({ user: result.user });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Login
+router.post("/login", async function (req, res, next) {
+  try {
+    const result = await authController.Login(req.body.email, req.body.password);
+
+    res.cookie(authHandler.AUTH_COOKIE_NAME, result.token, {
+      maxAge: 7 * 24 * 3600 * 1000,
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+
+    res.send({ user: result.user });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Logout
+router.post("/logout", function (req, res, next) {
+  try {
+    res.clearCookie(authHandler.AUTH_COOKIE_NAME);
+    res.send({ message: "Logged out." });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get Profile
+router.get("/profile", authHandler.CheckLogin, async function (req, res, next) {
+  try {
+    const user = await authController.GetProfile(req.authUser.userId);
+    res.send({ user });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update Profile
+router.put("/profile", authHandler.CheckLogin, async function (req, res, next) {
+  try {
+    const user = await authController.UpdateProfile(
+      req.authUser.userId,
+      req.body.fullName,
+      req.body.phone
+    );
+    res.send({ user });
+  } catch (error) {
+    next(error);
+  }
 });
 
 module.exports = router;

@@ -16,7 +16,7 @@ import {
   organizerService,
   type OrganizerRegistrationDetail,
   type VolunteerEvaluationItem,
-} from '../../services/api';
+} from '../../lib/api';
 
 const emptyDetail: OrganizerRegistrationDetail = {
   id: '',

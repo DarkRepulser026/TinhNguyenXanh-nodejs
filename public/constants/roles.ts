@@ -1,4 +1,4 @@
-import type { UserRole } from '../services/api';
+import type { UserRole } from '../lib/api';
 
 export const VOLUNTEER_ROLES: UserRole[] = ['Volunteer', 'Admin'];
 export const ORGANIZER_ROLES: UserRole[] = ['Organizer', 'Admin'];

@@ -11,7 +11,7 @@ import {
   XCircle,
 } from 'lucide-react';
 
-import { getApiErrorMessage, organizerService, type OrganizerRegistrationItem } from '../../services/api';
+import { getApiErrorMessage, organizerService, type OrganizerRegistrationItem } from '../../lib/api';
 
 const sectionTitleStyle: CSSProperties = {
   color: '#0f172a',

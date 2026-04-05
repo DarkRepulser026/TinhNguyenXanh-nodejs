@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { organizationService, eventService, type EventItem, type OrganizationItem } from '../../services/api';
+import { organizationService, eventService, type EventItem, type OrganizationItem } from '../../lib/api';
 
 type Scope = 'events' | 'organizations' | 'all';
 

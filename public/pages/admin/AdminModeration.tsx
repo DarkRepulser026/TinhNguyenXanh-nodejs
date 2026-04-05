@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { adminService, getApiErrorMessage, type AdminModerationReport } from '../../services/api';
+import { adminService, getApiErrorMessage, type AdminModerationReport } from '../../lib/api';
 
 const defaultReport: AdminModerationReport = {
   queue: [],

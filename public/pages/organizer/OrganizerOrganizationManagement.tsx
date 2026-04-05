@@ -10,7 +10,7 @@ import {
   Save,
   ShieldCheck,
 } from 'lucide-react';
-import { getApiErrorMessage, organizerService, type OrganizationItem } from '../../services/api';
+import { getApiErrorMessage, organizerService, type OrganizationItem } from '../../lib/api';
 
 const emptyOrganization: OrganizationItem = {
   id: '',

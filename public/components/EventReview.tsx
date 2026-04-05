@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { eventService, type RatingItem, getApiErrorMessage } from '../services/api';
+import { eventService, type RatingItem, getApiErrorMessage } from '../lib/api';
 import { useAuth } from '../contexts/useAuth';
 import { Star, MessageSquare } from 'lucide-react';
 import Swal from 'sweetalert2';

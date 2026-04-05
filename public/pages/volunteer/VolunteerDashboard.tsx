@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
-import { volunteerService } from '../../services/api';
+import { volunteerService } from '../../lib/api';
 
 const VolunteerDashboard: React.FC = () => {
     const { user } = useAuth();

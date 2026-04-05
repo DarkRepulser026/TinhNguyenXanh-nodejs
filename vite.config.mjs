@@ -1,14 +1,18 @@
-import { defineConfig } from 'vite';
-import { fileURLToPath, URL } from 'node:url';
-import react from '@vitejs/plugin-react';
+import path from 'path'
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  root: 'public',
   plugins: [react()],
+  root: 'public',
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./public', import.meta.url)),
+      '@': path.resolve(__dirname, 'public'),
     },
+  },
+  build: {
+    outDir: '../dist',
+    emptyOutDir: true,
   },
   server: {
     port: 5173,
@@ -16,14 +20,7 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
-      },
-    },
-  },
-  preview: {
-    port: 4173,
-  },
-  build: {
-    outDir: '../dist',
-    emptyOutDir: false,
-  },
-});
+      }
+    }
+  }
+})

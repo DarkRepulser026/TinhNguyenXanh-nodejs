@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { getApiErrorMessage, type RegistrationItem, volunteerService } from '../../services/api';
+import { getApiErrorMessage, type RegistrationItem, volunteerService } from '../../lib/api';
 import { useAuth } from '../../contexts/useAuth';
 
 const MyRegistrations: React.FC = () => {

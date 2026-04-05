@@ -11,7 +11,7 @@ import {
   Building2,
   CheckCircle2,
 } from 'lucide-react';
-import { eventService, getApiErrorMessage, type EventItem, volunteerService } from '../../services/api';
+import { eventService, getApiErrorMessage, type EventItem, volunteerService } from '../../lib/api';
 import { useAuth } from '../../contexts/useAuth';
 import EventComments from '../../components/EventComments';
 import EventReview from '../../components/EventReview';

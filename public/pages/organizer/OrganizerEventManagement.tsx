@@ -11,7 +11,7 @@ import {
   XCircle,
 } from 'lucide-react';
 
-import { getApiErrorMessage, organizerService, type OrganizerEventItem } from '../../services/api';
+import { getApiErrorMessage, organizerService, type OrganizerEventItem } from '../../lib/api';
 
 type EventFormState = {
   title: string;
