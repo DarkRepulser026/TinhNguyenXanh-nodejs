@@ -31,46 +31,60 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="container py-5" style={{ maxWidth: '520px' }}>
-      <div className="card border-0 shadow-sm rounded-4 p-4 p-md-5">
-        <h1 className="h3 fw-bold mb-2">Đăng nhập</h1>
-        <p className="text-muted mb-4">Truy cập tài khoản để quản lý sự kiện và hồ sơ tình nguyện.</p>
+    <section className="auth-page">
+      <div className="auth-card">
+        <div className="auth-hero">
+          <div className="auth-hero-content">
+            <div className="auth-hero-badge">Kết nối tình nguyện viên</div>
+            <h2 className="auth-hero-title">Chào mừng trở lại!</h2>
+            <p className="auth-hero-text">
+              Đăng nhập để tiếp tục tham gia các chiến dịch thực tế, kết nối với tổ chức và đóng góp cho cộng đồng.
+            </p>
+          </div>
+        </div>
 
-        {error && <div className="alert alert-danger py-2">{error}</div>}
-
-        <form onSubmit={handleSubmit} className="d-grid gap-3">
+        <div className="auth-form-panel">
           <div>
-            <label className="form-label">Email</label>
-            <input
-              type="email"
-              className="form-control"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <h1 className="h3 fw-bold mb-2">Đăng nhập</h1>
+            <p className="text-muted mb-4">Truy cập tài khoản để quản lý sự kiện và hồ sơ tình nguyện.</p>
           </div>
 
-          <div>
-            <label className="form-label">Mật khẩu</label>
-            <input
-              type="password"
-              className="form-control"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
+          {error && <div className="alert alert-danger py-2">{error}</div>}
 
-          <button className="btn btn-success" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Đang xử lý...' : 'Đăng nhập'}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="d-grid gap-3">
+            <div>
+              <label className="form-label">Email</label>
+              <input
+                type="email"
+                className="form-control"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
 
-        <p className="text-muted small mt-4 mb-0">
-          Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
-        </p>
+            <div>
+              <label className="form-label">Mật khẩu</label>
+              <input
+                type="password"
+                className="form-control"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button className="btn btn-success btn-auth" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Đang xử lý...' : 'Đăng nhập'}
+            </button>
+          </form>
+
+          <p className="auth-actions">
+            Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
+          </p>
+        </div>
       </div>
-    </div>
+    </section>
   );
 };
 
