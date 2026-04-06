@@ -11,7 +11,7 @@ function toRole(value) {
 }
 
 module.exports = {
-  Register: async function (email, fullName, phone, password, role) {
+  async Register(email, fullName, phone, password, role) {
     email = typeof email === 'string' ? email.trim().toLowerCase() : '';
     fullName = typeof fullName === 'string' ? fullName.trim() : '';
     phone = typeof phone === 'string' ? phone.trim() : null;
@@ -76,7 +76,7 @@ module.exports = {
     };
   },
 
-  Login: async function (email, password) {
+  async Login(email, password) {
     email = typeof email === 'string' ? email.trim().toLowerCase() : '';
     password = typeof password === 'string' ? password : '';
 
@@ -109,7 +109,7 @@ module.exports = {
     };
   },
 
-  GetProfile: async function (userId) {
+  async GetProfile(userId) {
     let user = await models.appUser.findOne({ _id: mongo.toObjectId(userId) }).lean();
     const plainUser = mongo.toPlain(user);
 
@@ -126,7 +126,7 @@ module.exports = {
     };
   },
 
-  UpdateProfile: async function (userId, fullName, phone) {
+  async UpdateProfile(userId, fullName, phone) {
     fullName = typeof fullName === 'string' ? fullName.trim() : '';
     phone = typeof phone === 'string' && phone.trim() !== '' ? phone.trim() : null;
 

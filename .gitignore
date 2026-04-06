@@ -64,3 +64,4 @@ dist/
 
 .github
 sample
+controllers/layout/
