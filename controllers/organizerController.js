@@ -1,4 +1,4 @@
-﻿// controllers/organizerController.js
+// controllers/organizerController.js
 const models = require('../utils/models');
 const mongo = require('../utils/mongo');
 
@@ -29,16 +29,15 @@ exports.getDashboard = async (req, res, next) => {
     relatedRegistrations = mongo.toPlain(relatedRegistrations);
 
     res.send({
-      organization: { id: organization.id, name: organization.name },
-      metrics: {
-        totalEvents: events.length,
-        approvedEvents: events.filter((item) => item.status === 'approved').length,
-        pendingEvents: events.filter((item) => item.status === 'pending').length,
-        draftEvents: events.filter((item) => item.status === 'draft').length,
-        totalRegistrations: relatedRegistrations.length,
-        pendingRegistrations: relatedRegistrations.filter((item) => item.status === 'Pending').length,
-        confirmedRegistrations: relatedRegistrations.filter((item) => item.status === 'Confirmed').length,
-      },
+      ...organization,
+      organizationName: organization.name,
+      totalEvents: events.length,
+      approvedEvents: events.filter((item) => item.status === 'approved').length,
+      pendingEvents: events.filter((item) => item.status === 'pending').length,
+      draftEvents: events.filter((item) => item.status === 'draft').length,
+      totalRegistrations: relatedRegistrations.length,
+      pendingRegistrations: relatedRegistrations.filter((item) => item.status === 'Pending').length,
+      confirmedVolunteers: relatedRegistrations.filter((item) => item.status === 'Confirmed').length,
     });
   } catch (error) {
     next(error);
@@ -52,7 +51,20 @@ exports.getOrganizationProfile = async (req, res, next) => {
     if (!organization) {
       return res.status(404).send({ message: 'Organizer organization profile not found.' });
     }
-    res.send(organization);
+    const events = await models.event.find({ organizationId: mongo.toObjectId(organization.id) }).select('_id').lean();
+    const eventIds = events.map(e => e._id);
+    const ratings = eventIds.length > 0 ? await models.eventRating.find({ eventId: { $in: eventIds }, isHidden: false }).select('rating').lean() : [];
+    
+    let totalRatingValue = 0;
+    ratings.forEach(r => { totalRatingValue += r.rating; });
+    const averageRating = ratings.length > 0 ? Number((totalRatingValue / ratings.length).toFixed(1)) : 0;
+    
+    res.send({ 
+       ...organization,
+       eventsOrganized: events.length,
+       totalReviews: ratings.length,
+       averageRating
+    });
   } catch (error) {
     next(error);
   }
@@ -76,6 +88,7 @@ exports.updateOrganization = async (req, res, next) => {
       phoneNumber: typeof req.body.phoneNumber === 'string' ? req.body.phoneNumber.trim() : organization.phoneNumber,
       website: typeof req.body.website === 'string' ? req.body.website.trim() : organization.website,
       organizationType: typeof req.body.organizationType === 'string' ? req.body.organizationType.trim() : organization.organizationType,
+      avatarUrl: typeof req.body.avatarUrl === 'string' ? req.body.avatarUrl.trim() : organization.avatarUrl,
     };
 
     if (!payload.name) {
@@ -190,6 +203,7 @@ exports.createEvent = async (req, res, next) => {
     const description = typeof req.body.description === 'string' ? req.body.description.trim() : null;
     const location = typeof req.body.location === 'string' ? req.body.location.trim() : null;
     const categoryId = typeof req.body.categoryId === 'string' ? req.body.categoryId.trim() : null;
+    const images = typeof req.body.images === 'string' ? req.body.images.trim() : null;
     const maxVolunteers = Number(req.body.maxVolunteers);
     const startTime = new Date(req.body.startTime);
     const endTime = new Date(req.body.endTime);
@@ -201,7 +215,7 @@ exports.createEvent = async (req, res, next) => {
       return res.status(400).send({ message: 'endTime must be later than startTime.' });
     }
 
-    let event = await models.event.create({ title, description, location, categoryId: categoryId ? mongo.toObjectId(categoryId) : null, maxVolunteers: Number.isFinite(maxVolunteers) && maxVolunteers >= 0 ? maxVolunteers : 0, startTime, endTime, organizationId: mongo.toObjectId(organization.id), status: 'draft', images: null, isHidden: false });
+    let event = await models.event.create({ title, description, location, categoryId: categoryId ? mongo.toObjectId(categoryId) : null, maxVolunteers: Number.isFinite(maxVolunteers) && maxVolunteers >= 0 ? maxVolunteers : 0, startTime, endTime, organizationId: mongo.toObjectId(organization.id), status: 'draft', images: images, isHidden: false });
     event = mongo.toPlain(event.toObject());
     res.status(201).send(event);
   } catch (error) {
@@ -226,6 +240,7 @@ exports.updateEvent = async (req, res, next) => {
     if (typeof req.body.description === 'string') data.description = req.body.description.trim();
     if (typeof req.body.location === 'string') data.location = req.body.location.trim();
     if (typeof req.body.categoryId === 'string') data.categoryId = req.body.categoryId.trim() || null;
+    if (typeof req.body.images === 'string') data.images = req.body.images.trim() || null;
     if (Number.isFinite(Number(req.body.maxVolunteers))) data.maxVolunteers = Number(req.body.maxVolunteers);
     if (req.body.startTime && Number.isFinite(new Date(req.body.startTime).valueOf())) data.startTime = new Date(req.body.startTime);
     if (req.body.endTime && Number.isFinite(new Date(req.body.endTime).valueOf())) data.endTime = new Date(req.body.endTime);

@@ -1,4 +1,4 @@
-﻿// controllers/organizationController.js
+// controllers/organizationController.js
 const models = require('../utils/models');
 const mongo = require('../utils/mongo');
 
@@ -19,7 +19,24 @@ exports.getOrganizations = async (req, res, next) => {
     });
 
     const totalCount = rows.length;
-    const items = rows.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize);
+    let items = rows.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize);
+
+    items = await Promise.all(items.map(async (org) => {
+      const events = await models.event.find({ organizationId: mongo.toObjectId(org.id) }).select('_id').lean();
+      const eventIds = events.map(e => e._id);
+      const ratings = eventIds.length > 0 ? await models.eventRating.find({ eventId: { $in: eventIds }, isHidden: false }).select('rating').lean() : [];
+      
+      let totalRatingValue = 0;
+      ratings.forEach(r => { totalRatingValue += r.rating; });
+      const averageRating = ratings.length > 0 ? Number((totalRatingValue / ratings.length).toFixed(1)) : 0;
+      
+      return {
+        ...org,
+        eventsOrganized: events.length,
+        totalReviews: ratings.length,
+        averageRating
+      };
+    }));
 
     res.send({ items, totalCount, page, pageSize, totalPages: Math.ceil(totalCount / pageSize) });
   } catch (error) {
@@ -47,8 +64,46 @@ exports.getOrganizationById = async (req, res, next) => {
       .sort({ startTime: 1 })
       .limit(5)
       .lean();
+    
+    // Fetch all events created by this organization to aggregate ratings
+    const allOrgEvents = await models.event.find({ organizationId: mongo.toObjectId(id) }).select('_id title').lean();
+    const eventIds = allOrgEvents.map(e => e._id);
+    const eventTitleMap = {};
+    allOrgEvents.forEach(e => { eventTitleMap[e._id.toString()] = e.title; });
 
-    res.send({ ...row, events: mongo.toPlain(approvedEvents) });
+    let ratings = [];
+    if (eventIds.length > 0) {
+      ratings = await models.eventRating.find({ eventId: { $in: eventIds }, isHidden: false })
+        .populate('userId', 'fullName')
+        .sort({ createdAt: -1 })
+        .lean();
+    }
+    ratings = mongo.toPlain(ratings);
+
+    let totalRatingValue = 0;
+    const formattedReviews = ratings.map(r => {
+      totalRatingValue += r.rating;
+      return {
+        id: r.id,
+        rating: r.rating,
+        review: r.review,
+        createdAt: r.createdAt,
+        eventId: r.eventId,
+        eventName: eventTitleMap[r.eventId],
+        userName: r.userId ? r.userId.fullName : 'Người ẩn danh'
+      };
+    });
+
+    const averageRating = formattedReviews.length > 0 ? Number((totalRatingValue / formattedReviews.length).toFixed(1)) : 0;
+    const totalReviews = formattedReviews.length;
+
+    res.send({ 
+      ...row, 
+      events: mongo.toPlain(approvedEvents), 
+      averageRating, 
+      totalReviews, 
+      reviews: formattedReviews 
+    });
   } catch (error) {
     next(error);
   }
