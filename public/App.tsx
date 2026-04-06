@@ -39,6 +39,8 @@ const OrganizerOverview = lazy(() => import('./pages/organizer/OrganizerOverview
 const OrganizerEventManagementPage = lazy(() => import('./pages/organizer/OrganizerEventManagementPage'));
 const OrganizerOrganizationManagementPage = lazy(() => import('./pages/organizer/OrganizerOrganizationManagementPage'));
 const OrganizerVolunteersPage = lazy(() => import('./pages/organizer/OrganizerVolunteersPage'));
+const OrganizerVolunteerDetails = lazy(() => import('./pages/organizer/OrganizerVolunteerDetails'));
+const OrganizerVolunteerHistory = lazy(() => import('./pages/organizer/OrganizerVolunteerHistory'));
 const OrganizationSuccess = lazy(() => import('./pages/organizations/OrganizationSuccess'));
 
 // Minimal loading spinner
@@ -60,7 +62,7 @@ function App() {
             <Route path="/events" element={<EventList />} />
             <Route path="/events/:id" element={<EventDetails />} />
             <Route
-              path="/dashboard"
+              path="/volunteer/dashboard"
               element={
                 <RequireAuth>
                   <VolunteerDashboard />
@@ -68,7 +70,7 @@ function App() {
               }
             />
             <Route
-              path="/favorites"
+              path="/volunteer/favorites"
               element={
                 <RequireAuth>
                   <FavoriteEvents />
@@ -76,7 +78,7 @@ function App() {
               }
             />
             <Route
-              path="/registrations"
+              path="/volunteer/registrations"
               element={
                 <RequireAuth>
                   <MyRegistrations />
@@ -84,7 +86,7 @@ function App() {
               }
             />
             <Route
-              path="/profile"
+              path="/volunteer/profile"
               element={
                 <RequireAuth>
                   <VolunteerProfile />
@@ -92,7 +94,7 @@ function App() {
               }
             />
             <Route
-              path="/settings"
+              path="/account/settings"
               element={
                 <RequireAuth roles={VOLUNTEER_ROLES}>
                   <AccountSettings />
@@ -109,6 +111,14 @@ function App() {
             />
             <Route
               path="/organizer"
+              element={
+                <RequireAuth roles={ORGANIZER_ROLES}>
+                  <OrganizerOverview />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/organizer/overview"
               element={
                 <RequireAuth roles={ORGANIZER_ROLES}>
                   <OrganizerOverview />
@@ -136,6 +146,23 @@ function App() {
               element={
                 <RequireAuth roles={ORGANIZER_ROLES}>
                   <OrganizerVolunteersPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/organizer/registrations/:id"
+              element={
+                <RequireAuth roles={ORGANIZER_ROLES}>
+                  <OrganizerVolunteerDetails />
+                </RequireAuth>
+              }
+            />
+
+            <Route
+              path="/organizer/volunteers/:id/history"
+              element={
+                <RequireAuth roles={ORGANIZER_ROLES}>
+                  <OrganizerVolunteerHistory />
                 </RequireAuth>
               }
             />

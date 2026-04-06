@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { adminService, getApiErrorMessage, type AdminEventApprovalItem } from '../../services/api';
+import { adminService, getApiErrorMessage, type AdminEventApprovalItem } from '../../lib/api';
 
 const AdminEventApprovals = () => {
   const [search, setSearch] = useState('');

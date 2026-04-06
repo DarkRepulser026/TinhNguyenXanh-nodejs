@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { adminService, getApiErrorMessage, type AdminDashboardMetrics } from '../../services/api';
+import { adminService, getApiErrorMessage, type AdminDashboardMetrics } from '../../lib/api';
 
 const defaultMetrics: AdminDashboardMetrics = {
   totalUsers: 0,

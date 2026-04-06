@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { adminService, getApiErrorMessage, type AdminCategoryItem } from '../../services/api';
+import { adminService, getApiErrorMessage, type AdminCategoryItem } from '../../lib/api';
 
 const AdminCategories = () => {
   const [search, setSearch] = useState('');

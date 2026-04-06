@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { getApiErrorMessage, paymentService, type DonationStatus } from '../../services/api';
+import { getApiErrorMessage, paymentService, type DonationStatus } from '../../lib/api';
 
 type PaymentStatus = 'success' | 'failed' | 'pending';
 

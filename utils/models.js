@@ -7,6 +7,7 @@ const modelNames = {
   eventCategory: 'EventCategory',
   eventComment: 'EventComment',
   eventFavorite: 'EventFavorite',
+  eventRating: 'EventRating',
   eventRegistration: 'EventRegistration',
   eventReport: 'EventReport',
   eventTask: 'EventTask',
@@ -16,6 +17,7 @@ const modelNames = {
   organizationMember: 'OrganizationMember',
   organizationReview: 'OrganizationReview',
   volunteer: 'Volunteer',
+  volunteerEvaluation: 'VolunteerEvaluation',
   volunteerSkill: 'VolunteerSkill',
 };
 
