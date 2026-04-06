@@ -25,6 +25,7 @@ const Contact = lazy(() => import('./pages/public/Contact'));
 const SearchPage = lazy(() => import('./pages/public/Search'));
 const DonatePage = lazy(() => import('./pages/public/Donate'));
 const PaymentResultPage = lazy(() => import('./pages/public/PaymentResult'));
+const DonationHistory = lazy(() => import('./pages/volunteer/DonationHistory'));
 const PrivacyPage = lazy(() => import('./pages/public/Privacy'));
 const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
@@ -205,7 +206,16 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/search" element={<SearchPage />} />
-            <Route path="/donate" element={<DonatePage />} />
+            <Route path="/donate" element={
+              <RequireAuth>
+                <DonatePage />
+              </RequireAuth>
+            } />
+            <Route path="/volunteer/donations" element={
+              <RequireAuth>
+                <DonationHistory />
+              </RequireAuth>
+            } />
             <Route path="/payment-result" element={<PaymentResultPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/events/register" element={<EventRegisterPage />} />

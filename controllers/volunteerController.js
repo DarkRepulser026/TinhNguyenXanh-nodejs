@@ -117,6 +117,21 @@ module.exports = {
     };
   },
 
+  getDonations: async function (userId) {
+    userId = (userId || '').trim();
+    if (!userId) throw { status: 400, message: 'userId is required.' };
+    let rows = mongo.toPlain(await models.donation.find({ userId: safeObjectId(userId) }).sort({ createdAt: -1 }).lean());
+    return rows.map(r => ({
+      id: r._id || r.id,
+      amount: parseFloat(r.amount ? r.amount.toString() : 0),
+      message: r.message,
+      transactionCode: r.transactionCode,
+      status: r.status,
+      paymentMethod: r.paymentMethod,
+      createdAt: r.createdAt
+    }));
+  },
+
   getEventComments: async function (eventId) {
     eventId = (eventId || '').trim();
     if (!eventId) throw { status: 400, message: 'eventId is required.' };

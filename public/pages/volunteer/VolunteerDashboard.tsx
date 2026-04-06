@@ -9,7 +9,8 @@ import {
   Heart,
   TrendingUp,
   Award,
-  Layers // Đã thêm Layers vào import để không bị lỗi giao diện
+  Layers,
+  CreditCard
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
@@ -75,24 +76,6 @@ const VolunteerDashboard: React.FC = () => {
                                 </div>
                                 <h5 className="fw-bold mb-1">{user?.fullName || 'Tình nguyện viên'}</h5>
                                 <p className="text-muted small mb-0">{stats.rank}</p>
-                            </div>
-                            <hr className="text-muted opacity-25" />
-                            <div className="nav flex-column nav-pills gap-2">
-                                <Link to="/volunteer/dashboard" className="nav-link active bg-success text-white rounded-3 px-3 py-2 d-flex align-items-center">
-                                    <BarChart2 size={18} className="me-2" /> Tổng quan
-                                </Link>
-                                <Link to="/volunteer/profile" className="nav-link text-dark hover-success rounded-3 px-3 py-2 d-flex align-items-center">
-                                    <UserIcon size={18} className="me-2" /> Hồ sơ cá nhân
-                                </Link>
-                                <Link to="/volunteer/registrations" className="nav-link text-dark hover-success rounded-3 px-3 py-2 d-flex align-items-center">
-                                    <Calendar size={18} className="me-2" /> Lịch sử đăng ký
-                                </Link>
-                                <Link to="/volunteer/favorites" className="nav-link text-dark hover-success rounded-3 px-3 py-2 d-flex align-items-center">
-                                    <Heart size={18} className="me-2" /> Yêu thích
-                                </Link>
-                                <Link to="/account/settings" className="nav-link text-dark hover-success rounded-3 px-3 py-2 d-flex align-items-center mt-2">
-                                    <Settings size={18} className="me-2" /> Cài đặt
-                                </Link>
                             </div>
                         </div>
                         <div className="card border-0 shadow-sm rounded-4 p-4 bg-gradient-success text-white" style={{ background: 'linear-gradient(135deg, #198754 0%, #20c997 100%)' }}>

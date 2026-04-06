@@ -64,6 +64,13 @@ router.get('/volunteers/:userId/dashboard', authHandler.CheckLogin, async functi
     res.send(result);
   } catch (error) { next(error); }
 });
+router.get('/volunteers/:userId/donations', authHandler.CheckLogin, async function (req, res, next) {
+  try {
+    if (!assertAccess(req.params.userId, req.authUser)) return res.status(403).send({ message: 'You do not have access to these donations.' });
+    let result = await volunteerController.getDonations(req.params.userId);
+    res.send(result);
+  } catch (error) { next(error); }
+});
 router.get('/events/:eventId/comments', async function (req, res, next) {
   try { let result = await volunteerController.getEventComments(req.params.eventId); res.send(result); } catch (error) { next(error); }
 });

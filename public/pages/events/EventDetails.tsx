@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { eventService, getApiErrorMessage, type EventItem, volunteerService } from '../../lib/api';
 import { useAuth } from '../../contexts/useAuth';
-import EventComments from '../../components/EventComments';
 import EventReview from '../../components/EventReview';
 import EventRegistrationForm from '../../components/EventRegistrationForm';
 
@@ -252,11 +251,6 @@ const EventDetails: React.FC = () => {
               </div>
             </div>
 
-            {/* Comments Section */}
-            <div className="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4">
-              <EventComments eventId={event.id} />
-            </div>
-
             {/* Reviews Section */}
             <div className="card border-0 shadow-sm rounded-4 p-4 p-md-5">
               <EventReview eventId={event.id} />
@@ -356,4 +350,3 @@ const EventDetails: React.FC = () => {
 };
 
 export default EventDetails;
-

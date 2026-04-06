@@ -114,6 +114,7 @@ export const organizationService = {
 
 export const volunteerService = {
   getDashboard: (userId: IdValue) => axios.get(`/volunteers/${userId}/dashboard`),
+  getDonations: (userId: IdValue) => axios.get(`/volunteers/${userId}/donations`),
   getFavorites: (userId: IdValue) => axios.get(`/volunteers/${userId}/favorites`),
   removeFavorite: (userId: IdValue, eventId: IdValue) =>
     axios.delete(`/volunteers/${userId}/favorites/${eventId}`),

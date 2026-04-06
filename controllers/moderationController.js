@@ -28,9 +28,18 @@ module.exports = {
     if (!organizationId) throw { status: 400, message: 'Invalid organization id.' };
     let org = mongo.toPlain(await models.organization.findOne({ _id: mongo.toObjectId(organizationId) }).lean());
     if (!org) throw { status: 404, message: 'Organization not found.' };
+
+    // Sử dụng MongoDB Aggregation để lấy tổng số đếm và tính trung bình chính xác trên TẤT CẢ bản ghi
+    let stats = await models.organizationReview.aggregate([
+      { $match: { organizationId: mongo.toObjectId(organizationId), status: 'Approved' } },
+      { $group: { _id: null, averageRating: { $avg: "$rating" }, totalCount: { $sum: 1 } } }
+    ]);
+    const averageRating = stats.length > 0 ? stats[0].averageRating : 0;
+    const totalCount = stats.length > 0 ? stats[0].totalCount : 0;
+
     let items = mongo.toPlain(await models.organizationReview.find({ organizationId: mongo.toObjectId(organizationId), status: 'Approved' }).sort({ createdAt: -1 }).limit(100).lean());
-    const averageRating = items.length > 0 ? items.reduce((sum, item) => sum + item.rating, 0) / items.length : 0;
-    return { items, totalCount: items.length, averageRating };
+    
+    return { items, totalCount, averageRating };
   },
 
   createOrganizationReview: async function (organizationId, userId, rating, title, content) {
@@ -42,14 +51,14 @@ module.exports = {
     if (!Number.isFinite(rating) || rating < 1 || rating > 5) throw { status: 400, message: 'rating must be between 1 and 5.' };
     let org = mongo.toPlain(await models.organization.findOne({ _id: mongo.toObjectId(organizationId) }).lean());
     if (!org) throw { status: 404, message: 'Organization not found.' };
-    let existing = mongo.toPlain(await models.organizationReview.findOne({ organizationId: mongo.toObjectId(organizationId), userId: mongo.toObjectId(userId) }).lean());
-    if (!existing) {
-      existing = await models.organizationReview.create({ organizationId: mongo.toObjectId(organizationId), userId: mongo.toObjectId(userId), rating, title, content, status: 'Pending' });
-      existing = mongo.toPlain(existing.toObject());
-    } else {
-      existing = mongo.toPlain(await models.organizationReview.findOneAndUpdate({ _id: mongo.toObjectId(existing.id) }, { $set: { rating, title, content, status: 'Pending' } }, { new: true }).lean());
-    }
-    return existing;
+
+    // Tối ưu hóa: Dùng upsert để gộp thao tác Tìm & Cập nhật/Tạo mới thành 1 Query duy nhất
+    let result = await models.organizationReview.findOneAndUpdate(
+      { organizationId: mongo.toObjectId(organizationId), userId: mongo.toObjectId(userId) },
+      { $set: { rating, title, content, status: 'Pending' } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    ).lean();
+    return mongo.toPlain(result);
   },
 
   reportEvent: async function (eventId, userId, reason, details) {

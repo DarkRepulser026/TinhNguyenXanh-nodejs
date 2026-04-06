@@ -39,26 +39,41 @@ const PaymentResultPage: React.FC = () => {
   const queryMethod = searchParams.get('method') || 'unknown';
 
   useEffect(() => {
-    const loadTransaction = async () => {
+    let isMounted = true;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const loadTransaction = async (isFirstLoad = false) => {
       if (!txn || txn === 'N/A') {
         return;
       }
 
       try {
-        setLoading(true);
-        setError(null);
+        if (isFirstLoad) setLoading(true);
         const response = await paymentService.getByTransaction(txn);
-        setResolvedStatus(mapDonationStatus(response.data.status));
+        if (!isMounted) return;
+
+        const currentStatus = mapDonationStatus(response.data.status);
+        setResolvedStatus(currentStatus);
         setResolvedAmount(response.data.amount);
         setResolvedMethod(response.data.method);
+        setError(null);
+
+        // Nếu giao dịch vẫn đang xử lý, tự động kiểm tra lại sau 3 giây
+        if (currentStatus === 'pending') {
+          timeoutId = setTimeout(() => loadTransaction(false), 3000);
+        }
       } catch (err) {
-        setError(getApiErrorMessage(err, 'Không thể đồng bộ trạng thái giao dịch từ hệ thống.'));
+        if (isMounted) setError(getApiErrorMessage(err, 'Không thể đồng bộ trạng thái giao dịch từ hệ thống.'));
       } finally {
-        setLoading(false);
+        if (isMounted && isFirstLoad) setLoading(false);
       }
     };
 
-    void loadTransaction();
+    void loadTransaction(true);
+    return () => {
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [txn]);
 
   const status = (resolvedStatus && resolvedStatus !== 'pending') ? resolvedStatus : initialStatus;
