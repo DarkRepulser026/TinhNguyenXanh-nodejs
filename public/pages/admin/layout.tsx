@@ -1,152 +1,116 @@
-"use client"
-
-import type { ComponentType, ReactNode } from "react"
-import { Bell, FileWarning, LayoutDashboard, ListChecks, Menu, ShieldCheck, Users } from "lucide-react"
-import { useLocation, useNavigate } from "react-router-dom"
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { cn } from "@/lib/utils"
+import type { ComponentType, ReactNode } from 'react';
+import { FileWarning, LayoutDashboard, ListChecks, Menu, ShieldCheck, Users } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/useAuth';
 
 type AdminLayoutProps = {
-  children: ReactNode
-}
+  children: ReactNode;
+};
 
 type NavItem = {
-  label: string
-  path: string
-  icon: ComponentType<{ className?: string }>
-}
+  label: string;
+  path: string;
+  icon: ComponentType<{ size?: number; className?: string }>;
+};
 
-const NAV_ITEMS: NavItem[] = [
-  { label: "Overview", path: "/admin", icon: LayoutDashboard },
-  { label: "Approvals", path: "/admin/approvals", icon: ListChecks },
-  { label: "Moderation", path: "/admin/moderation", icon: FileWarning },
-  { label: "Users", path: "/admin/users", icon: Users },
-  { label: "Categories", path: "/admin/categories", icon: ShieldCheck },
-]
+const navItems: NavItem[] = [
+  { label: 'Overview', path: '/admin', icon: LayoutDashboard },
+  { label: 'Approvals', path: '/admin/approvals', icon: ListChecks },
+  { label: 'Moderation', path: '/admin/moderation', icon: FileWarning },
+  { label: 'Users', path: '/admin/users', icon: Users },
+  { label: 'Categories', path: '/admin/categories', icon: ShieldCheck },
+];
 
-function SidebarContent() {
-  const navigate = useNavigate()
-  const location = useLocation()
+function AdminNav({ closeMobile }: { closeMobile?: () => void }) {
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
-    <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex h-16 items-center border-b border-sidebar-border px-5">
-        <p className="text-base font-semibold tracking-tight">VolunteerHub Admin</p>
-      </div>
+    <ul className="nav flex-column gap-1">
+      {navItems.map((item) => {
+        const Icon = item.icon;
+        const isActive = item.path === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(item.path);
 
-      <nav className="flex-1 space-y-1 p-3">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon
-          const isActive =
-            item.path === "/admin"
-              ? location.pathname === "/admin"
-              : location.pathname.startsWith(item.path)
-
-          return (
-            <Button
-              key={item.path}
+        return (
+          <li className="nav-item" key={item.path}>
+            <button
+              className={`btn w-100 d-flex align-items-center gap-2 text-start ${isActive ? 'btn-success' : 'btn-outline-secondary'}`}
+              onClick={() => {
+                navigate(item.path);
+                if (closeMobile) {
+                  closeMobile();
+                }
+              }}
               type="button"
-              variant="ghost"
-              className={cn(
-                "flex w-full items-center justify-start gap-3 rounded-md px-3 py-2 text-sm",
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              )}
-              onClick={() => navigate(item.path)}
             >
-                <Icon className="size-4" />
-                <span>{item.label}</span>
-            </Button>
-          )
-        })}
-      </nav>
-
-      <div className="p-3">
-        <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3">
-          <p className="text-sm font-medium">Placeholder Widget</p>
-          <p className="text-muted-foreground mt-1 text-xs">Add quick stats or shortcuts here.</p>
-        </div>
-      </div>
-    </div>
-  )
+              <Icon size={16} />
+              <span>{item.label}</span>
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
+  const { user, logout } = useAuth();
+
   return (
-    <div className="min-h-screen bg-background">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-sidebar-border md:block">
-        <SidebarContent />
-      </aside>
+    <div className="container-fluid px-0 bg-light" style={{ minHeight: '100vh' }}>
+      <div className="row g-0" style={{ minHeight: '100vh' }}>
+        <aside className="col-md-3 col-lg-2 bg-white border-end d-none d-md-block p-3">
+          <h5 className="mb-3">VolunteerHub Admin</h5>
+          <AdminNav />
+        </aside>
 
-      <div className="md:pl-60">
-        <header className="sticky top-0 z-20 h-16 border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/70 sm:px-6">
-          <div className="mx-auto flex h-full max-w-400 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="icon" className="md:hidden" aria-label="Open sidebar menu">
-                    <Menu className="size-4" />
-                  </Button>
-                </SheetTrigger>
-
-                <SheetContent side="left" className="w-60 p-0">
-                  <SheetHeader className="sr-only">
-                    <SheetTitle>Admin navigation</SheetTitle>
-                    <SheetDescription>Open the admin sidebar navigation links.</SheetDescription>
-                  </SheetHeader>
-                  <SidebarContent />
-                </SheetContent>
-              </Sheet>
-
-              <p className="text-sm font-medium text-muted-foreground">Admin Workspace</p>
+        <div className="col-12 col-md-9 col-lg-10 d-flex flex-column">
+          <header className="bg-white border-bottom p-3 d-flex align-items-center justify-content-between sticky-top">
+            <div className="d-flex align-items-center gap-2">
+              <button
+                className="btn btn-outline-secondary d-md-none"
+                data-bs-toggle="offcanvas"
+                data-bs-target="#adminSidebarCanvas"
+                aria-controls="adminSidebarCanvas"
+                type="button"
+              >
+                <Menu size={16} />
+              </button>
+              <span className="text-muted small">Admin Workspace</span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" aria-label="Open notifications">
-                <Bell className="size-4" />
-              </Button>
-
-              <Separator orientation="vertical" className="mx-1 hidden h-6 sm:block" />
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-10 gap-2 rounded-full px-2">
-                    <Avatar className="size-8">
-                      <AvatarImage src="https://i.pravatar.cc/80?img=32" alt="Admin user" />
-                      <AvatarFallback>AD</AvatarFallback>
-                    </Avatar>
-                    <span className="hidden text-sm font-medium sm:inline">Admin User</span>
-                  </Button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Profile</DropdownMenuItem>
-                  <DropdownMenuItem>Settings</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Sign out</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div className="dropdown">
+              <button className="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" type="button">
+                {user?.fullName || 'Admin User'}
+              </button>
+              <ul className="dropdown-menu dropdown-menu-end">
+                <li>
+                  <button className="dropdown-item text-danger" onClick={() => void logout()} type="button">
+                    Sign out
+                  </button>
+                </li>
+              </ul>
             </div>
-          </div>
-        </header>
+          </header>
 
-        <main className="mx-auto max-w-400 p-4 sm:p-6 lg:p-8">{children}</main>
+          <main className="p-3 p-lg-4">{children}</main>
+        </div>
+      </div>
+
+      <div className="offcanvas offcanvas-start" id="adminSidebarCanvas" tabIndex={-1} aria-labelledby="adminSidebarCanvasLabel">
+        <div className="offcanvas-header">
+          <h5 className="offcanvas-title" id="adminSidebarCanvasLabel">VolunteerHub Admin</h5>
+          <button className="btn-close" data-bs-dismiss="offcanvas" aria-label="Close" type="button"></button>
+        </div>
+        <div className="offcanvas-body">
+          <AdminNav closeMobile={() => {
+            const canvas = document.getElementById('adminSidebarCanvas');
+            if (!canvas) return;
+            const api = (window as any).bootstrap?.Offcanvas?.getOrCreateInstance(canvas);
+            api?.hide();
+          }} />
+        </div>
       </div>
     </div>
-  )
+  );
 }

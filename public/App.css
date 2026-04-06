@@ -135,7 +135,7 @@
   margin-top: 0.5rem;
 }
 
-.auth-actions a {
+.auth-actions a:not(.btn) {
   color: #0f766e;
   font-weight: 600;
 }

@@ -1,4 +1,4 @@
-var express = require('express');
+﻿var express = require('express');
 var router = express.Router();
 var authHandler = require('../utils/authHandler');
 var moderationController = require('../controllers/moderationController');
