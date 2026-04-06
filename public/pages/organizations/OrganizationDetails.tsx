@@ -696,20 +696,22 @@ const OrganizationDetails = () => {
                   </div>
 
                   <div className="d-grid gap-2">
-                    <Link
-                      to="/organizations/register"
-                      style={{
-                        background: '#16a34a',
-                        color: '#fff',
-                        textDecoration: 'none',
-                        textAlign: 'center',
-                        padding: '12px 16px',
-                        borderRadius: '10px',
-                        fontWeight: 700,
-                      }}
-                    >
-                      Đăng ký trở thành ban tổ chức
-                    </Link>
+                    {!item.ownerUserId && (
+                      <Link
+                        to="/organizations/register"
+                        style={{
+                          background: '#16a34a',
+                          color: '#fff',
+                          textDecoration: 'none',
+                          textAlign: 'center',
+                          padding: '12px 16px',
+                          borderRadius: '10px',
+                          fontWeight: 700,
+                        }}
+                      >
+                        Đăng ký trở thành ban tổ chức
+                      </Link>
+                    )}
 
                     <Link
                       to="/organizations"

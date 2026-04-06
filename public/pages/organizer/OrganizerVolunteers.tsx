@@ -393,20 +393,22 @@ const OrganizerVolunteers = () => {
                         </td>
 
                         <td className="text-end">
-                          <div className="d-flex justify-content-end gap-2 flex-wrap">
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', minWidth: '220px', marginLeft: 'auto' }}>
                             <Link
                               to={`/organizer/registrations/${row.id}`}
                               style={{
                                 background: '#ffffff',
                                 color: '#0f172a',
                                 border: '1px solid #d1d5db',
-                                padding: '8px 12px',
+                                padding: '8px 4px',
                                 borderRadius: '10px',
                                 fontWeight: 600,
                                 textDecoration: 'none',
                                 display: 'inline-flex',
                                 alignItems: 'center',
+                                justifyContent: 'center',
                                 gap: '6px',
+                                width: '100%',
                               }}
                             >
                               <Eye size={15} />
@@ -420,19 +422,21 @@ const OrganizerVolunteers = () => {
                                   background: '#ffffff',
                                   color: '#0f172a',
                                   border: '1px solid #d1d5db',
-                                  padding: '8px 12px',
+                                  padding: '8px 4px',
                                   borderRadius: '10px',
                                   fontWeight: 600,
                                   textDecoration: 'none',
                                   display: 'inline-flex',
                                   alignItems: 'center',
+                                  justifyContent: 'center',
                                   gap: '6px',
+                                  width: '100%',
                                 }}
                               >
                                 <History size={15} />
                                 Lịch sử
                               </Link>
-                            ) : null}
+                            ) : <div></div>}
 
                             <button
                               type="button"
@@ -442,12 +446,14 @@ const OrganizerVolunteers = () => {
                                 background: '#16a34a',
                                 color: '#fff',
                                 border: 'none',
-                                padding: '8px 12px',
+                                padding: '8px 4px',
                                 borderRadius: '10px',
                                 fontWeight: 600,
                                 display: 'inline-flex',
                                 alignItems: 'center',
+                                justifyContent: 'center',
                                 gap: '6px',
+                                width: '100%',
                                 opacity: row.status !== 'Pending' ? 0.5 : 1,
                               }}
                             >
@@ -463,12 +469,14 @@ const OrganizerVolunteers = () => {
                                 background: '#dc2626',
                                 color: '#fff',
                                 border: 'none',
-                                padding: '8px 12px',
+                                padding: '8px 4px',
                                 borderRadius: '10px',
                                 fontWeight: 600,
                                 display: 'inline-flex',
                                 alignItems: 'center',
+                                justifyContent: 'center',
                                 gap: '6px',
+                                width: '100%',
                                 opacity: row.status !== 'Pending' ? 0.5 : 1,
                               }}
                             >

@@ -1,4 +1,4 @@
-﻿// controllers/eventController.js
+// controllers/eventController.js
 const models = require('../utils/models');
 const mongo = require('../utils/mongo');
 
@@ -103,6 +103,7 @@ module.exports = {
       startTime: row.startTime,
       endTime: row.endTime,
       location: row.location,
+      mapUrl: row.mapUrl,
       organizationId: row.organizationId && row.organizationId.id ? row.organizationId.id : row.organizationId,
       organizationName: row.organizationId && row.organizationId.name ? row.organizationId.name : null,
       categoryId: row.categoryId && row.categoryId.id ? row.categoryId.id : row.categoryId,
@@ -220,5 +221,11 @@ module.exports = {
     });
 
     return { status: 'added', isFavorited: true };
+  },
+
+  GetCategories: async function () {
+    let items = await models.eventCategory.find().sort({ name: 1 }).lean();
+    items = mongo.toPlain(items);
+    return items;
   },
 };
