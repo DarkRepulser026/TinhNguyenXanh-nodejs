@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const DonationSchema = new mongoose.Schema(
   {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'AppUser', default: null },
     donorName: { type: String, default: null },
     amount: { type: mongoose.Types.Decimal128, required: true },
     phoneNumber: { type: String, default: null },
