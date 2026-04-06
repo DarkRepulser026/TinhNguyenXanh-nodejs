@@ -1,152 +1,412 @@
-"use client"
-
-import type { ComponentType, ReactNode } from "react"
-import { Bell, FileWarning, LayoutDashboard, ListChecks, Menu, ShieldCheck, Users } from "lucide-react"
-import { useLocation, useNavigate } from "react-router-dom"
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { cn } from "@/lib/utils"
+import React, { useState } from 'react';
+import type { CSSProperties } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  FileWarning, 
+  LayoutDashboard, 
+  ListChecks, 
+  LogOut, 
+  Menu, 
+  ShieldCheck, 
+  Users,
+  Shield,
+  AlertTriangle
+} from 'lucide-react';
+import { useAuth } from '../../contexts/useAuth';
 
 type AdminLayoutProps = {
-  children: ReactNode
-}
+  children: React.ReactNode;
+};
 
-type NavItem = {
-  label: string
-  path: string
-  icon: ComponentType<{ className?: string }>
-}
+const shellStyle: CSSProperties = {
+  minHeight: '100vh',
+  background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)',
+};
 
-const NAV_ITEMS: NavItem[] = [
-  { label: "Overview", path: "/admin", icon: LayoutDashboard },
-  { label: "Approvals", path: "/admin/approvals", icon: ListChecks },
-  { label: "Moderation", path: "/admin/moderation", icon: FileWarning },
-  { label: "Users", path: "/admin/users", icon: Users },
-  { label: "Categories", path: "/admin/categories", icon: ShieldCheck },
-]
+const sidebarStyle: CSSProperties = {
+  width: '280px',
+  background: '#ffffff',
+  borderRight: '1px solid #e5e7eb',
+  padding: '24px 18px',
+  position: 'sticky',
+  top: 0,
+  height: '100vh',
+  boxShadow: '4px 0 16px rgba(0,0,0,0.03)',
+};
 
-function SidebarContent() {
-  const navigate = useNavigate()
-  const location = useLocation()
+const brandBoxStyle: CSSProperties = {
+  border: '1px solid #e5e7eb',
+  borderRadius: '18px',
+  padding: '18px 16px',
+  marginBottom: '24px',
+  background: 'linear-gradient(135deg, #dcfce7 0%, #ffffff 100%)',
+};
+
+const mainStyle: CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+};
+
+const topbarStyle: CSSProperties = {
+  background: '#ffffff',
+  borderBottom: '1px solid #e5e7eb',
+  padding: '18px 28px',
+  position: 'sticky',
+  top: 0,
+  zIndex: 10,
+};
+
+const contentWrapStyle: CSSProperties = {
+  padding: '28px',
+};
+
+const sectionLabelStyle: CSSProperties = {
+  fontSize: '0.78rem',
+  color: '#64748b',
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  marginBottom: '10px',
+  paddingLeft: '10px',
+};
+
+const menuContainerStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '8px',
+  marginBottom: '24px',
+};
+
+const baseLinkStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '12px',
+  padding: '12px 14px',
+  borderRadius: '12px',
+  textDecoration: 'none',
+  fontWeight: 600,
+  fontSize: '0.95rem',
+  transition: 'all 0.2s ease',
+  cursor: 'pointer',
+  border: '1px solid transparent',
+};
+
+const getLinkStyle = (active: boolean): CSSProperties => ({
+  ...baseLinkStyle,
+  background: active ? '#16a34a' : '#ffffff',
+  color: active ? '#ffffff' : '#0f172a',
+  border: active ? '1px solid #16a34a' : '1px solid #e5e7eb',
+  boxShadow: active ? '0 8px 18px rgba(22,163,74,0.18)' : 'none',
+});
+
+const quickCardStyle: CSSProperties = {
+  border: '1px solid #e5e7eb',
+  borderRadius: '16px',
+  padding: '16px',
+  background: '#ffffff',
+};
+
+const mobileMenuBtnStyle: CSSProperties = {
+  display: 'none',
+  padding: '10px',
+  border: '1px solid #e5e7eb',
+  borderRadius: '10px',
+  background: 'transparent',
+  cursor: 'pointer',
+  '@media (max-width: 768px)': {
+    display: 'flex',
+  }
+} as any;
+
+const AdminLayout = ({ children }: AdminLayoutProps) => {
+  const location = useLocation();
+  const { user, logout } = useAuth();
+
+  const isActive = (path: string) => {
+    if (path === '/admin') {
+      return location.pathname === '/admin';
+    }
+    return location.pathname.startsWith(path);
+  };
+
+  const navItems = [
+    { label: 'Tổng quan', path: '/admin', icon: LayoutDashboard },
+    { label: 'Phê duyệt', path: '/admin/approvals', icon: ListChecks },
+    { label: 'Moderation', path: '/admin/moderation', icon: FileWarning },
+    { label: 'Người dùng', path: '/admin/users', icon: Users },
+    { label: 'Danh mục', path: '/admin/categories', icon: ShieldCheck },
+  ];
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   return (
-    <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex h-16 items-center border-b border-sidebar-border px-5">
-        <p className="text-base font-semibold tracking-tight">VolunteerHub Admin</p>
-      </div>
+    <>
+      <div style={shellStyle}>
+        <div style={{ display: 'flex', minHeight: '100vh' }}>
+          {/* Desktop Sidebar */}
+          <aside style={{ 
+            ...sidebarStyle, 
+            '@media (max-width: 768px)': { display: 'none' } 
+          } as any}>
+            <div style={brandBoxStyle}>
+              <div
+                style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '14px',
+                  background: '#16a34a',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '12px',
+                }}
+              >
+                <Shield size={28} />
+              </div>
+              <div style={{
+                fontSize: '1.1rem',
+                fontWeight: 800,
+                color: '#0f172a',
+                marginBottom: '4px',
+              }}>
+                Admin Panel
+              </div>
+              <div style={{
+                color: '#64748b',
+                fontSize: '0.9rem',
+                lineHeight: 1.6,
+              }}>
+                Quản trị toàn diện hệ thống VolunteerHub
+              </div>
+            </div>
 
-      <nav className="flex-1 space-y-1 p-3">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon
-          const isActive =
-            item.path === "/admin"
-              ? location.pathname === "/admin"
-              : location.pathname.startsWith(item.path)
+            <div style={sectionLabelStyle}>Điều hướng</div>
+            <div style={menuContainerStyle}>
+              {navItems.map((item) => (
+                <Link 
+                  key={item.path}
+                  to={item.path}
+                  style={getLinkStyle(isActive(item.path))}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <item.icon size={18} />
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </div>
 
-          return (
-            <Button
-              key={item.path}
-              type="button"
-              variant="ghost"
-              className={cn(
-                "flex w-full items-center justify-start gap-3 rounded-md px-3 py-2 text-sm",
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              )}
-              onClick={() => navigate(item.path)}
-            >
-                <Icon className="size-4" />
-                <span>{item.label}</span>
-            </Button>
-          )
-        })}
-      </nav>
+            <div style={sectionLabelStyle}>Truy cập nhanh</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={quickCardStyle}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px',
+                  color: '#0f172a',
+                  fontWeight: 700,
+                }}>
+                  <ListChecks size={16} color="#16a34a" />
+                  Phê duyệt sự kiện
+                </div>
+                <div style={{ color: '#64748b', fontSize: '0.88rem', lineHeight: 1.6 }}>
+                  Kiểm tra và duyệt các sự kiện mới từ tổ chức.
+                </div>
+              </div>
+            </div>
+          </aside>
 
-      <div className="p-3">
-        <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3">
-          <p className="text-sm font-medium">Placeholder Widget</p>
-          <p className="text-muted-foreground mt-1 text-xs">Add quick stats or shortcuts here.</p>
+          {/* Main Content */}
+          <main style={mainStyle}>
+            <div style={topbarStyle}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap' as any,
+                gap: '16px',
+              }}>
+                <div>
+                  <div style={{
+                    color: '#0f172a',
+                    fontSize: '1.1rem',
+                    fontWeight: 800 as any,
+                    marginBottom: '4px',
+                  }}>
+                    Admin Dashboard
+                  </div>
+                  <div style={{
+                    color: '#64748b',
+                    fontSize: '0.9rem',
+                  }}>
+                    Chào mừng, {user?.fullName || 'Quản trị viên'} 👋
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Link
+                    to="/"
+                    style={{
+                      textDecoration: 'none',
+                      color: '#0f172a',
+                      border: '1px solid #e5e7eb',
+                      background: '#ffffff',
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      fontWeight: 600 as any,
+                      fontSize: '0.9rem',
+                    }}
+                  >
+                    🏠 Trang chủ
+                  </Link>
+                  <button
+                    onClick={() => void logout()}
+                    style={{
+                      textDecoration: 'none',
+                      color: '#ffffff',
+                      background: '#0f172a',
+                      border: 'none',
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      fontWeight: 600 as any,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <LogOut size={16} />
+                    Đăng xuất
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div style={contentWrapStyle}>{children}</div>
+          </main>
         </div>
+
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <>
+            <div 
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0,0,0,0.5)',
+                zIndex: 999,
+              }} 
+              onClick={() => setSidebarOpen(false)}
+            />
+            <aside 
+              style={{ 
+                ...sidebarStyle, 
+                position: 'fixed',
+                left: 0,
+                top: 0,
+                bottom: 0,
+                zIndex: 1000,
+                width: '280px',
+                transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+                transition: 'transform 0.3s ease',
+              }}
+            >
+              {/* Mobile content same as desktop */}
+              <div style={brandBoxStyle}>
+                {/* Same brand content */}
+                <div style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '14px',
+                  background: '#16a34a',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '12px',
+                }}>
+                  <Shield size={28} />
+                </div>
+                <div style={{
+                  fontSize: '1.1rem',
+                  fontWeight: 800,
+                  color: '#0f172a',
+                  marginBottom: '4px',
+                }}>
+                  Admin Panel
+                </div>
+                <div style={{
+                  color: '#64748b',
+                  fontSize: '0.9rem',
+                  lineHeight: 1.6,
+                }}>
+                  Quản trị toàn diện hệ thống VolunteerHub
+                </div>
+              </div>
+
+              <div style={sectionLabelStyle}>Điều hướng</div>
+              <div style={menuContainerStyle}>
+                {navItems.map((item) => (
+                  <Link 
+                    key={item.path}
+                    to={item.path}
+                    style={getLinkStyle(isActive(item.path))}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <item.icon size={18} />
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+              <button 
+                style={{
+                  ...baseLinkStyle,
+                  marginTop: 'auto',
+                  background: '#fee2e2',
+                  color: '#dc2626',
+                  border: '1px solid #fecaca',
+                }}
+                onClick={() => {
+                  logout();
+                  setSidebarOpen(false);
+                }}
+              >
+                <LogOut size={18} />
+                <span>Đăng xuất</span>
+              </button>
+            </aside>
+          </>
+        )}
+
+        {/* Mobile Menu Button */}
+        <button 
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '20px',
+            zIndex: 1001,
+            padding: '12px',
+            border: '1px solid #e5e7eb',
+            borderRadius: '12px',
+            background: 'white',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            cursor: 'pointer',
+            display: 'none',
+          }}
+          onClick={toggleSidebar}
+        >
+          <Menu size={20} />
+        </button>
       </div>
-    </div>
-  )
-}
+    </>
+  );
+};
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
-  return (
-    <div className="min-h-screen bg-background">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-sidebar-border md:block">
-        <SidebarContent />
-      </aside>
+export default AdminLayout;
 
-      <div className="md:pl-60">
-        <header className="sticky top-0 z-20 h-16 border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/70 sm:px-6">
-          <div className="mx-auto flex h-full max-w-400 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="icon" className="md:hidden" aria-label="Open sidebar menu">
-                    <Menu className="size-4" />
-                  </Button>
-                </SheetTrigger>
-
-                <SheetContent side="left" className="w-60 p-0">
-                  <SheetHeader className="sr-only">
-                    <SheetTitle>Admin navigation</SheetTitle>
-                    <SheetDescription>Open the admin sidebar navigation links.</SheetDescription>
-                  </SheetHeader>
-                  <SidebarContent />
-                </SheetContent>
-              </Sheet>
-
-              <p className="text-sm font-medium text-muted-foreground">Admin Workspace</p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" aria-label="Open notifications">
-                <Bell className="size-4" />
-              </Button>
-
-              <Separator orientation="vertical" className="mx-1 hidden h-6 sm:block" />
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-10 gap-2 rounded-full px-2">
-                    <Avatar className="size-8">
-                      <AvatarImage src="https://i.pravatar.cc/80?img=32" alt="Admin user" />
-                      <AvatarFallback>AD</AvatarFallback>
-                    </Avatar>
-                    <span className="hidden text-sm font-medium sm:inline">Admin User</span>
-                  </Button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Profile</DropdownMenuItem>
-                  <DropdownMenuItem>Settings</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Sign out</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </header>
-
-        <main className="mx-auto max-w-400 p-4 sm:p-6 lg:p-8">{children}</main>
-      </div>
-    </div>
-  )
-}

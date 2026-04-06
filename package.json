@@ -5,9 +5,9 @@
   "scripts": {
     "start": "nodemon ./bin/www",
     "dev:backend": "nodemon ./bin/www",
-    "dev:frontend": "vite",
-    "build:frontend": "vite build",
-    "preview:frontend": "vite preview",
+    "dev:frontend": "vite --config vite.config.mjs",
+    "build:frontend": "vite build --config vite.config.mjs",
+    "preview": "vite preview --config vite.config.mjs",
     "smoke:test": "node scripts/smoke-test.js",
     "db:generate": "node scripts/db-generate.js",
     "db:push": "node scripts/db-generate.js",
@@ -37,6 +37,7 @@
     "lucide-react": "^0.553.0",
     "mongoose": "^9.3.3",
     "morgan": "~1.9.1",
+    "nodemailer": "^8.0.4",
     "nodemon": "^3.1.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -46,6 +47,8 @@
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
     "typescript": "^5.9.3",
     "vite": "^5.4.21"

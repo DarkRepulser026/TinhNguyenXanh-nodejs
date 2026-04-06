@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { adminService, getApiErrorMessage, type AdminDashboardMetrics } from '../../services/api';
+import { adminService, getApiErrorMessage, type AdminDashboardMetrics } from '../../lib/api';
 
 const defaultMetrics: AdminDashboardMetrics = {
   totalUsers: 0,
@@ -34,45 +34,69 @@ export default function AdminPage() {
   }, []);
 
   return (
-    <section className="space-y-6">
+    <section>
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Admin Dashboard</h1>
-        <p className="text-muted-foreground mt-1 text-sm">Tổng quan hệ thống theo dữ liệu backend.</p>
+        <h1 className="h3 mb-1">Admin Dashboard</h1>
+        <p className="text-muted small">Tổng quan hệ thống theo dữ liệu backend.</p>
       </div>
 
-      {loading ? <div className="rounded-xl border bg-card p-4 text-sm">Đang tải số liệu...</div> : null}
-      {error ? <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div> : null}
+      {loading ? <div className="alert alert-light border mt-3">Đang tải số liệu...</div> : null}
+      {error ? <div className="alert alert-danger mt-3">{error}</div> : null}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <div className="rounded-xl border bg-card p-5">
-          <p className="text-sm font-medium">Users</p>
-          <p className="mt-1 text-2xl font-semibold">{metrics.totalUsers}</p>
-          <p className="text-muted-foreground mt-1 text-xs">Active: {metrics.activeUsers}</p>
+      <div className="row g-3 mt-1">
+        <div className="col-12 col-md-6 col-xl-4">
+          <div className="card h-100">
+            <div className="card-body">
+              <p className="small fw-semibold mb-1">Users</p>
+              <p className="h3 mb-1">{metrics.totalUsers}</p>
+              <p className="text-muted small mb-0">Active: {metrics.activeUsers}</p>
+            </div>
+          </div>
         </div>
-        <div className="rounded-xl border bg-card p-5">
-          <p className="text-sm font-medium">Events</p>
-          <p className="mt-1 text-2xl font-semibold">{metrics.totalEvents}</p>
-          <p className="text-muted-foreground mt-1 text-xs">Pending approvals: {metrics.pendingApprovals}</p>
+        <div className="col-12 col-md-6 col-xl-4">
+          <div className="card h-100">
+            <div className="card-body">
+              <p className="small fw-semibold mb-1">Events</p>
+              <p className="h3 mb-1">{metrics.totalEvents}</p>
+              <p className="text-muted small mb-0">Pending approvals: {metrics.pendingApprovals}</p>
+            </div>
+          </div>
         </div>
-        <div className="rounded-xl border bg-card p-5 md:col-span-2 xl:col-span-1">
-          <p className="text-sm font-medium">Registrations</p>
-          <p className="mt-1 text-2xl font-semibold">{metrics.pendingRegistrations}</p>
-          <p className="text-muted-foreground mt-1 text-xs">Pending volunteer confirmations</p>
+        <div className="col-12 col-xl-4">
+          <div className="card h-100">
+            <div className="card-body">
+              <p className="small fw-semibold mb-1">Registrations</p>
+              <p className="h3 mb-1">{metrics.pendingRegistrations}</p>
+              <p className="text-muted small mb-0">Pending volunteer confirmations</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-xl border bg-card p-4 text-sm">
-          <p className="font-medium">Organizations</p>
-          <p className="mt-1 text-xl font-semibold">{metrics.totalOrganizations}</p>
+      <div className="row g-3 mt-1">
+        <div className="col-12 col-md-4">
+          <div className="card h-100">
+            <div className="card-body">
+              <p className="fw-semibold mb-1">Organizations</p>
+              <p className="h4 mb-0">{metrics.totalOrganizations}</p>
+            </div>
+          </div>
         </div>
-        <div className="rounded-xl border bg-card p-4 text-sm">
-          <p className="font-medium">Categories</p>
-          <p className="mt-1 text-xl font-semibold">{metrics.totalCategories}</p>
+        <div className="col-12 col-md-4">
+          <div className="card h-100">
+            <div className="card-body">
+              <p className="fw-semibold mb-1">Categories</p>
+              <p className="h4 mb-0">{metrics.totalCategories}</p>
+            </div>
+          </div>
         </div>
-        <div className="rounded-xl border bg-card p-4 text-sm">
-          <p className="font-medium">Volunteers</p>
-          <p className="mt-1 text-xl font-semibold">{metrics.totalVolunteers}</p>
+        <div className="col-12 col-md-4">
+          <div className="card h-100">
+            <div className="card-body">
+              <p className="fw-semibold mb-1">Volunteers</p>
+              <p className="h4 mb-0">{metrics.totalVolunteers}</p>
+            </div>
+          </div>
         </div>
       </div>
     </section>

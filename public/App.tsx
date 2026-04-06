@@ -25,6 +25,7 @@ const Contact = lazy(() => import('./pages/public/Contact'));
 const SearchPage = lazy(() => import('./pages/public/Search'));
 const DonatePage = lazy(() => import('./pages/public/Donate'));
 const PaymentResultPage = lazy(() => import('./pages/public/PaymentResult'));
+const DonationHistory = lazy(() => import('./pages/volunteer/DonationHistory'));
 const PrivacyPage = lazy(() => import('./pages/public/Privacy'));
 const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
@@ -39,6 +40,8 @@ const OrganizerOverview = lazy(() => import('./pages/organizer/OrganizerOverview
 const OrganizerEventManagementPage = lazy(() => import('./pages/organizer/OrganizerEventManagementPage'));
 const OrganizerOrganizationManagementPage = lazy(() => import('./pages/organizer/OrganizerOrganizationManagementPage'));
 const OrganizerVolunteersPage = lazy(() => import('./pages/organizer/OrganizerVolunteersPage'));
+const OrganizerVolunteerDetails = lazy(() => import('./pages/organizer/OrganizerVolunteerDetails'));
+const OrganizerVolunteerHistory = lazy(() => import('./pages/organizer/OrganizerVolunteerHistory'));
 const OrganizationSuccess = lazy(() => import('./pages/organizations/OrganizationSuccess'));
 
 // Minimal loading spinner
@@ -60,7 +63,7 @@ function App() {
             <Route path="/events" element={<EventList />} />
             <Route path="/events/:id" element={<EventDetails />} />
             <Route
-              path="/dashboard"
+              path="/volunteer/dashboard"
               element={
                 <RequireAuth>
                   <VolunteerDashboard />
@@ -68,7 +71,7 @@ function App() {
               }
             />
             <Route
-              path="/favorites"
+              path="/volunteer/favorites"
               element={
                 <RequireAuth>
                   <FavoriteEvents />
@@ -76,7 +79,7 @@ function App() {
               }
             />
             <Route
-              path="/registrations"
+              path="/volunteer/registrations"
               element={
                 <RequireAuth>
                   <MyRegistrations />
@@ -84,7 +87,7 @@ function App() {
               }
             />
             <Route
-              path="/profile"
+              path="/volunteer/profile"
               element={
                 <RequireAuth>
                   <VolunteerProfile />
@@ -92,7 +95,7 @@ function App() {
               }
             />
             <Route
-              path="/settings"
+              path="/account/settings"
               element={
                 <RequireAuth roles={VOLUNTEER_ROLES}>
                   <AccountSettings />
@@ -107,8 +110,18 @@ function App() {
                 </RequireAuth>
               }
             />
+
+
             <Route
               path="/organizer"
+              element={
+                <RequireAuth roles={ORGANIZER_ROLES}>
+                  <OrganizerOverview />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/organizer/overview"
               element={
                 <RequireAuth roles={ORGANIZER_ROLES}>
                   <OrganizerOverview />
@@ -136,6 +149,23 @@ function App() {
               element={
                 <RequireAuth roles={ORGANIZER_ROLES}>
                   <OrganizerVolunteersPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/organizer/registrations/:id"
+              element={
+                <RequireAuth roles={ORGANIZER_ROLES}>
+                  <OrganizerVolunteerDetails />
+                </RequireAuth>
+              }
+            />
+
+            <Route
+              path="/organizer/volunteers/:id/history"
+              element={
+                <RequireAuth roles={ORGANIZER_ROLES}>
+                  <OrganizerVolunteerHistory />
                 </RequireAuth>
               }
             />
@@ -178,7 +208,16 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/search" element={<SearchPage />} />
-            <Route path="/donate" element={<DonatePage />} />
+            <Route path="/donate" element={
+              <RequireAuth>
+                <DonatePage />
+              </RequireAuth>
+            } />
+            <Route path="/volunteer/donations" element={
+              <RequireAuth>
+                <DonationHistory />
+              </RequireAuth>
+            } />
             <Route path="/payment-result" element={<PaymentResultPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/events/register" element={<EventRegisterPage />} />

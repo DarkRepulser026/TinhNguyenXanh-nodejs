@@ -55,10 +55,13 @@ typings/
 .yarn-integrity
 
 # dotenv environment variables file
-.env
+.env.example
 
-# next.js build output
+# Vite build output
+dist/
+.vite/
 .next
 
 .github
 sample
+controllers/layout/

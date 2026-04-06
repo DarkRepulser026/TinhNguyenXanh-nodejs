@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { adminService, getApiErrorMessage, type AdminCategoryItem } from '../../services/api';
+import { adminService, getApiErrorMessage, type AdminCategoryItem } from '../../lib/api';
 
 const AdminCategories = () => {
   const [search, setSearch] = useState('');
@@ -74,56 +74,56 @@ const AdminCategories = () => {
 
   return (
     <section>
-      <h1 className="mb-2 text-2xl font-semibold tracking-tight">Event Categories</h1>
-      <p className="text-muted-foreground mb-6 text-sm">CRUD danh mục cho phân loại sự kiện.</p>
+      <h1 className="h3 mb-2">Event Categories</h1>
+      <p className="text-muted small mb-4">CRUD danh mục cho phân loại sự kiện.</p>
 
-      <form className="mb-3 flex gap-2" onSubmit={onSearchSubmit}>
+      <form className="row g-2 mb-2" onSubmit={onSearchSubmit}>
         <input
-          className="w-full max-w-md rounded border px-3 py-2 text-sm"
+          className="form-control col"
           placeholder="Tìm danh mục"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button className="rounded bg-black px-3 py-2 text-sm text-white" type="submit">
+        <button className="btn btn-dark col-auto" type="submit">
           Search
         </button>
       </form>
 
-      <form className="mb-4 flex gap-2" onSubmit={createCategory}>
+      <form className="row g-2 mb-3" onSubmit={createCategory}>
         <input
-          className="w-full max-w-md rounded border px-3 py-2 text-sm"
+          className="form-control col"
           placeholder="Tên danh mục mới"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-        <button className="rounded bg-green-700 px-3 py-2 text-sm text-white" type="submit">
+        <button className="btn btn-success col-auto" type="submit">
           Add
         </button>
       </form>
 
-      {loading ? <div className="rounded border bg-card p-4 text-sm">Đang tải dữ liệu...</div> : null}
-      {error ? <div className="mb-4 rounded border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div> : null}
+      {loading ? <div className="alert alert-light border">Đang tải dữ liệu...</div> : null}
+      {error ? <div className="alert alert-danger">{error}</div> : null}
 
-      <div className="overflow-x-auto rounded-xl border bg-card">
-        <table className="min-w-full text-sm">
+      <div className="table-responsive card">
+        <table className="table table-hover mb-0 align-middle">
           <thead>
-            <tr className="border-b bg-muted/40 text-left">
-              <th className="px-4 py-3">ID</th>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th className="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr className="border-b" key={item.id}>
-                <td className="px-4 py-3">{item.id}</td>
-                <td className="px-4 py-3">{item.name}</td>
-                <td className="px-4 py-3 text-right">
-                  <div className="inline-flex gap-2">
-                    <button className="rounded bg-slate-900 px-3 py-1 text-white" onClick={() => void renameCategory(item)} type="button">
+              <tr key={item.id}>
+                <td>{item.id}</td>
+                <td>{item.name}</td>
+                <td className="text-end">
+                  <div className="d-inline-flex gap-2">
+                    <button className="btn btn-sm btn-dark" onClick={() => void renameCategory(item)} type="button">
                       Edit
                     </button>
-                    <button className="rounded bg-red-700 px-3 py-1 text-white" onClick={() => void deleteCategory(item)} type="button">
+                    <button className="btn btn-sm btn-danger" onClick={() => void deleteCategory(item)} type="button">
                       Delete
                     </button>
                   </div>
@@ -132,7 +132,7 @@ const AdminCategories = () => {
             ))}
             {!loading && !items.length ? (
               <tr>
-                <td className="px-4 py-5 text-center text-muted-foreground" colSpan={3}>
+                <td className="text-center text-muted py-4" colSpan={3}>
                   Không có danh mục nào.
                 </td>
               </tr>

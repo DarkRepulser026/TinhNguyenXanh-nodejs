@@ -9,11 +9,12 @@ import {
   Heart,
   TrendingUp,
   Award,
-  Layers // Đã thêm Layers vào import để không bị lỗi giao diện
+  Layers,
+  CreditCard
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
-import { volunteerService } from '../../services/api';
+import { volunteerService } from '../../lib/api';
 
 const VolunteerDashboard: React.FC = () => {
     const { user } = useAuth();
@@ -53,8 +54,18 @@ const VolunteerDashboard: React.FC = () => {
     const upcomingEvents = dashboardData?.upcomingEvents || [];
 
     return (
-        <div className="volunteer-dashboard py-4 bg-light min-vh-100">
+        <div className="volunteer-page volunteer-dashboard py-5">
             <div className="container">
+                <div className="section-header d-flex flex-column flex-md-row align-items-start justify-content-between gap-3 mb-4">
+                    <div>
+                        <span className="badge bg-success-soft text-success rounded-pill py-2 px-3 mb-3">Trang tình nguyện viên</span>
+                        <h1 className="section-title mb-2">Xin chào, {user?.fullName?.split(' ')[0] || 'Tình nguyện viên'}!</h1>
+                        <p className="section-subtitle">Xem nhanh kết quả hoạt động, hồ sơ và sự kiện phù hợp với bạn.</p>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                        <Link to="/events" className="btn btn-success btn-pill px-4 py-3 shadow-sm">Khám phá sự kiện mới</Link>
+                    </div>
+                </div>
                 <div className="row g-4">
                     {/* Left Sidebar */}
                     <div className="col-lg-3">
@@ -65,24 +76,6 @@ const VolunteerDashboard: React.FC = () => {
                                 </div>
                                 <h5 className="fw-bold mb-1">{user?.fullName || 'Tình nguyện viên'}</h5>
                                 <p className="text-muted small mb-0">{stats.rank}</p>
-                            </div>
-                            <hr className="text-muted opacity-25" />
-                            <div className="nav flex-column nav-pills gap-2">
-                                <Link to="/volunteer/dashboard" className="nav-link active bg-success text-white rounded-3 px-3 py-2 d-flex align-items-center">
-                                    <BarChart2 size={18} className="me-2" /> Tổng quan
-                                </Link>
-                                <Link to="/volunteer/profile" className="nav-link text-dark hover-success rounded-3 px-3 py-2 d-flex align-items-center">
-                                    <UserIcon size={18} className="me-2" /> Hồ sơ cá nhân
-                                </Link>
-                                <Link to="/volunteer/registrations" className="nav-link text-dark hover-success rounded-3 px-3 py-2 d-flex align-items-center">
-                                    <Calendar size={18} className="me-2" /> Lịch sử đăng ký
-                                </Link>
-                                <Link to="/volunteer/favorites" className="nav-link text-dark hover-success rounded-3 px-3 py-2 d-flex align-items-center">
-                                    <Heart size={18} className="me-2" /> Yêu thích
-                                </Link>
-                                <Link to="/account/settings" className="nav-link text-dark hover-success rounded-3 px-3 py-2 d-flex align-items-center mt-2">
-                                    <Settings size={18} className="me-2" /> Cài đặt
-                                </Link>
                             </div>
                         </div>
                         <div className="card border-0 shadow-sm rounded-4 p-4 bg-gradient-success text-white" style={{ background: 'linear-gradient(135deg, #198754 0%, #20c997 100%)' }}>

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { contactService, getApiErrorMessage } from '../../lib/api';
+import Swal from 'sweetalert2';
 
 const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -8,11 +10,26 @@ const Contact: React.FC = () => {
     subject: '',
     message: ''
   });
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    alert('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất có thể.');
+    
+    if (!formData.name.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim()) {
+      Swal.fire('Lỗi', 'Vui lòng điền đầy đủ thông tin.', 'error');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await contactService.send(formData);
+      Swal.fire('Thành công', 'Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất có thể bằng email.', 'success');
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (error) {
+      Swal.fire('Lỗi', getApiErrorMessage(error, 'Đã xảy ra lỗi khi gửi liên hệ.'), 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -110,8 +127,8 @@ const Contact: React.FC = () => {
                     ></textarea>
                   </div>
                   <div className="col-12 text-end">
-                    <button type="submit" className="btn btn-success btn-lg px-5 py-3 rounded-pill fw-bold shadow-sm d-inline-flex align-items-center gap-2 transition-all hover-scale">
-                      <Send size={20} /> Gửi Liên Hệ
+                    <button type="submit" disabled={loading} className="btn btn-success btn-lg px-5 py-3 rounded-pill fw-bold shadow-sm d-inline-flex align-items-center gap-2 transition-all hover-scale">
+                      <Send size={20} /> {loading ? 'Đang gửi...' : 'Gửi Liên Hệ'}
                     </button>
                   </div>
                 </div>

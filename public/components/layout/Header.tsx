@@ -20,7 +20,8 @@ import {
   BarChart2,
   Settings,
   LogOut,
-  HandCoins // Thêm icon HandCoins cho Đóng góp
+  HandCoins, // Thêm icon HandCoins cho Đóng góp
+  CreditCard
 } from 'lucide-react';
 import { useAuth } from '../../contexts/useAuth';
 
@@ -188,6 +189,12 @@ const Header: React.FC = () => {
                             <Calendar size={15} /> Lịch sử đăng ký
                           </Link>
                         </li>
+                        <li>
+                          <Link to="/volunteer/donations" className="dropdown-item d-flex align-items-center gap-2">
+                            <CreditCard size={15} /> Lịch sử đóng góp
+                          </Link>
+                        </li>
+                        
                         <li>
                           <Link to="/volunteer/favorites" className="dropdown-item d-flex align-items-center gap-2">
                             <Heart size={15} /> Yêu thích

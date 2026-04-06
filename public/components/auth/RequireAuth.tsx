@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
-import type { UserRole } from '../../services/api';
+import type { UserRole } from '../../lib/api';
 
 type RequireAuthProps = {
   children: React.ReactElement;
