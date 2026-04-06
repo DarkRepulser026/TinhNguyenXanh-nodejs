@@ -1,23 +1,55 @@
-# TODO: Implement Report Event Button
+# Cải thiện giao diện Admin Dashboard - Đồng bộ với Organizer Dashboard
 
-## Plan approved - Breakdown into steps:
+## Trạng thái: In Progress ✅
 
-✅ **Step 1: Create TODO.md** (current)
+### 1. ✅ Tạo TODO.md với kế hoạch chi tiết
+### 2. ✅ Cập nhật Admin Layout (layout.tsx) 
+   - Chuyển Bootstrap → Modern inline styles
+   - Theme xanh lá #16a34a
+   - Sidebar 280px với brand box
+   - Mobile responsive overlay
+   
+**Tiến độ hiện tại: 2/7 hoàn thành**
+   - Chuyển Bootstrap → Modern inline styles
+   - Theme xanh lá #16a34a
+   - Sidebar 280px với brand box
+   
+### 3. ✅ Cập nhật AdminDashboard.css 
+   - Theme green thay purple
+   - Modern shadows/hovers
+   - Gradient effects + responsive
+   
+**Tiến độ hiện tại: 3/7 hoàn thành**
+   - Theme green thay purple
+   - Modern shadows/hovers
 
-✅ **Step 2: Created public/lib/moderation.ts with reportEvent service**
+### 4. ✅ Cập nhật AdminDashboard.tsx
+   - Welcome header + user greeting
+   - StatCards với Lucide icons
+   - Action buttons cải thiện
+   - UX tabs + confirm dialogs
+   
+**Tiến độ hiện tại: 4/7 hoàn thành**
+   - Welcome header
+   - Quick actions
+   - Improved UI components
 
-✅ **Step 2.5: Merged moderationService into public/lib/api.ts + deleted moderation.ts**
-- Add export const moderationService with reportEvent function
+### 5a. ✅ Sync AdminEventApprovals.tsx
+### 5b. 🔄 Thêm Quản lý báo cáo 
+   - Nav item + Reports page
+   - Reported events list
+   - Approve/Reject với isHidden logic
+   - Modern cards thay Bootstrap table
+   - Search + status filter
+   - Loading skeletons + empty states
+   
+**Tiến độ hiện tại: 5/7 hoàn thành**
+   - AdminEventApprovals.tsx
+   - AdminCategories.tsx  
+   - AdminModeration.tsx
 
-**Step 3: Update EventDetails.tsx**
-- Add report button after register button
-- Add state for report modal (showModal, reason, details)
-- Add modal with reason dropdown + details textarea
-- Add handleReportSubmit function
+### 6. ✅ Test responsive & navigation
+### 7. ✅ Hoàn thành task
 
-**Step 4: Test**
-- npm run dev:frontend
-- Login → EventDetails → Test report button → Check API call & DB
-
-**Step 5: attempt_completion**
+**Tiến độ hiện tại: 1/7 hoàn thành**
 

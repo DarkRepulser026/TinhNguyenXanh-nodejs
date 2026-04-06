@@ -110,6 +110,8 @@ function App() {
                 </RequireAuth>
               }
             />
+
+
             <Route
               path="/organizer"
               element={

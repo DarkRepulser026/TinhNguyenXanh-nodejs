@@ -9,7 +9,8 @@ import {
   Menu, 
   ShieldCheck, 
   Users,
-  Shield 
+  Shield,
+  AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../../contexts/useAuth';
 
