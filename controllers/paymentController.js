@@ -3,40 +3,76 @@ const models = require('../utils/models');
 const mongo = require('../utils/mongo');
 
 function toPaymentMethod(value) {
-  if (value === 'momo' || value === 'bank') return value;
+  if (value === 'momo' || value === 'bank') {
+    return value;
+  }
   return 'momo';
 }
 
-module.exports = {
-  createMomoPayment: async function (donorName, phoneNumber, message, method, amount) {
-    donorName = typeof donorName === 'string' ? donorName.trim() : null;
-    phoneNumber = typeof phoneNumber === 'string' ? phoneNumber.trim() : null;
-    message = typeof message === 'string' ? message.trim() : null;
-    const paymentMethod = toPaymentMethod(method);
-    amount = Number(amount);
-    if (!Number.isFinite(amount) || amount <= 0) throw { status: 400, message: 'amount must be a positive number.' };
-    const transactionCode = 'VH_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
-    let donation = await models.donation.create({ donorName, amount, phoneNumber, message, paymentMethod, transactionCode, status: 'Pending', providerRef: null });
-    donation = mongo.toPlain(donation.toObject());
-    const paymentUrl = '/payment-result?status=pending&txn=' + encodeURIComponent(transactionCode) + '&amount=' + encodeURIComponent(String(amount)) + '&method=' + encodeURIComponent(paymentMethod);
-    return { donationId: donation.id, transactionCode, status: donation.status, paymentUrl, message: 'Payment request created. Continue to provider checkout.' };
-  },
+exports.createDonation = async (userId, donorNameInput, phoneNumberInput, messageInput, methodInput, amountInput) => {
+  const donorName = typeof donorNameInput === 'string' ? donorNameInput.trim() : null;
+  const phoneNumber = typeof phoneNumberInput === 'string' ? phoneNumberInput.trim() : null;
+  const message = typeof messageInput === 'string' ? messageInput.trim() : null;
+  const paymentMethod = toPaymentMethod(methodInput);
+  const amount = Number(amountInput);
 
-  handleMomoIpn: async function (transactionCode, resultCode, providerRef) {
-    transactionCode = typeof transactionCode === 'string' ? transactionCode.trim() : '';
-    providerRef = typeof providerRef === 'string' ? providerRef.trim() : null;
-    if (!transactionCode) throw { status: 400, message: 'transactionCode is required.' };
-    let donation = mongo.toPlain(await models.donation.findOne({ transactionCode }).lean());
-    if (!donation) throw { status: 404, message: 'Donation transaction not found.' };
-    donation = mongo.toPlain(await models.donation.findOneAndUpdate({ _id: mongo.toObjectId(donation.id) }, { $set: { status: resultCode === '0' ? 'Success' : 'Failed', providerRef } }, { new: true }).lean());
-    return { transactionCode: donation.transactionCode, status: donation.status, amount: donation.amount, method: donation.paymentMethod };
-  },
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw { status: 400, message: 'amount must be a positive number.' };
+  }
 
-  getPaymentStatus: async function (transactionCode) {
-    transactionCode = typeof transactionCode === 'string' ? transactionCode.trim() : '';
-    if (!transactionCode) throw { status: 400, message: 'transactionCode is required.' };
-    let donation = mongo.toPlain(await models.donation.findOne({ transactionCode }).lean());
-    if (!donation) throw { status: 404, message: 'Donation transaction not found.' };
-    return { transactionCode: donation.transactionCode, status: donation.status, amount: donation.amount, method: donation.paymentMethod, createdAt: donation.createdAt, updatedAt: donation.updatedAt };
-  },
+  const transactionCode = 'VH_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
+  const requestId = transactionCode;
+
+  let donation = await models.donation.create({
+      userId: userId ? mongo.toObjectId(userId) : null,
+      donorName,
+      amount,
+      phoneNumber,
+      message,
+      paymentMethod,
+      transactionCode,
+      status: 'Pending',
+      providerRef: requestId,
+  });
+  return mongo.toPlain(donation.toObject());
+};
+
+exports.updateDonationStatus = async (transactionCode, status, providerRef) => {
+  let donation = await models.donation.findOne({ transactionCode }).lean();
+  donation = mongo.toPlain(donation);
+
+  if (!donation) {
+    throw { status: 404, message: 'Donation transaction not found.' };
+  }
+
+  donation = await models.donation.findOneAndUpdate(
+    { _id: mongo.toObjectId(donation.id) },
+    { $set: { status, providerRef } },
+    { new: true },
+  ).lean();
+  return mongo.toPlain(donation);
+};
+
+exports.getPaymentStatus = async (transactionCodeInput) => {
+  const transactionCode = typeof transactionCodeInput === 'string' ? transactionCodeInput.trim() : '';
+
+  if (!transactionCode) {
+    throw { status: 400, message: 'transactionCode is required.' };
+  }
+
+  let donation = await models.donation.findOne({ transactionCode }).lean();
+  donation = mongo.toPlain(donation);
+
+  if (!donation) {
+    throw { status: 404, message: 'Donation transaction not found.' };
+  }
+
+  return {
+    transactionCode: donation.transactionCode,
+    status: donation.status,
+    amount: donation.amount,
+    method: donation.paymentMethod,
+    createdAt: donation.createdAt,
+    updatedAt: donation.updatedAt,
+  };
 };
