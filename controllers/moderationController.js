@@ -3,7 +3,7 @@ const models = require('../utils/models');
 const mongo = require('../utils/mongo');
 
 module.exports = {
-  GetEventComments: async function (eventId) {
+  async GetEventComments(eventId) {
     eventId = typeof eventId === 'string' ? eventId.trim() : '';
     if (!eventId) {
       throw { status: 400, code: 'INVALID_EVENT_ID', message: 'Invalid event id.' };
@@ -22,7 +22,7 @@ module.exports = {
     return { items, totalCount: items.length };
   },
 
-  CreateEventComment: async function (eventId, userId, content) {
+  async CreateEventComment(eventId, userId, content) {
     eventId = typeof eventId === 'string' ? eventId.trim() : '';
     content = typeof content === 'string' ? content.trim() : '';
 
@@ -47,7 +47,7 @@ module.exports = {
     return row;
   },
 
-  GetOrganizationReviews: async function (organizationId) {
+  async GetOrganizationReviews(organizationId) {
     organizationId = typeof organizationId === 'string' ? organizationId.trim() : '';
     if (!organizationId) {
       throw { status: 400, code: 'INVALID_ORGANIZATION_ID', message: 'Invalid organization id.' };
@@ -67,7 +67,7 @@ module.exports = {
     return { items, totalCount: items.length, averageRating };
   },
 
-  CreateOrganizationReview: async function (organizationId, userId, rating, title, content) {
+  async CreateOrganizationReview(organizationId, userId, rating, title, content) {
     organizationId = typeof organizationId === 'string' ? organizationId.trim() : '';
     rating = Number(rating);
     title = typeof title === 'string' ? title.trim() : null;
@@ -101,7 +101,7 @@ module.exports = {
     return existing;
   },
 
-  ReportEvent: async function (eventId, userId, reason, details) {
+  async ReportEvent(eventId, userId, reason, details) {
     eventId = typeof eventId === 'string' ? eventId.trim() : '';
     reason = typeof reason === 'string' ? reason.trim() : '';
     details = typeof details === 'string' ? details.trim() : null;

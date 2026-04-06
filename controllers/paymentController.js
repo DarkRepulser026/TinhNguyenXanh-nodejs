@@ -9,16 +9,16 @@ function toPaymentMethod(value) {
   return 'momo';
 }
 
-exports.createMomoPayment = async (req, res, next) => {
-  try {
-    const donorName = typeof req.body.donorName === 'string' ? req.body.donorName.trim() : null;
-    const phoneNumber = typeof req.body.phoneNumber === 'string' ? req.body.phoneNumber.trim() : null;
-    const message = typeof req.body.message === 'string' ? req.body.message.trim() : null;
-    const paymentMethod = toPaymentMethod(req.body.method);
-    const amount = Number(req.body.amount);
+module.exports = {
+  async createMomoPayment(body) {
+    const donorName = typeof body.donorName === 'string' ? body.donorName.trim() : null;
+    const phoneNumber = typeof body.phoneNumber === 'string' ? body.phoneNumber.trim() : null;
+    const message = typeof body.message === 'string' ? body.message.trim() : null;
+    const paymentMethod = toPaymentMethod(body.method);
+    const amount = Number(body.amount);
 
     if (!Number.isFinite(amount) || amount <= 0) {
-      return res.status(400).send({ message: 'amount must be a positive number.' });
+      throw { status: 400, message: 'amount must be a positive number.' };
     }
 
     const transactionCode = 'VH_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
@@ -36,33 +36,29 @@ exports.createMomoPayment = async (req, res, next) => {
 
     const paymentUrl = '/payment-result?status=pending&txn=' + encodeURIComponent(transactionCode) + '&amount=' + encodeURIComponent(String(amount)) + '&method=' + encodeURIComponent(paymentMethod);
 
-    res.status(201).send({
+    return {
       donationId: donation.id,
       transactionCode,
       status: donation.status,
       paymentUrl,
       message: 'Payment request created. Continue to provider checkout.',
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+    };
+  },
 
-exports.handleMomoIpn = async (req, res, next) => {
-  try {
-    const transactionCode = typeof req.body.transactionCode === 'string' ? req.body.transactionCode.trim() : '';
-    const resultCode = typeof req.body.resultCode === 'string' ? req.body.resultCode : '';
-    const providerRef = typeof req.body.providerRef === 'string' ? req.body.providerRef.trim() : null;
+  async handleMomoIpn(body) {
+    const transactionCode = typeof body.transactionCode === 'string' ? body.transactionCode.trim() : '';
+    const resultCode = typeof body.resultCode === 'string' ? body.resultCode : '';
+    const providerRef = typeof body.providerRef === 'string' ? body.providerRef.trim() : null;
 
     if (!transactionCode) {
-      return res.status(400).send({ message: 'transactionCode is required.' });
+      throw { status: 400, message: 'transactionCode is required.' };
     }
 
     let donation = await models.donation.findOne({ transactionCode }).lean();
     donation = mongo.toPlain(donation);
 
     if (!donation) {
-      return res.status(404).send({ message: 'Donation transaction not found.' });
+      throw { status: 404, message: 'Donation transaction not found.' };
     }
 
     donation = await models.donation.findOneAndUpdate(
@@ -72,41 +68,35 @@ exports.handleMomoIpn = async (req, res, next) => {
     ).lean();
     donation = mongo.toPlain(donation);
 
-    res.send({
+    return {
       transactionCode: donation.transactionCode,
       status: donation.status,
       amount: donation.amount,
       method: donation.paymentMethod,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+    };
+  },
 
-exports.getPaymentStatus = async (req, res, next) => {
-  try {
-    const transactionCode = typeof req.params.transactionCode === 'string' ? req.params.transactionCode.trim() : '';
+  async getPaymentStatus(transactionCode) {
+    transactionCode = typeof transactionCode === 'string' ? transactionCode.trim() : '';
 
     if (!transactionCode) {
-      return res.status(400).send({ message: 'transactionCode is required.' });
+      throw { status: 400, message: 'transactionCode is required.' };
     }
 
     let donation = await models.donation.findOne({ transactionCode }).lean();
     donation = mongo.toPlain(donation);
 
     if (!donation) {
-      return res.status(404).send({ message: 'Donation transaction not found.' });
+      throw { status: 404, message: 'Donation transaction not found.' };
     }
 
-    res.send({
+    return {
       transactionCode: donation.transactionCode,
       status: donation.status,
       amount: donation.amount,
       method: donation.paymentMethod,
       createdAt: donation.createdAt,
       updatedAt: donation.updatedAt,
-    });
-  } catch (error) {
-    next(error);
+    };
   }
 };

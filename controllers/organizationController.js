@@ -2,7 +2,8 @@
 const models = require('../utils/models');
 const mongo = require('../utils/mongo');
 
-exports.getOrganizations = async (req, res, next) => {
+module.exports = {
+  async getOrganizations(req, res, next) {
   try {
     const keyword = typeof req.query.keyword === 'string' ? req.query.keyword.trim().toLowerCase() : '';
     const city = typeof req.query.city === 'string' ? req.query.city.trim().toLowerCase() : '';
@@ -25,9 +26,9 @@ exports.getOrganizations = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
+  },
 
-exports.getOrganizationById = async (req, res, next) => {
+  async getOrganizationById(req, res, next) {
   try {
     const id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
     if (!id) {
@@ -52,9 +53,9 @@ exports.getOrganizationById = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
+  },
 
-exports.registerOrganization = async (req, res, next) => {
+  async registerOrganization(req, res, next) {
   try {
     const authUser = req.authUser;
     const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
@@ -137,5 +138,6 @@ exports.registerOrganization = async (req, res, next) => {
     res.status(201).send({ message: 'Đăng ký tổ chức thành công.', item: plainOrganization });
   } catch (error) {
     next(error);
+  }
   }
 };

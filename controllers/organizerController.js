@@ -13,12 +13,11 @@ async function getOwnedOrganization(userId) {
   return mongo.toPlain(organization);
 }
 
-exports.getDashboard = async (req, res, next) => {
-  try {
-    const authUser = req.authUser;
+module.exports = {
+  async getDashboard(authUser) {
     const organization = await getOwnedOrganization(authUser.userId);
     if (!organization) {
-      return res.status(404).send({ message: 'Organizer organization profile not found.' });
+      throw { status: 404, message: 'Organizer organization profile not found.' };
     }
 
     let events = await models.event.find({ organizationId: mongo.toObjectId(organization.id) }).select('_id status').lean();
@@ -28,7 +27,7 @@ exports.getDashboard = async (req, res, next) => {
     let relatedRegistrations = await models.eventRegistration.find({ eventId: { $in: eventIds.map((id) => mongo.toObjectId(id)) } }).select('status').lean();
     relatedRegistrations = mongo.toPlain(relatedRegistrations);
 
-    res.send({
+    return {
       organization: { id: organization.id, name: organization.name },
       metrics: {
         totalEvents: events.length,
@@ -39,90 +38,71 @@ exports.getDashboard = async (req, res, next) => {
         pendingRegistrations: relatedRegistrations.filter((item) => item.status === 'Pending').length,
         confirmedRegistrations: relatedRegistrations.filter((item) => item.status === 'Confirmed').length,
       },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+    };
+  },
 
-exports.getOrganizationProfile = async (req, res, next) => {
-  try {
-    const authUser = req.authUser;
+  async getOrganizationProfile(authUser) {
     const organization = await getOwnedOrganization(authUser.userId);
     if (!organization) {
-      return res.status(404).send({ message: 'Organizer organization profile not found.' });
+      throw { status: 404, message: 'Organizer organization profile not found.' };
     }
-    res.send(organization);
-  } catch (error) {
-    next(error);
-  }
-};
 
-exports.updateOrganization = async (req, res, next) => {
-  try {
-    const authUser = req.authUser;
+    return organization;
+  },
+
+  async updateOrganization(authUser, body) {
     const organization = await getOwnedOrganization(authUser.userId);
     if (!organization) {
-      return res.status(404).send({ message: 'Organizer organization profile not found.' });
+      throw { status: 404, message: 'Organizer organization profile not found.' };
     }
 
     const payload = {
-      name: typeof req.body.name === 'string' ? req.body.name.trim() : organization.name,
-      description: typeof req.body.description === 'string' ? req.body.description.trim() : organization.description,
-      city: typeof req.body.city === 'string' ? req.body.city.trim() : organization.city,
-      district: typeof req.body.district === 'string' ? req.body.district.trim() : organization.district,
-      address: typeof req.body.address === 'string' ? req.body.address.trim() : organization.address,
-      contactEmail: typeof req.body.contactEmail === 'string' ? req.body.contactEmail.trim().toLowerCase() : organization.contactEmail,
-      phoneNumber: typeof req.body.phoneNumber === 'string' ? req.body.phoneNumber.trim() : organization.phoneNumber,
-      website: typeof req.body.website === 'string' ? req.body.website.trim() : organization.website,
-      organizationType: typeof req.body.organizationType === 'string' ? req.body.organizationType.trim() : organization.organizationType,
+      name: typeof body.name === 'string' ? body.name.trim() : organization.name,
+      description: typeof body.description === 'string' ? body.description.trim() : organization.description,
+      city: typeof body.city === 'string' ? body.city.trim() : organization.city,
+      district: typeof body.district === 'string' ? body.district.trim() : organization.district,
+      address: typeof body.address === 'string' ? body.address.trim() : organization.address,
+      contactEmail: typeof body.contactEmail === 'string' ? body.contactEmail.trim().toLowerCase() : organization.contactEmail,
+      phoneNumber: typeof body.phoneNumber === 'string' ? body.phoneNumber.trim() : organization.phoneNumber,
+      website: typeof body.website === 'string' ? body.website.trim() : organization.website,
+      organizationType: typeof body.organizationType === 'string' ? body.organizationType.trim() : organization.organizationType,
     };
 
     if (!payload.name) {
-      return res.status(400).send({ message: 'Organization name is required.' });
+      throw { status: 400, message: 'Organization name is required.' };
     }
 
     let updated = await models.organization.findOneAndUpdate({ _id: mongo.toObjectId(organization.id) }, { $set: payload }, { new: true }).lean();
     updated = mongo.toPlain(updated);
-    res.send(updated);
-  } catch (error) {
-    next(error);
-  }
-};
+    return updated;
+  },
 
-exports.claimOrganization = async (req, res, next) => {
-  try {
-    const authUser = req.authUser;
-    const organizationId = typeof req.body.organizationId === 'string' ? req.body.organizationId.trim() : '';
+  async claimOrganization(authUser, organizationId) {
+    organizationId = typeof organizationId === 'string' ? organizationId.trim() : '';
     if (!organizationId) {
-      return res.status(400).send({ message: 'organizationId is required.' });
+      throw { status: 400, message: 'organizationId is required.' };
     }
 
     let org = await models.organization.findOne({ _id: mongo.toObjectId(organizationId) }).lean();
     org = mongo.toPlain(org);
     if (!org) {
-      return res.status(404).send({ message: 'Organization not found.' });
+      throw { status: 404, message: 'Organization not found.' };
     }
 
     org = await models.organization.findOneAndUpdate({ _id: mongo.toObjectId(org.id) }, { $set: { ownerUserId: mongo.toObjectId(authUser.userId) } }, { new: true }).lean();
     org = mongo.toPlain(org);
-    res.send(org);
-  } catch (error) {
-    next(error);
-  }
-};
+    return org;
+  },
 
-exports.getEvents = async (req, res, next) => {
-  try {
-    const authUser = req.authUser;
+  async getEvents(authUser, query) {
     const organization = await getOwnedOrganization(authUser.userId);
     if (!organization) {
-      return res.status(404).send({ message: 'Organizer organization profile not found.' });
+      throw { status: 404, message: 'Organizer organization profile not found.' };
     }
 
-    const search = typeof req.query.search === 'string' ? req.query.search.trim().toLowerCase() : '';
-    const status = typeof req.query.status === 'string' ? req.query.status.trim().toLowerCase() : '';
-    const paging = toPageParams(req.query, 10);
+    const search = typeof query.search === 'string' ? query.search.trim().toLowerCase() : '';
+    const status = typeof query.status === 'string' ? query.status.trim().toLowerCase() : '';
+    const paging = toPageParams(query, 10);
 
     let rows = await models.event.find({ organizationId: mongo.toObjectId(organization.id) }).populate('categoryId').lean();
     const registrationRows = await models.eventRegistration.find({ eventId: { $in: rows.map((item) => item._id) } }).select('eventId status').lean();
@@ -156,137 +136,107 @@ exports.getEvents = async (req, res, next) => {
       registrationCount: registrationCountByEvent[event.id] || 0,
     }));
 
-    res.send({ items, totalCount, page: paging.page, pageSize: paging.pageSize, totalPages: Math.ceil(totalCount / paging.pageSize) });
-  } catch (error) {
-    next(error);
-  }
-};
+    return { items, totalCount, page: paging.page, pageSize: paging.pageSize, totalPages: Math.ceil(totalCount / paging.pageSize) };
+  },
 
-exports.getEventById = async (req, res, next) => {
-  try {
-    const authUser = req.authUser;
+  async getEventById(authUser, id) {
     const organization = await getOwnedOrganization(authUser.userId);
-    const id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
-    if (!organization) return res.status(404).send({ message: 'Organizer organization profile not found.' });
-    if (!id) return res.status(400).send({ message: 'Invalid event id.' });
+    id = typeof id === 'string' ? id.trim() : '';
+    if (!organization) throw { status: 404, message: 'Organizer organization profile not found.' };
+    if (!id) throw { status: 400, message: 'Invalid event id.' };
 
     let event = await models.event.findOne({ _id: mongo.toObjectId(id), organizationId: mongo.toObjectId(organization.id) }).populate('categoryId').lean();
     event = mongo.toPlain(event);
-    if (!event) return res.status(404).send({ message: 'Event not found.' });
+    if (!event) throw { status: 404, message: 'Event not found.' };
 
-    res.send({ id: event.id, title: event.title, description: event.description, startTime: event.startTime, endTime: event.endTime, location: event.location, status: event.status, isHidden: Boolean(event.isHidden), maxVolunteers: event.maxVolunteers, images: event.images, categoryId: event.categoryId, categoryName: event.categoryId && event.categoryId.name ? event.categoryId.name : null });
-  } catch (error) {
-    next(error);
-  }
-};
+    return { id: event.id, title: event.title, description: event.description, startTime: event.startTime, endTime: event.endTime, location: event.location, status: event.status, isHidden: Boolean(event.isHidden), maxVolunteers: event.maxVolunteers, images: event.images, categoryId: event.categoryId, categoryName: event.categoryId && event.categoryId.name ? event.categoryId.name : null };
+  },
 
-exports.createEvent = async (req, res, next) => {
-  try {
-    const authUser = req.authUser;
+  async createEvent(authUser, body) {
     const organization = await getOwnedOrganization(authUser.userId);
-    if (!organization) return res.status(404).send({ message: 'Organizer organization profile not found.' });
+    if (!organization) throw { status: 404, message: 'Organizer organization profile not found.' };
 
-    const title = typeof req.body.title === 'string' ? req.body.title.trim() : '';
-    const description = typeof req.body.description === 'string' ? req.body.description.trim() : null;
-    const location = typeof req.body.location === 'string' ? req.body.location.trim() : null;
-    const categoryId = typeof req.body.categoryId === 'string' ? req.body.categoryId.trim() : null;
-    const maxVolunteers = Number(req.body.maxVolunteers);
-    const startTime = new Date(req.body.startTime);
-    const endTime = new Date(req.body.endTime);
+    const title = typeof body.title === 'string' ? body.title.trim() : '';
+    const description = typeof body.description === 'string' ? body.description.trim() : null;
+    const location = typeof body.location === 'string' ? body.location.trim() : null;
+    const categoryId = typeof body.categoryId === 'string' ? body.categoryId.trim() : null;
+    const maxVolunteers = Number(body.maxVolunteers);
+    const startTime = new Date(body.startTime);
+    const endTime = new Date(body.endTime);
 
     if (!title || !Number.isFinite(startTime.valueOf()) || !Number.isFinite(endTime.valueOf())) {
-      return res.status(400).send({ message: 'title, startTime, and endTime are required.' });
+      throw { status: 400, message: 'title, startTime, and endTime are required.' };
     }
     if (endTime <= startTime) {
-      return res.status(400).send({ message: 'endTime must be later than startTime.' });
+      throw { status: 400, message: 'endTime must be later than startTime.' };
     }
 
     let event = await models.event.create({ title, description, location, categoryId: categoryId ? mongo.toObjectId(categoryId) : null, maxVolunteers: Number.isFinite(maxVolunteers) && maxVolunteers >= 0 ? maxVolunteers : 0, startTime, endTime, organizationId: mongo.toObjectId(organization.id), status: 'draft', images: null, isHidden: false });
     event = mongo.toPlain(event.toObject());
-    res.status(201).send(event);
-  } catch (error) {
-    next(error);
-  }
-};
+    return event;
+  },
 
-exports.updateEvent = async (req, res, next) => {
-  try {
-    const authUser = req.authUser;
+  async updateEvent(authUser, id, body) {
     const organization = await getOwnedOrganization(authUser.userId);
-    const id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
-    if (!organization) return res.status(404).send({ message: 'Organizer organization profile not found.' });
-    if (!id) return res.status(400).send({ message: 'Invalid event id.' });
+    id = typeof id === 'string' ? id.trim() : '';
+    if (!organization) throw { status: 404, message: 'Organizer organization profile not found.' };
+    if (!id) throw { status: 400, message: 'Invalid event id.' };
 
     let event = await models.event.findOne({ _id: mongo.toObjectId(id), organizationId: mongo.toObjectId(organization.id) }).lean();
     event = mongo.toPlain(event);
-    if (!event) return res.status(404).send({ message: 'Event not found.' });
+    if (!event) throw { status: 404, message: 'Event not found.' };
 
     const data = {};
-    if (typeof req.body.title === 'string') data.title = req.body.title.trim();
-    if (typeof req.body.description === 'string') data.description = req.body.description.trim();
-    if (typeof req.body.location === 'string') data.location = req.body.location.trim();
-    if (typeof req.body.categoryId === 'string') data.categoryId = req.body.categoryId.trim() || null;
-    if (Number.isFinite(Number(req.body.maxVolunteers))) data.maxVolunteers = Number(req.body.maxVolunteers);
-    if (req.body.startTime && Number.isFinite(new Date(req.body.startTime).valueOf())) data.startTime = new Date(req.body.startTime);
-    if (req.body.endTime && Number.isFinite(new Date(req.body.endTime).valueOf())) data.endTime = new Date(req.body.endTime);
+    if (typeof body.title === 'string') data.title = body.title.trim();
+    if (typeof body.description === 'string') data.description = body.description.trim();
+    if (typeof body.location === 'string') data.location = body.location.trim();
+    if (typeof body.categoryId === 'string') data.categoryId = body.categoryId.trim() || null;
+    if (Number.isFinite(Number(body.maxVolunteers))) data.maxVolunteers = Number(body.maxVolunteers);
+    if (body.startTime && Number.isFinite(new Date(body.startTime).valueOf())) data.startTime = new Date(body.startTime);
+    if (body.endTime && Number.isFinite(new Date(body.endTime).valueOf())) data.endTime = new Date(body.endTime);
     if (Object.prototype.hasOwnProperty.call(data, 'categoryId')) data.categoryId = data.categoryId ? mongo.toObjectId(data.categoryId) : null;
 
     event = await models.event.findOneAndUpdate({ _id: mongo.toObjectId(event.id) }, { $set: data }, { new: true }).lean();
     event = mongo.toPlain(event);
-    res.send(event);
-  } catch (error) {
-    next(error);
-  }
-};
+    return event;
+  },
 
-exports.hideEvent = async (req, res, next) => {
-  try {
-    const authUser = req.authUser;
+  async hideEvent(authUser, id) {
     const organization = await getOwnedOrganization(authUser.userId);
-    const id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
-    if (!organization) return res.status(404).send({ message: 'Organizer organization profile not found.' });
+    id = typeof id === 'string' ? id.trim() : '';
+    if (!organization) throw { status: 404, message: 'Organizer organization profile not found.' };
 
     let event = await models.event.findOne({ _id: mongo.toObjectId(id), organizationId: mongo.toObjectId(organization.id) }).lean();
     event = mongo.toPlain(event);
-    if (!event) return res.status(404).send({ message: 'Event not found.' });
+    if (!event) throw { status: 404, message: 'Event not found.' };
 
     event = await models.event.findOneAndUpdate({ _id: mongo.toObjectId(event.id) }, { $set: { isHidden: true, status: 'hidden' } }, { new: true }).lean();
     event = mongo.toPlain(event);
-    res.send({ id: event.id, status: event.status, isHidden: event.isHidden });
-  } catch (error) {
-    next(error);
-  }
-};
+    return { id: event.id, status: event.status, isHidden: event.isHidden };
+  },
 
-exports.unhideEvent = async (req, res, next) => {
-  try {
-    const authUser = req.authUser;
+  async unhideEvent(authUser, id) {
     const organization = await getOwnedOrganization(authUser.userId);
-    const id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
-    if (!organization) return res.status(404).send({ message: 'Organizer organization profile not found.' });
+    id = typeof id === 'string' ? id.trim() : '';
+    if (!organization) throw { status: 404, message: 'Organizer organization profile not found.' };
 
     let event = await models.event.findOne({ _id: mongo.toObjectId(id), organizationId: mongo.toObjectId(organization.id) }).lean();
     event = mongo.toPlain(event);
-    if (!event) return res.status(404).send({ message: 'Event not found.' });
+    if (!event) throw { status: 404, message: 'Event not found.' };
 
     event = await models.event.findOneAndUpdate({ _id: mongo.toObjectId(event.id) }, { $set: { isHidden: false, status: 'pending' } }, { new: true }).lean();
     event = mongo.toPlain(event);
-    res.send({ id: event.id, status: event.status, isHidden: event.isHidden });
-  } catch (error) {
-    next(error);
-  }
-};
+    return { id: event.id, status: event.status, isHidden: event.isHidden };
+  },
 
-exports.getVolunteers = async (req, res, next) => {
-  try {
-    const authUser = req.authUser;
+  async getVolunteers(authUser, query) {
     const organization = await getOwnedOrganization(authUser.userId);
-    if (!organization) return res.status(404).send({ message: 'Organizer organization profile not found.' });
+    if (!organization) throw { status: 404, message: 'Organizer organization profile not found.' };
 
-    const eventId = typeof req.query.eventId === 'string' ? req.query.eventId.trim() : '';
-    const search = typeof req.query.search === 'string' ? req.query.search.trim().toLowerCase() : '';
-    const status = typeof req.query.status === 'string' ? req.query.status.trim() : '';
-    const paging = toPageParams(req.query, 10);
+    const eventId = typeof query.eventId === 'string' ? query.eventId.trim() : '';
+    const search = typeof query.search === 'string' ? query.search.trim().toLowerCase() : '';
+    const status = typeof query.status === 'string' ? query.status.trim() : '';
+    const paging = toPageParams(query, 10);
 
     let ownedEvents = await models.event.find({ organizationId: mongo.toObjectId(organization.id) }).select('_id').lean();
     ownedEvents = mongo.toPlain(ownedEvents);
@@ -316,71 +266,56 @@ exports.getVolunteers = async (req, res, next) => {
       volunteer: { id: item.volunteerId ? item.volunteerId.id : null, userId: item.volunteerId ? item.volunteerId.userId : null, fullName: item.volunteerId ? item.volunteerId.fullName : item.fullName, phone: item.volunteerId ? item.volunteerId.phone : item.phone },
     }));
 
-    res.send({ items, totalCount, page: paging.page, pageSize: paging.pageSize, totalPages: Math.ceil(totalCount / paging.pageSize) });
-  } catch (error) {
-    next(error);
-  }
-};
+    return { items, totalCount, page: paging.page, pageSize: paging.pageSize, totalPages: Math.ceil(totalCount / paging.pageSize) };
+  },
 
-exports.updateRegistrationStatus = async (req, res, next) => {
-  try {
-    const authUser = req.authUser;
+  async updateRegistrationStatus(authUser, id, action) {
     const organization = await getOwnedOrganization(authUser.userId);
-    const id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
-    const action = typeof req.body.action === 'string' ? req.body.action : '';
-    if (!organization) return res.status(404).send({ message: 'Organizer organization profile not found.' });
-    if (!id) return res.status(400).send({ message: 'Invalid registration id.' });
+    id = typeof id === 'string' ? id.trim() : '';
+    action = typeof action === 'string' ? action : '';
+    if (!organization) throw { status: 404, message: 'Organizer organization profile not found.' };
+    if (!id) throw { status: 400, message: 'Invalid registration id.' };
 
     let registration = await models.eventRegistration.findOne({ _id: mongo.toObjectId(id) }).populate('eventId').lean();
     registration = mongo.toPlain(registration);
-    if (!registration) return res.status(404).send({ message: 'Registration not found.' });
+    if (!registration) throw { status: 404, message: 'Registration not found.' };
     const event = registration.eventId;
-    if (!event || event.organizationId !== organization.id) return res.status(403).send({ message: 'You do not have access to this registration.' });
+    if (!event || event.organizationId !== organization.id) throw { status: 403, message: 'You do not have access to this registration.' };
 
     if (action === 'approve') {
       registration = await models.eventRegistration.findOneAndUpdate({ _id: mongo.toObjectId(registration.id) }, { $set: { status: 'Confirmed' } }, { new: true }).lean();
     } else if (action === 'reject') {
       registration = await models.eventRegistration.findOneAndUpdate({ _id: mongo.toObjectId(registration.id) }, { $set: { status: 'Rejected' } }, { new: true }).lean();
     } else {
-      return res.status(400).send({ message: "action must be 'approve' or 'reject'." });
+      throw { status: 400, message: "action must be 'approve' or 'reject'." };
     }
 
     registration = mongo.toPlain(registration);
-    res.send({ id: registration.id, status: registration.status });
-  } catch (error) {
-    next(error);
-  }
-};
+    return { id: registration.id, status: registration.status };
+  },
 
-exports.getRegistrationById = async (req, res, next) => {
-  try {
-    const authUser = req.authUser;
+  async getRegistrationById(authUser, id) {
     const organization = await getOwnedOrganization(authUser.userId);
-    const id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
-    if (!organization) return res.status(404).send({ message: 'Organizer organization profile not found.' });
-    if (!id) return res.status(400).send({ message: 'Invalid registration id.' });
+    id = typeof id === 'string' ? id.trim() : '';
+    if (!organization) throw { status: 404, message: 'Organizer organization profile not found.' };
+    if (!id) throw { status: 400, message: 'Invalid registration id.' };
 
     let row = await models.eventRegistration.findOne({ _id: mongo.toObjectId(id) }).populate('eventId').populate('volunteerId').lean();
     row = mongo.toPlain(row);
-    if (!row) return res.status(404).send({ message: 'Registration not found.' });
+    if (!row) throw { status: 404, message: 'Registration not found.' };
 
     const event = row.eventId;
     const volunteer = row.volunteerId;
-    if (!event || event.organizationId !== organization.id) return res.status(403).send({ message: 'You do not have access to this registration.' });
+    if (!event || event.organizationId !== organization.id) throw { status: 403, message: 'You do not have access to this registration.' };
 
-    res.send({ id: row.id, status: row.status, fullName: row.fullName, phone: row.phone, reason: row.reason, registeredAt: row.registeredAt, event: { id: event.id, title: event.title, startTime: event.startTime, endTime: event.endTime, location: event.location, status: event.status }, volunteer: { id: volunteer ? volunteer.id : null, userId: volunteer ? volunteer.userId : null, fullName: volunteer ? volunteer.fullName : row.fullName, phone: volunteer ? volunteer.phone : row.phone } });
-  } catch (error) {
-    next(error);
-  }
-};
+    return { id: row.id, status: row.status, fullName: row.fullName, phone: row.phone, reason: row.reason, registeredAt: row.registeredAt, event: { id: event.id, title: event.title, startTime: event.startTime, endTime: event.endTime, location: event.location, status: event.status }, volunteer: { id: volunteer ? volunteer.id : null, userId: volunteer ? volunteer.userId : null, fullName: volunteer ? volunteer.fullName : row.fullName, phone: volunteer ? volunteer.phone : row.phone } };
+  },
 
-exports.getVolunteerHistory = async (req, res, next) => {
-  try {
-    const authUser = req.authUser;
+  async getVolunteerHistory(authUser, volunteerId) {
     const organization = await getOwnedOrganization(authUser.userId);
-    const volunteerId = typeof req.params.id === 'string' ? req.params.id.trim() : '';
-    if (!organization) return res.status(404).send({ message: 'Organizer organization profile not found.' });
-    if (!volunteerId) return res.status(400).send({ message: 'Invalid volunteer id.' });
+    volunteerId = typeof volunteerId === 'string' ? volunteerId.trim() : '';
+    if (!organization) throw { status: 404, message: 'Organizer organization profile not found.' };
+    if (!volunteerId) throw { status: 400, message: 'Invalid volunteer id.' };
 
     let ownedEvents = await models.event.find({ organizationId: mongo.toObjectId(organization.id) }).select('_id').lean();
     ownedEvents = mongo.toPlain(ownedEvents);
@@ -391,30 +326,23 @@ exports.getVolunteerHistory = async (req, res, next) => {
 
     const items = rows.map((row) => ({ id: row.id, status: row.status, reason: row.reason, registeredAt: row.registeredAt, event: { id: row.eventId ? row.eventId.id : null, title: row.eventId ? row.eventId.title : '', location: row.eventId ? row.eventId.location : null, startTime: row.eventId ? row.eventId.startTime : null, endTime: row.eventId ? row.eventId.endTime : null, status: row.eventId ? row.eventId.status : null } }));
 
-    res.send({ items });
-  } catch (error) {
-    next(error);
-  }
-};
+    return { items };
+  },
 
-exports.getRegistrationEvaluation = async (req, res, next) => {
-  try {
-    const authUser = req.authUser;
+  async getRegistrationEvaluation(authUser, id) {
     const organization = await getOwnedOrganization(authUser.userId);
-    const id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
-    if (!organization) return res.status(404).send({ message: 'Organizer organization profile not found.' });
-    if (!id) return res.status(400).send({ message: 'Invalid registration id.' });
+    id = typeof id === 'string' ? id.trim() : '';
+    if (!organization) throw { status: 404, message: 'Organizer organization profile not found.' };
+    if (!id) throw { status: 400, message: 'Invalid registration id.' };
 
     let registration = await models.eventRegistration.findOne({ _id: mongo.toObjectId(id) }).populate('eventId').lean();
     registration = mongo.toPlain(registration);
-    if (!registration) return res.status(404).send({ message: 'Registration not found.' });
+    if (!registration) throw { status: 404, message: 'Registration not found.' };
     const event = registration.eventId;
-    if (!event || event.organizationId !== organization.id) return res.status(403).send({ message: 'You do not have access to this registration.' });
+    if (!event || event.organizationId !== organization.id) throw { status: 403, message: 'You do not have access to this registration.' };
 
     let evaluation = await models.volunteerEvaluation.findOne({ registrationId: mongo.toObjectId(id) }).lean();
     evaluation = mongo.toPlain(evaluation);
-    res.send({ item: evaluation || null });
-  } catch (error) {
-    next(error);
+    return { item: evaluation || null };
   }
 };

@@ -20,7 +20,7 @@ function toViewEvent(row) {
 }
 
 module.exports = {
-  GetAllEvents: async function (keyword, location, category, page, pageSize) {
+  async GetAllEvents(keyword, location, category, page, pageSize) {
     keyword = typeof keyword === 'string' ? keyword.trim().toLowerCase() : '';
     location = typeof location === 'string' ? location.trim().toLowerCase() : '';
     category = typeof category === 'string' ? category.trim() : '';
@@ -81,7 +81,7 @@ module.exports = {
     };
   },
 
-  GetEventById: async function (id) {
+  async GetEventById(id) {
     id = typeof id === 'string' ? id.trim() : '';
     if (!id) {
       throw { status: 400, message: 'Invalid event id.' };
@@ -114,7 +114,7 @@ module.exports = {
     };
   },
 
-  RegisterEvent: async function (eventId, userId, fullName, phone, reason) {
+  async RegisterEvent(eventId, userId, fullName, phone, reason) {
     eventId = typeof eventId === 'string' ? eventId.trim() : '';
     fullName = typeof fullName === 'string' ? fullName.trim() : null;
     phone = typeof phone === 'string' ? phone.trim() : null;
@@ -178,7 +178,7 @@ module.exports = {
     return { message: 'Registration created.' };
   },
 
-  ToggleFavorite: async function (eventId, userId) {
+  async ToggleFavorite(eventId, userId) {
     eventId = typeof eventId === 'string' ? eventId.trim() : '';
     if (!eventId || !userId) {
       throw { status: 400, message: 'eventId and userId are required.' };

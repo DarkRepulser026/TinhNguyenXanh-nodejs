@@ -8,8 +8,8 @@ function toPageParams(query, defaultPageSize) {
   return { page, pageSize };
 }
 
-exports.getDashboard = async (req, res, next) => {
-  try {
+module.exports = {
+  async getDashboard() {
     const totalUsers = await models.appUser.countDocuments({});
     const activeUsers = await models.appUser.countDocuments({ isActive: true });
     const totalEvents = await models.event.countDocuments({});
@@ -19,16 +19,12 @@ exports.getDashboard = async (req, res, next) => {
     const totalVolunteers = await models.volunteer.countDocuments({});
     const pendingRegistrations = await models.eventRegistration.countDocuments({ status: 'Pending' });
 
-    res.send({ totalUsers, activeUsers, totalEvents, pendingApprovals, totalOrganizations, totalCategories, totalVolunteers, pendingRegistrations });
-  } catch (error) {
-    next(error);
-  }
-};
+    return { totalUsers, activeUsers, totalEvents, pendingApprovals, totalOrganizations, totalCategories, totalVolunteers, pendingRegistrations };
+  },
 
-exports.getEventApprovals = async (req, res, next) => {
-  try {
-    const search = typeof req.query.search === 'string' ? req.query.search.trim().toLowerCase() : '';
-    const paging = toPageParams(req.query, 10);
+  async getEventApprovals(search, page, pageSize) {
+    search = typeof search === 'string' ? search.trim().toLowerCase() : '';
+    const paging = { page: Math.max(1, Number(page || 1)), pageSize: Math.min(100, Math.max(1, Number(pageSize || 10))) };
 
     let rows = await models.event.find({ status: { $in: ['draft', 'pending'] } }).populate('organizationId').populate('categoryId').lean();
     rows = mongo.toPlain(rows);
@@ -55,19 +51,15 @@ exports.getEventApprovals = async (req, res, next) => {
       categoryName: event.categoryId && event.categoryId.name ? event.categoryId.name : null,
     }));
 
-    res.send({ items, totalCount, page: paging.page, pageSize: paging.pageSize, totalPages: Math.ceil(totalCount / paging.pageSize) });
-  } catch (error) {
-    next(error);
-  }
-};
+    return { items, totalCount, page: paging.page, pageSize: paging.pageSize, totalPages: Math.ceil(totalCount / paging.pageSize) };
+  },
 
-exports.updateEventStatus = async (req, res, next) => {
-  try {
-    const id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
-    const action = typeof req.body.action === 'string' ? req.body.action : '';
+  async updateEventStatus(id, action) {
+    id = typeof id === 'string' ? id.trim() : '';
+    action = typeof action === 'string' ? action : '';
 
     if (!id) {
-      return res.status(400).send({ message: 'Invalid event id.' });
+      throw { status: 400, message: 'Invalid event id.' };
     }
 
     let event = await models.event.findOne({ _id: mongo.toObjectId(id) }).lean();
@@ -81,20 +73,16 @@ exports.updateEventStatus = async (req, res, next) => {
     } else if (action === 'reject') {
       event = await models.event.findOneAndUpdate({ _id: mongo.toObjectId(event.id) }, { $set: { status: 'rejected' } }, { new: true }).lean();
     } else {
-      return res.status(400).send({ message: "action must be 'approve' or 'reject'." });
+      throw { status: 400, message: "action must be 'approve' or 'reject'." };
     }
 
     event = mongo.toPlain(event);
-    res.send({ id: event.id, status: event.status });
-  } catch (error) {
-    next(error);
-  }
-};
+    return { id: event.id, status: event.status };
+  },
 
-exports.getUsers = async (req, res, next) => {
-  try {
-    const search = typeof req.query.search === 'string' ? req.query.search.trim().toLowerCase() : '';
-    const paging = toPageParams(req.query, 10);
+  async getUsers(search, page, pageSize) {
+    search = typeof search === 'string' ? search.trim().toLowerCase() : '';
+    const paging = { page: Math.max(1, Number(page || 1)), pageSize: Math.min(100, Math.max(1, Number(pageSize || 10))) };
 
     let rows = await models.appUser.find({}).lean();
     rows = mongo.toPlain(rows);
@@ -117,23 +105,18 @@ exports.getUsers = async (req, res, next) => {
       createdAt: item.createdAt,
     }));
 
-    res.send({ items, totalCount, page: paging.page, pageSize: paging.pageSize, totalPages: Math.ceil(totalCount / paging.pageSize) });
-  } catch (error) {
-    next(error);
-  }
-};
+    return { items, totalCount, page: paging.page, pageSize: paging.pageSize, totalPages: Math.ceil(totalCount / paging.pageSize) };
+  },
 
-exports.updateUserStatus = async (req, res, next) => {
-  try {
-    const authUser = req.authUser;
-    const id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
-    const isActive = Boolean(req.body.isActive);
+  async updateUserStatus(id, isActive, authUser) {
+    id = typeof id === 'string' ? id.trim() : '';
+    isActive = Boolean(isActive);
 
     if (!id) {
-      return res.status(400).send({ message: 'Invalid user id.' });
+      throw { status: 400, message: 'Invalid user id.' };
     }
     if (authUser.userId === id && !isActive) {
-      return res.status(400).send({ message: 'Admin cannot disable own account.' });
+      throw { status: 400, message: 'Admin cannot disable own account.' };
     }
 
     let user = await models.appUser.findOne({ _id: mongo.toObjectId(id) }).lean();
@@ -144,19 +127,15 @@ exports.updateUserStatus = async (req, res, next) => {
 
     user = await models.appUser.findOneAndUpdate({ _id: mongo.toObjectId(user.id) }, { $set: { isActive } }, { new: true }).lean();
     user = mongo.toPlain(user);
-    res.send({ id: user.id, isActive: user.isActive });
-  } catch (error) {
-    next(error);
-  }
-};
+    return { id: user.id, isActive: user.isActive };
+  },
 
-exports.updateUserRole = async (req, res, next) => {
-  try {
-    const id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
-    const role = typeof req.body.role === 'string' ? req.body.role : '';
+  async updateUserRole(id, role) {
+    id = typeof id === 'string' ? id.trim() : '';
+    role = typeof role === 'string' ? role : '';
 
     if (!(role === 'Admin' || role === 'Organizer' || role === 'Volunteer')) {
-      return res.status(400).send({ message: 'Invalid role.' });
+      throw { status: 400, message: 'Invalid role.' };
     }
 
     let user = await models.appUser.findOne({ _id: mongo.toObjectId(id) }).lean();
@@ -167,16 +146,12 @@ exports.updateUserRole = async (req, res, next) => {
 
     user = await models.appUser.findOneAndUpdate({ _id: mongo.toObjectId(user.id) }, { $set: { role } }, { new: true }).lean();
     user = mongo.toPlain(user);
-    res.send({ id: user.id, role: user.role });
-  } catch (error) {
-    next(error);
-  }
-};
+    return { id: user.id, role: user.role };
+  },
 
-exports.getCategories = async (req, res, next) => {
-  try {
-    const search = typeof req.query.search === 'string' ? req.query.search.trim().toLowerCase() : '';
-    const paging = toPageParams(req.query, 10);
+  async getCategories(search, page, pageSize) {
+    search = typeof search === 'string' ? search.trim().toLowerCase() : '';
+    const paging = { page: Math.max(1, Number(page || 1)), pageSize: Math.min(100, Math.max(1, Number(pageSize || 10))) };
 
     let rows = await models.eventCategory.find({}).lean();
     rows = mongo.toPlain(rows);
@@ -185,36 +160,28 @@ exports.getCategories = async (req, res, next) => {
     const totalCount = rows.length;
     const items = rows.slice((paging.page - 1) * paging.pageSize, (paging.page - 1) * paging.pageSize + paging.pageSize);
 
-    res.send({ items, totalCount, page: paging.page, pageSize: paging.pageSize, totalPages: Math.ceil(totalCount / paging.pageSize) });
-  } catch (error) {
-    next(error);
-  }
-};
+    return { items, totalCount, page: paging.page, pageSize: paging.pageSize, totalPages: Math.ceil(totalCount / paging.pageSize) };
+  },
 
-exports.createCategory = async (req, res, next) => {
-  try {
-    const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+  async createCategory(name) {
+    name = typeof name === 'string' ? name.trim() : '';
     if (!name) {
-      return res.status(400).send({ message: 'Category name is required.' });
+      throw { status: 400, message: 'Category name is required.' };
     }
 
     const item = await models.eventCategory.create({ name });
-    res.status(201).send(mongo.toPlain(item.toObject()));
-  } catch (error) {
-    next(error);
-  }
-};
+    return mongo.toPlain(item.toObject());
+  },
 
-exports.updateCategory = async (req, res, next) => {
-  try {
-    const id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
-    const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+  async updateCategory(id, name) {
+    id = typeof id === 'string' ? id.trim() : '';
+    name = typeof name === 'string' ? name.trim() : '';
 
     if (!id) {
-      return res.status(400).send({ message: 'Invalid category id.' });
+      throw { status: 400, message: 'Invalid category id.' };
     }
     if (!name) {
-      return res.status(400).send({ message: 'Category name is required.' });
+      throw { status: 400, message: 'Category name is required.' };
     }
 
     let item = await models.eventCategory.findOne({ _id: mongo.toObjectId(id) }).lean();
@@ -225,41 +192,31 @@ exports.updateCategory = async (req, res, next) => {
 
     item = await models.eventCategory.findOneAndUpdate({ _id: mongo.toObjectId(item.id) }, { $set: { name } }, { new: true }).lean();
     item = mongo.toPlain(item);
-    res.send(item);
-  } catch (error) {
-    next(error);
-  }
-};
+    return item;
+  },
 
-exports.deleteCategory = async (req, res, next) => {
-  try {
-    const id = typeof req.params.id === 'string' ? req.params.id.trim() : '';
+  async deleteCategory(id) {
+    id = typeof id === 'string' ? id.trim() : '';
     if (!id) {
-      return res.status(400).send({ message: 'Invalid category id.' });
+      throw { status: 400, message: 'Invalid category id.' };
     }
 
     let item = await models.eventCategory.findOne({ _id: mongo.toObjectId(id) }).lean();
     item = mongo.toPlain(item);
     if (!item) {
-      return res.status(404).send({ message: 'Category not found.' });
+      throw { status: 404, message: 'Category not found.' };
     }
 
     await models.eventCategory.findOneAndDelete({ _id: mongo.toObjectId(item.id) });
-    res.send({ message: 'Category deleted.' });
-  } catch (error) {
-    next(error);
-  }
-};
+    return { message: 'Category deleted.' };
+  },
 
-exports.getModerationSummary = async (req, res, next) => {
-  try {
+  async getModerationSummary() {
     const queue = await models.eventReport.find({}).sort({ createdAt: -1 }).limit(100).lean();
     const rejectedEvents = await models.event.countDocuments({ status: 'rejected' });
     const hiddenEvents = await models.event.countDocuments({ isHidden: true });
     const inactiveUsers = await models.appUser.countDocuments({ isActive: false });
 
-    res.send({ queue: mongo.toPlain(queue), summary: { rejectedEvents, hiddenEvents, inactiveUsers }, message: 'Moderation queue loaded.' });
-  } catch (error) {
-    next(error);
+    return { queue: mongo.toPlain(queue), summary: { rejectedEvents, hiddenEvents, inactiveUsers }, message: 'Moderation queue loaded.' };
   }
 };
