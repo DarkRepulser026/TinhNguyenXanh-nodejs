@@ -49,6 +49,15 @@ app.use(function (req, res, next) {
 
 // error handler
 app.use(function (err, req, res, next) {
+  console.error('🚨 API ERROR:', {
+    url: req.originalUrl,
+    method: req.method,
+    status: err.status || 500,
+    message: err.message,
+    stack: err.stack,
+    userId: req.authUser?.userId
+  });
+
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
@@ -59,5 +68,12 @@ app.use(function (err, req, res, next) {
     message: err.message,
   });
 });
+
+// Global unhandled promise rejection
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
+  // Optionally exit if critical
+});
+
 
 module.exports = app;

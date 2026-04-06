@@ -140,12 +140,12 @@ export const adminService = {
   updateEventStatus: (id: string | number, action: string | number) =>
     axios.patch(`/admin/events/${id}/status`, { action }),
   getUsers: (params?: Record<string, unknown>) => axios.get('/admin/users', { params }),
-  updateUserStatus: (id: string, isActive: boolean) => axios.patch(`/admin/users/${id}/status`, { isActive }),
-  updateUserRole: (id: string, role: UserRole) => axios.patch(`/admin/users/${id}/role`, { role }),
+  updateUserStatus: (id: string, isActive: boolean) => axios.patch('/admin/users/${id}/status', { isActive }),
+  updateUserRole: (id: string, role: UserRole) => axios.patch('/admin/users/${id}/role', { role }),
   getCategories: (params?: Record<string, unknown>) => axios.get('/admin/categories', { params }),
   createCategory: (name: string) => axios.post('/admin/categories', { name }),
   updateCategory: (id: string, name: string) => axios.patch(`/admin/categories/${id}`, { name }),
-  deleteCategory: (id: string) => axios.delete(`/admin/categories/${id}`),
+  deleteCategory: (id: string) => axios.delete('/admin/categories/${id}'),
   getModeration: () => axios.get('/admin/moderation'),
 }
 
@@ -171,7 +171,17 @@ export const organizerService = {
   getVolunteerHistory: (id: string | number) => axios.get(`/organizer/volunteers/${id}/history`),
 }
 
+export const moderationService = {
+  reportEvent: (eventId: string | number, payload: { reason: string; details?: string }) => {
+    return axios.post(`/events/${eventId}/reports`, payload).catch((error) => {
+      const message = getApiErrorMessage(error, 'Không thể báo cáo sự kiện');
+      throw new Error(message);
+    });
+  }
+};
+
 export const paymentService = {
   createMomo: (payload: Record<string, unknown>) => axios.post('/payments/momo/create', payload),
   getByTransaction: (transactionCode: string) => axios.get(`/payments/${transactionCode}`),
 }
+

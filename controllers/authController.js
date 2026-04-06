@@ -1,4 +1,4 @@
-﻿// controllers/authController.js
+﻿const bcrypt = require('bcrypt');
 const authHandler = require('../utils/authHandler');
 const models = require('../utils/models');
 const mongo = require('../utils/mongo');
@@ -31,12 +31,15 @@ module.exports = {
       throw { status: 409, message: 'Email is already registered.' };
     }
 
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
     const user = await models.appUser.create({
       email,
       fullName,
       phone,
       role,
-      passwordHash: password,
+      passwordHash,
       isActive: true,
     });
 
@@ -87,7 +90,7 @@ module.exports = {
     let user = await models.appUser.findOne({ email }).lean();
     user = mongo.toPlain(user);
 
-    if (!user || !user.isActive || user.passwordHash !== password) {
+    if (!user || !user.isActive || !(await bcrypt.compare(password, user.passwordHash))) {
       throw { status: 401, message: 'Invalid credentials.' };
     }
 

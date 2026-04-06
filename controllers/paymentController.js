@@ -106,11 +106,23 @@ exports.createMomoPayment = async (userId, donorNameInput, phoneNumberInput, mes
       signature,
     };
 
-    const momoResponse = await axios.post(momoApiUrl, momoRequest, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    let momoResponse;
+    if (process.env.NODE_ENV === 'development') {
+      // Mock for dev
+      momoResponse = {
+        data: {
+          payUrl: 'https://test-payment.momo.vn/?mock=success',
+          resultCode: 0
+        }
+      };
+    } else {
+      momoResponse = await axios.post(momoApiUrl, momoRequest, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 10000  // 10s timeout
+      });
+    }
 
     const momoData = momoResponse.data;
     if (momoData && momoData.payUrl) {
