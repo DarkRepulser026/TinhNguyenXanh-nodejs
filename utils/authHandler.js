@@ -4,7 +4,15 @@ let mongo = require('./mongo');
 let models = require('./models');
 
 let AUTH_COOKIE_NAME = 'vh_session';
-let JWT_SECRET = 'volunteerhub-dev-secret-change-me';
+let JWT_SECRET = process.env.JWT_SECRET || 'volunteerhub-dev-secret-change-me';
+
+function getJwtSecret() {
+    if (process.env.JWT_SECRET) {
+        return process.env.JWT_SECRET;
+    }
+
+    return JWT_SECRET;
+}
 
 function getToken(req) {
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
@@ -25,7 +33,7 @@ async function readAuthUser(req) {
             return null;
         }
 
-        let payload = jwt.verify(token, JWT_SECRET);
+        let payload = jwt.verify(token, getJwtSecret());
         let user = await models.appUser.findOne({
             _id: mongo.toObjectId(payload.userId),
         }).lean();
@@ -86,7 +94,7 @@ function requireRole() {
 }
 
 function createAuthToken(payload) {
-    return jwt.sign(payload, JWT_SECRET, {
+    return jwt.sign(payload, getJwtSecret(), {
         expiresIn: '7d'
     });
 }

@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 
+const bcrypt = require('bcrypt');
 const { connectToDatabase, mongoose } = require('../utils/mongo-connection');
 const models = require('../utils/models');
+
+const BCRYPT_ROUNDS = Math.min(15, Math.max(8, Number(process.env.BCRYPT_ROUNDS || 10)));
 
 function toDate(daysFromNow, hour, minute) {
   const value = new Date();
@@ -11,6 +14,8 @@ function toDate(daysFromNow, hour, minute) {
 }
 
 async function upsertUser(input) {
+  const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS);
+
   return models.appUser.findOneAndUpdate(
     { email: input.email.toLowerCase() },
     {
@@ -19,7 +24,7 @@ async function upsertUser(input) {
         phone: input.phone || null,
         role: input.role,
         isActive: true,
-        passwordHash: input.password,
+        passwordHash,
       },
       $setOnInsert: {
         email: input.email.toLowerCase(),

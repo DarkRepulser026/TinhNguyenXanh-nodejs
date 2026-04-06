@@ -1,7 +1,14 @@
 ﻿// controllers/authController.js
+const bcrypt = require('bcrypt');
 const authHandler = require('../utils/authHandler');
 const models = require('../utils/models');
 const mongo = require('../utils/mongo');
+
+const BCRYPT_ROUNDS = Math.min(15, Math.max(8, Number(process.env.BCRYPT_ROUNDS || 10)));
+
+function isBcryptHash(value) {
+  return typeof value === 'string' && value.startsWith('$2');
+}
 
 function toRole(value) {
   if (value === 'Admin' || value === 'Organizer' || value === 'Volunteer') {
@@ -31,12 +38,14 @@ module.exports = {
       throw { status: 409, message: 'Email is already registered.' };
     }
 
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+
     const user = await models.appUser.create({
       email,
       fullName,
       phone,
       role,
-      passwordHash: password,
+      passwordHash,
       isActive: true,
     });
 
@@ -87,7 +96,28 @@ module.exports = {
     let user = await models.appUser.findOne({ email }).lean();
     user = mongo.toPlain(user);
 
-    if (!user || !user.isActive || user.passwordHash !== password) {
+    if (!user || !user.isActive) {
+      throw { status: 401, message: 'Invalid credentials.' };
+    }
+
+    let isValidPassword = false;
+
+    if (isBcryptHash(user.passwordHash)) {
+      isValidPassword = await bcrypt.compare(password, user.passwordHash);
+    } else {
+      // Backward compatibility for legacy plain-text data; successful login upgrades hash.
+      isValidPassword = user.passwordHash === password;
+
+      if (isValidPassword) {
+        const nextHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+        await models.appUser.findOneAndUpdate(
+          { _id: mongo.toObjectId(user.id) },
+          { $set: { passwordHash: nextHash } }
+        );
+      }
+    }
+
+    if (!isValidPassword) {
       throw { status: 401, message: 'Invalid credentials.' };
     }
 
