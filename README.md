@@ -13,7 +13,7 @@ TinhNguyenXanh is a volunteer coordination platform for connecting volunteers, o
 - [public/App.css](public/App.css) uses `clamp()`, `object-fit`, and `line-clamp` for layout stability and text truncation on mixed-size cards and hero sections. See MDN for [`clamp()`](https://developer.mozilla.org/en-US/docs/Web/CSS/clamp), [`object-fit`](https://developer.mozilla.org/en-US/docs/Web/CSS/object-fit), and [`line-clamp`](https://developer.mozilla.org/en-US/docs/Web/CSS/line-clamp).
 - [app.js](app.js) mounts the API routes under a shared `/api/v1` prefix and serves uploaded files from `/uploads`, which keeps the deployment story simple.
 
-## Libraries and tools worth noting
+## Libraries and tools
 
 - [React](https://react.dev/) and [React Router](https://reactrouter.com/) drive the frontend routing model.
 - [Vite](https://vite.dev/) handles the frontend build and dev server.
