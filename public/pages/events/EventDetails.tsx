@@ -11,10 +11,9 @@ import {
   Building2,
   CheckCircle2,
   Flag,
-  AlertTriangle, // Thêm icon cảnh báo
+  AlertTriangle,
   X 
 } from 'lucide-react';
-// Import thêm moderationService để gọi API báo cáo
 import { eventService, getApiErrorMessage, type EventItem, volunteerService, moderationService } from '../../lib/api';
 import { useAuth } from '../../contexts/useAuth';
 import EventReview from '../../components/EventReview';
@@ -34,7 +33,7 @@ const EventDetails: React.FC = () => {
   
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
-  const [isSubmittingReport, setIsSubmittingReport] = useState(false); // State theo dõi trạng thái gửi
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   const reportReasons = [
     'Nội dung sai sự thật',
@@ -53,7 +52,12 @@ const EventDetails: React.FC = () => {
         if (user?.id) {
           try {
             const favoritesResponse = await volunteerService.getFavorites(user.id);
-            setIsFavorited(favoritesResponse.data.some((item) => item.id === Number(id)));
+            // ĐÃ SỬA: Kiểm tra thêm item.eventId phòng trường hợp API trả về cấu trúc bản ghi yêu thích
+            setIsFavorited(favoritesResponse.data.some((item) => 
+              item.id === Number(id) || 
+              item.eventId === Number(id) || 
+              String(item.eventId) === id
+            ));
           } catch { setIsFavorited(false); }
 
           try {
@@ -90,7 +94,6 @@ const EventDetails: React.FC = () => {
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const formatTime = (dateStr: string) => new Date(dateStr).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
-  // GIỮ NGUYÊN LOGIC ĐĂNG KÝ CỦA BẠN
   const handleRegister = async () => {
     if (!event) return;
     if (isRegistered) {
@@ -104,22 +107,27 @@ const EventDetails: React.FC = () => {
     setShowRegistrationForm(true);
   };
 
-  // GIỮ NGUYÊN LOGIC YÊU THÍCH CỦA BẠN
+  // ĐÃ SỬA LOGIC YÊU THÍCH CHO TƯỜNG MINH
   const handleFavorite = async () => {
     if (!event || !user?.id) {
       if (!user?.id) navigate(`/login?redirect=${encodeURIComponent(`/events/${event?.id}`)}`);
       return;
     }
     try {
+      // Xác định trạng thái mới sẽ được áp dụng
+      const newFavoriteState = !isFavorited; 
+      
+      // Gọi API thực hiện việc toggle ở phía Database
       await eventService.toggleFavorite(event.id, user.id);
-      setIsFavorited((value) => !value);
-      setMessage(isFavorited ? 'Đã xóa khỏi yêu thích.' : 'Đã thêm vào yêu thích.');
+      
+      // Cập nhật giao diện theo trạng thái mới
+      setIsFavorited(newFavoriteState);
+      setMessage(newFavoriteState ? 'Đã thêm vào yêu thích.' : 'Đã xóa khỏi yêu thích.');
     } catch (e) {
       setMessage(getApiErrorMessage(e, 'Cập nhật yêu thích thất bại.'));
     }
   };
 
-  // CẬP NHẬT HÀM GỬI BÁO CÁO (KẾT NỐI DATABASE)
   const submitReport = async () => {
     if (!reportReason) {
       alert('Vui lòng chọn lý do báo cáo!');
@@ -129,7 +137,6 @@ const EventDetails: React.FC = () => {
 
     setIsSubmittingReport(true);
     try {
-      // Gọi API thực tế để lưu vào database qua moderationService
       await moderationService.reportEvent(id, { 
         reason: reportReason,
         details: `Người dùng báo cáo lý do: ${reportReason}` 
@@ -284,7 +291,6 @@ const EventDetails: React.FC = () => {
                     <Heart size={20} className={isFavorited ? 'text-danger' : ''} fill={isFavorited ? 'currentColor' : 'none'} /> {isFavorited ? 'Bỏ yêu thích' : 'Lưu vào yêu thích'}
                   </button>
                   
-                  {/* NÚT BÁO CÁO ĐỔI SANG MÀU ĐỎ (btn-danger) */}
                   <button 
                     onClick={() => setShowReportModal(true)} 
                     className="btn btn-danger btn-lg rounded-pill fw-bold py-3 shadow-sm d-flex align-items-center justify-content-center gap-2 transition-hover"
