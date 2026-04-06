@@ -88,11 +88,17 @@ export const authService = {
   logout: () => axios.post('/logout'),
 }
 
+export const contactService = {
+  send: (payload: { name: string; email: string; subject: string; message: string }) =>
+    axios.post('/contact', payload),
+}
+
 export type IdValue = string | number
 
 export const eventService = {
   getAll: (params?: Record<string, unknown>) => axios.get('/events', { params }),
   getById: (eventId: string | number) => axios.get(`/events/${eventId}`),
+  getCategories: () => axios.get('/categories'),
   register: (
     eventId: string | number,
     payload: { userId: IdValue; fullName: string; phone: string; reason?: string },

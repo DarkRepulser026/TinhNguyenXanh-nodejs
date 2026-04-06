@@ -1,4 +1,4 @@
-﻿var express = require("express");
+var express = require("express");
 var router = express.Router();
 const authHandler = require("../utils/authHandler");
 const eventController = require("../controllers/eventController");
@@ -54,6 +54,16 @@ router.post("/events/:id/favorite", authHandler.CheckLogin, async function (req,
     } else {
       res.send(result);
     }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get categories
+router.get("/categories", async function (req, res, next) {
+  try {
+    const result = await eventController.GetCategories();
+    res.send(result);
   } catch (error) {
     next(error);
   }

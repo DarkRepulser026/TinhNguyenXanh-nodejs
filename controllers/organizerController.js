@@ -110,7 +110,7 @@ module.exports = {
     if (!id) throw { status: 400, message: 'Invalid event id.' };
     let event = mongo.toPlain(await models.event.findOne({ _id: mongo.toObjectId(id), organizationId: mongo.toObjectId(organization.id) }).populate('categoryId').lean());
     if (!event) throw { status: 404, message: 'Event not found.' };
-    return { id: event.id, title: event.title, description: event.description, startTime: event.startTime, endTime: event.endTime, location: event.location, status: event.status, isHidden: Boolean(event.isHidden), maxVolunteers: event.maxVolunteers, images: event.images, categoryId: event.categoryId, categoryName: event.categoryId && event.categoryId.name ? event.categoryId.name : null };
+    return { id: event.id, title: event.title, description: event.description, startTime: event.startTime, endTime: event.endTime, location: event.location, mapUrl: event.mapUrl, status: event.status, isHidden: Boolean(event.isHidden), maxVolunteers: event.maxVolunteers, images: event.images, categoryId: event.categoryId, categoryName: event.categoryId && event.categoryId.name ? event.categoryId.name : null };
   },
 
   createEvent: async function (userId, body) {
@@ -119,6 +119,7 @@ module.exports = {
     const title = typeof body.title === 'string' ? body.title.trim() : '';
     const description = typeof body.description === 'string' ? body.description.trim() : null;
     const location = typeof body.location === 'string' ? body.location.trim() : null;
+    const mapUrl = typeof body.mapUrl === 'string' ? body.mapUrl.trim() : null;
     const categoryId = typeof body.categoryId === 'string' ? body.categoryId.trim() : null;
     const images = typeof body.images === 'string' ? body.images.trim() : null;
     const maxVolunteers = Number(body.maxVolunteers);
@@ -126,7 +127,7 @@ module.exports = {
     const endTime = new Date(body.endTime);
     if (!title || !Number.isFinite(startTime.valueOf()) || !Number.isFinite(endTime.valueOf())) throw { status: 400, message: 'title, startTime, and endTime are required.' };
     if (endTime <= startTime) throw { status: 400, message: 'endTime must be later than startTime.' };
-    let event = await models.event.create({ title, description, location, categoryId: categoryId ? mongo.toObjectId(categoryId) : null, maxVolunteers: Number.isFinite(maxVolunteers) && maxVolunteers >= 0 ? maxVolunteers : 0, startTime, endTime, organizationId: mongo.toObjectId(organization.id), status: 'draft', images, isHidden: false });
+    let event = await models.event.create({ title, description, location, mapUrl, categoryId: categoryId ? mongo.toObjectId(categoryId) : null, maxVolunteers: Number.isFinite(maxVolunteers) && maxVolunteers >= 0 ? maxVolunteers : 0, startTime, endTime, organizationId: mongo.toObjectId(organization.id), status: 'draft', images, isHidden: false });
     return mongo.toPlain(event.toObject());
   },
 
@@ -141,6 +142,7 @@ module.exports = {
     if (typeof body.title === 'string') data.title = body.title.trim();
     if (typeof body.description === 'string') data.description = body.description.trim();
     if (typeof body.location === 'string') data.location = body.location.trim();
+    if (typeof body.mapUrl === 'string') data.mapUrl = body.mapUrl.trim();
     if (typeof body.categoryId === 'string') data.categoryId = body.categoryId.trim() || null;
     if (typeof body.images === 'string') data.images = body.images.trim() || null;
     if (Number.isFinite(Number(body.maxVolunteers))) data.maxVolunteers = Number(body.maxVolunteers);

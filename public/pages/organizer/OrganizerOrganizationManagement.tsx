@@ -11,6 +11,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { getApiErrorMessage, organizerService, type OrganizationItem } from '../../lib/api';
+import Toast from '../../components/ui/Toast';
 
 const emptyOrganization: OrganizationItem = {
   id: '',
@@ -95,6 +96,7 @@ const OrganizerOrganizationManagement = () => {
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
   const [form, setForm] = useState({
     name: '',
@@ -202,9 +204,12 @@ const OrganizerOrganizationManagement = () => {
       });
 
       setOrganization(response.data);
+      setToastType('success');
       setSuccess('Cập nhật hồ sơ tổ chức thành công.');
     } catch (err) {
+      setToastType('error');
       setError(getApiErrorMessage(err, 'Không thể cập nhật hồ sơ tổ chức.'));
+      setSuccess(getApiErrorMessage(err, 'Không thể cập nhật hồ sơ tổ chức.'));
     } finally {
       setSaving(false);
     }
@@ -296,9 +301,15 @@ const OrganizerOrganizationManagement = () => {
           <div className="alert alert-danger rounded-4">{error}</div>
         ) : null}
 
-        {success ? (
-          <div className="alert alert-success rounded-4">{success}</div>
-        ) : null}
+        <Toast
+          message={success}
+          type={toastType}
+          onDone={() => {
+            setSuccess(null);
+            setError(null);
+            if (toastType === 'success') void load();
+          }}
+        />
 
         {!loading ? (
           <>
@@ -325,13 +336,21 @@ const OrganizerOrganizationManagement = () => {
 
                       <div className="col-md-4 mb-3">
                         <label style={labelStyle}>Loại tổ chức</label>
-                        <input
-                          className="form-control"
+                        <select
+                          className="form-select"
                           style={inputStyle}
                           value={form.organizationType}
                           onChange={(e) => updateField('organizationType', e.target.value)}
-                          placeholder="VD: Cộng đồng, NGO..."
-                        />
+                        >
+                          <option value="">-- Chọn loại tổ chức --</option>
+                          <option value="Non-profit/NGO">Tổ chức phi lợi nhuận (NGO)</option>
+                          <option value="Câu lạc bộ/Đội/Nhóm">Câu lạc bộ/Đội/Nhóm</option>
+                          <option value="Tổ chức cộng đồng">Tổ chức cộng đồng</option>
+                          <option value="Doanh nghiệp">Doanh nghiệp</option>
+                          <option value="Tổ chức từ thiện">Tổ chức từ thiện</option>
+                          <option value="Cơ quan nhà nước">Cơ quan nhà nước</option>
+                          <option value="Khác">Khác</option>
+                        </select>
                       </div>
                     </div>
 
@@ -556,46 +575,6 @@ const OrganizerOrganizationManagement = () => {
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div style={cardStyle}>
-                  <div style={sectionTitleStyle}>
-                    <BadgeCheck size={22} color="#16a34a" />
-                    <span>Liên kết tổ chức</span>
-                  </div>
-
-                  <p style={{ color: '#64748b', lineHeight: 1.7 }}>
-                    Nếu tài khoản này chưa sở hữu tổ chức nào, bạn có thể nhập Organization ID để nhận quyền quản lý.
-                  </p>
-
-                  <div className="mb-3">
-                    <input
-                      className="form-control"
-                      style={inputStyle}
-                      value={claimId}
-                      onChange={(e) => setClaimId(e.target.value)}
-                      placeholder="Nhập Organization ID"
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    disabled={claiming}
-                    onClick={() => void onClaim()}
-                    style={{
-                      background: '#0f172a',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '12px 20px',
-                      borderRadius: '10px',
-                      fontWeight: 700,
-                      width: '100%',
-                      opacity: claiming ? 0.75 : 1,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {claiming ? 'Đang liên kết...' : 'Liên kết tổ chức'}
-                  </button>
                 </div>
 
                 <div style={cardStyle}>

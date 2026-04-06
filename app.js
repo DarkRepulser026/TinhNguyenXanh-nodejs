@@ -14,6 +14,7 @@ var paymentsRouter = require('./routes/payments');
 var moderationRouter = require('./routes/moderation');
 var adminRouter = require('./routes/admin');
 var organizerRouter = require('./routes/organizer');
+var contactRouter = require('./routes/contact');
 
 var app = express();
 
@@ -38,6 +39,7 @@ app.use('/api/v1', paymentsRouter);
 app.use('/api/v1', moderationRouter);
 app.use('/api/v1', adminRouter);
 app.use('/api/v1', organizerRouter);
+app.use('/api/v1/contact', contactRouter);
 
 
 // catch 404 and forward to error handler

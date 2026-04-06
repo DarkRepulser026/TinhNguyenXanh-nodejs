@@ -17,6 +17,7 @@ import {
   type OrganizerRegistrationDetail,
   type VolunteerEvaluationItem,
 } from '../../lib/api';
+import Toast from '../../components/ui/Toast';
 
 const emptyDetail: OrganizerRegistrationDetail = {
   id: '',
@@ -150,6 +151,7 @@ const OrganizerVolunteerDetails = () => {
   const [error, setError] = useState<string | null>(null);
   const [evaluationError, setEvaluationError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
   const [rating, setRating] = useState('5');
   const [comment, setComment] = useState('');
@@ -227,8 +229,11 @@ const OrganizerVolunteerDetails = () => {
       setEvaluation(response.data);
       setRating(String(response.data.rating));
       setComment(response.data.comment || '');
+      setToastType('success');
       setSuccess('Lưu đánh giá tình nguyện viên thành công.');
     } catch (err) {
+      setToastType('error');
+      setSuccess(getApiErrorMessage(err, 'Không thể lưu đánh giá tình nguyện viên.'));
       setEvaluationError(getApiErrorMessage(err, 'Không thể lưu đánh giá tình nguyện viên.'));
       setSuccess(null);
     } finally {
@@ -340,7 +345,13 @@ const OrganizerVolunteerDetails = () => {
 
           {loading ? <div className="alert alert-info rounded-4">Đang tải chi tiết đăng ký...</div> : null}
           {error ? <div className="alert alert-danger rounded-4">{error}</div> : null}
-          {success ? <div className="alert alert-success rounded-4">{success}</div> : null}
+          <Toast
+            message={success}
+            type={toastType}
+            onDone={() => {
+              setSuccess(null);
+            }}
+          />
 
           {!loading && !error ? (
             <>
@@ -508,109 +519,6 @@ const OrganizerVolunteerDetails = () => {
                       </div>
                     </div>
                   </div>
-
-                  <div style={cardStyle}>
-                    <div className="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
-                      <div style={sectionTitleStyle}>
-                        <Star size={22} color="#16a34a" />
-                        <span>Đánh giá tình nguyện viên</span>
-                      </div>
-
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          padding: '6px 10px',
-                          borderRadius: '999px',
-                          background: evaluation ? '#dcfce7' : '#f3f4f6',
-                          color: evaluation ? '#166534' : '#4b5563',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                        }}
-                      >
-                        {evaluation ? 'Đã có đánh giá' : 'Chưa có đánh giá'}
-                      </span>
-                    </div>
-
-                    {evaluationLoading ? (
-                      <div className="alert alert-info rounded-4">Đang tải đánh giá hiện tại...</div>
-                    ) : null}
-
-                    {evaluationError ? (
-                      <div className="alert alert-danger rounded-4">{evaluationError}</div>
-                    ) : null}
-
-                    <div className="row">
-                      <div className="col-md-6 mb-3">
-                        <label style={labelStyle}>Điểm đánh giá</label>
-                        <select
-                          className="form-select"
-                          style={inputStyle}
-                          disabled={detail.status !== 'Confirmed' || savingEvaluation}
-                          value={rating}
-                          onChange={(e) => setRating(e.target.value)}
-                        >
-                          <option value="1">1 sao</option>
-                          <option value="2">2 sao</option>
-                          <option value="3">3 sao</option>
-                          <option value="4">4 sao</option>
-                          <option value="5">5 sao</option>
-                        </select>
-                      </div>
-
-                      <div className="col-md-6 mb-3">
-                        <label style={labelStyle}>Điều kiện đánh giá</label>
-                        <input
-                          className="form-control"
-                          disabled
-                          style={{ ...inputStyle, background: '#f8fafc' }}
-                          value={detail.status === 'Confirmed' ? 'Có thể đánh giá' : 'Chưa thể đánh giá'}
-                        />
-                      </div>
-
-                      <div className="col-12 mb-3">
-                        <label style={labelStyle}>Nhận xét</label>
-                        <textarea
-                          className="form-control"
-                          rows={5}
-                          disabled={detail.status !== 'Confirmed' || savingEvaluation}
-                          style={inputStyle}
-                          placeholder="Nhập nhận xét về thái độ, tinh thần trách nhiệm và khả năng hợp tác..."
-                          value={comment}
-                          onChange={(e) => setComment(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="col-12 d-flex justify-content-between align-items-center flex-wrap gap-3">
-                        <div style={{ color: '#64748b', fontSize: '0.85rem' }}>
-                          {evaluation
-                            ? `Cập nhật lần cuối: ${new Date(evaluation.updatedAt).toLocaleString('vi-VN')}`
-                            : 'Chưa có đánh giá nào được lưu.'}
-                        </div>
-
-                        <button
-                          type="button"
-                          disabled={detail.status !== 'Confirmed' || savingEvaluation}
-                          onClick={() => void saveEvaluation()}
-                          style={{
-                            background: '#16a34a',
-                            color: '#fff',
-                            border: 'none',
-                            padding: '12px 18px',
-                            borderRadius: '10px',
-                            fontWeight: 700,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            opacity: detail.status !== 'Confirmed' || savingEvaluation ? 0.5 : 1,
-                          }}
-                        >
-                          <Save size={18} />
-                          {savingEvaluation ? 'Đang lưu...' : evaluation ? 'Cập nhật đánh giá' : 'Lưu đánh giá'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -621,7 +529,6 @@ const OrganizerVolunteerDetails = () => {
                 </div>
 
                 <p style={{ color: '#64748b', lineHeight: 1.7, marginBottom: 0 }}>
-                  Bạn chỉ có thể đánh giá volunteer khi đăng ký đã ở trạng thái <strong>Đã duyệt</strong>.
                   Nếu cần xem thêm lịch sử tham gia của volunteer này, hãy dùng nút <strong>Xem lịch sử</strong> ở phía trên.
                 </p>
               </div>

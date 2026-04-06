@@ -152,10 +152,10 @@ const VolunteerProfile: React.FC = () => {
 
   return (
     <div className="container py-5">
-      <div className="row g-4">
+      <div className="row g-4 align-items-start">
         {/* Left Column - Avatar & Basic Info */}
         <div className="col-lg-4">
-          <div className="card border-0 shadow-sm rounded-4 overflow-hidden sticky-lg-top" style={{ top: '80px' }}>
+          <div className="card border-0 shadow-sm rounded-4 overflow-hidden" style={{ position: 'sticky', top: '5.5rem', zIndex: 10 }}>
             {/* Avatar Section */}
             <div className="bg-success bg-opacity-10 p-4 text-center position-relative">
               <div className="position-relative d-inline-block mb-3">

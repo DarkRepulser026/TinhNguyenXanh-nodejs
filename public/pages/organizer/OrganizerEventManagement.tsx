@@ -11,12 +11,14 @@ import {
   XCircle,
 } from 'lucide-react';
 
-import { getApiErrorMessage, organizerService, type OrganizerEventItem } from '../../lib/api';
+import { getApiErrorMessage, organizerService, eventService, type OrganizerEventItem } from '../../lib/api';
+import Toast from '../../components/ui/Toast';
 
 type EventFormState = {
   title: string;
   description: string;
   location: string;
+  mapUrl: string;
   categoryId: string;
   images: string;
   startTime: string;
@@ -28,6 +30,7 @@ const emptyForm: EventFormState = {
   title: '',
   description: '',
   location: '',
+  mapUrl: '',
   categoryId: '',
   images: '',
   startTime: '',
@@ -151,6 +154,7 @@ const OrganizerEventManagement = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [form, setForm] = useState<EventFormState>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<{ id: string, name: string }[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [filtering, setFiltering] = useState(false);
@@ -158,6 +162,7 @@ const OrganizerEventManagement = () => {
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
   const load = async (showFiltering = false) => {
     try {
@@ -176,7 +181,10 @@ const OrganizerEventManagement = () => {
         pageSize: 50,
       });
 
+      const catResponse = await eventService.getCategories();
+
       setItems(response.data.items);
+      setCategories(catResponse.data);
     } catch (err) {
       setError(getApiErrorMessage(err, 'Không thể tải danh sách sự kiện.'));
     } finally {
@@ -252,6 +260,7 @@ const OrganizerEventManagement = () => {
         title: form.title.trim(),
         description: form.description.trim() || undefined,
         location: form.location.trim() || undefined,
+        mapUrl: form.mapUrl.trim() || undefined,
         categoryId: form.categoryId.trim() || undefined,
         images: form.images.trim() || undefined,
         startTime: form.startTime,
@@ -261,15 +270,19 @@ const OrganizerEventManagement = () => {
 
       if (editingId) {
         await organizerService.updateEvent(editingId, payload);
+        setToastType('success');
         setSuccess('Cập nhật sự kiện thành công.');
       } else {
         await organizerService.createEvent(payload);
+        setToastType('success');
         setSuccess('Tạo sự kiện thành công.');
       }
 
       resetForm();
       await load();
     } catch (err) {
+      setToastType('error');
+      setSuccess(getApiErrorMessage(err, 'Không thể lưu sự kiện.'));
       setError(getApiErrorMessage(err, 'Không thể lưu sự kiện.'));
     } finally {
       setSubmitting(false);
@@ -285,6 +298,7 @@ const OrganizerEventManagement = () => {
       title: item.title || '',
       description: item.description || '',
       location: item.location || '',
+      mapUrl: item.mapUrl || '',
       categoryId: typeof item.categoryId === 'string' ? item.categoryId : ((item.categoryId as any)?.id || (item.categoryId as any)?._id || ''),
       images: item.images || '',
       startTime: toDateTimeLocal(item.startTime),
@@ -370,7 +384,14 @@ const OrganizerEventManagement = () => {
           </div>
 
           {error ? <div className="alert alert-danger rounded-4">{error}</div> : null}
-          {success ? <div className="alert alert-success rounded-4">{success}</div> : null}
+          <Toast
+            message={success}
+            type={toastType}
+            onDone={() => {
+              setSuccess(null);
+              setError(null);
+            }}
+          />
 
           <div className="row g-4">
             <div className="col-lg-5">
@@ -406,13 +427,11 @@ const OrganizerEventManagement = () => {
 
                   <div className="mb-3">
                     <label style={labelStyle}>Địa điểm</label>
-                    <div className="input-group">
-                      <span className="input-group-text bg-white border-end-0">
-                        <MapPin size={16} />
-                      </span>
+                    <div className="position-relative">
+                      <MapPin size={18} color="#94a3b8" style={{ position: 'absolute', top: '10px', left: '12px' }} />
                       <input
-                        className="form-control border-start-0"
-                        style={inputStyle}
+                        className="form-control"
+                        style={{ ...inputStyle, paddingLeft: '38px' }}
                         value={form.location}
                         onChange={(e) => updateForm('location', e.target.value)}
                         placeholder="Nhập địa điểm"
@@ -421,14 +440,43 @@ const OrganizerEventManagement = () => {
                   </div>
 
                   <div className="mb-3">
-                    <label style={labelStyle}>Category ID</label>
-                    <input
-                      className="form-control"
+                    <label style={labelStyle}>Google Maps Embed Link (hoặc Iframe)</label>
+                    <div className="position-relative">
+                      <input
+                        className="form-control"
+                        style={inputStyle}
+                        value={form.mapUrl}
+                        onChange={(e) => {
+                          let val = e.target.value;
+                          const srcMatch = val.match(/src="([^"]+)"/);
+                          if (srcMatch && srcMatch[1]) {
+                            val = srcMatch[1];
+                          }
+                          updateForm('mapUrl', val);
+                        }}
+                        placeholder="Dán link src hoặc mã <iframe> từ Google Maps"
+                      />
+                      <small className="text-muted mt-1 d-block">
+                        Ví dụ: https://www.google.com/maps/embed?pb=...
+                      </small>
+                    </div>
+                  </div>
+
+                  <div className="mb-3">
+                    <label style={labelStyle}>Phân loại Category</label>
+                    <select
+                      className="form-select"
                       style={inputStyle}
                       value={form.categoryId}
                       onChange={(e) => updateForm('categoryId', e.target.value)}
-                      placeholder="Nhập category id nếu có"
-                    />
+                    >
+                      <option value="">Chọn danh mục (tuỳ chọn)</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="mb-3">

@@ -161,7 +161,7 @@ const EventDetails: React.FC = () => {
           </Link>
         </nav>
 
-        <div className="row g-4">
+        <div className="row g-4 align-items-start">
           {/* Main Content */}
           <div className="col-lg-8">
             <div className="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
@@ -244,11 +244,24 @@ const EventDetails: React.FC = () => {
                   <span className="fw-500">{event.location ?? 'Khong ro dia diem'}</span>
                 </div>
                 {/* Map Placeholder */}
-                <div className="ratio ratio-16x9 bg-secondary-subtle rounded-4 overflow-hidden mb-4 border border-white">
-                  <div className="d-flex align-items-center justify-content-center text-muted">
-                    Bản đồ (Google Maps)
+                {event.mapUrl ? (
+                  <div className="ratio ratio-21x9 bg-secondary-subtle rounded-4 overflow-hidden mb-4 border border-white">
+                    <iframe
+                      src={event.mapUrl}
+                      title="Google Maps Location"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    ></iframe>
                   </div>
-                </div>
+                ) : (
+                  <div className="ratio ratio-21x9 bg-secondary-subtle rounded-4 overflow-hidden mb-4 border border-white">
+                    <div className="d-flex align-items-center justify-content-center text-muted">
+                      Bản đồ chưa được thiết lập
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -266,7 +279,7 @@ const EventDetails: React.FC = () => {
           {/* Sidebar */}
           <div className="col-lg-4">
             {showRegistrationForm ? (
-              <div className="sticky-top" style={{ top: '6rem' }}>
+              <div style={{ position: 'sticky', top: '6rem', zIndex: 10 }}>
                 <EventRegistrationForm
                   eventId={event.id}
                   eventTitle={event.title}
@@ -280,7 +293,7 @@ const EventDetails: React.FC = () => {
                 />
               </div>
             ) : (
-            <div className="register-card sticky-top border-0 shadow-sm rounded-4 bg-white p-4" style={{ top: '6rem' }}>
+            <div className="register-card border-0 shadow-sm rounded-4 bg-white p-4" style={{ position: 'sticky', top: '6rem', zIndex: 10 }}>
                <h5 className="fw-bold mb-4">Đăng ký tham gia</h5>
                
                <div className="mb-4">
