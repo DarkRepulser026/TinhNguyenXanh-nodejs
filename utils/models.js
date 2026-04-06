@@ -10,15 +10,11 @@ const modelNames = {
   eventRating: 'EventRating',
   eventRegistration: 'EventRegistration',
   eventReport: 'EventReport',
-  eventTask: 'EventTask',
-  eventTaskAssignment: 'EventTaskAssignment',
-  notification: 'Notification',
   organization: 'Organization',
   organizationMember: 'OrganizationMember',
   organizationReview: 'OrganizationReview',
   volunteer: 'Volunteer',
   volunteerEvaluation: 'VolunteerEvaluation',
-  volunteerSkill: 'VolunteerSkill',
 };
 
 const models = {};
