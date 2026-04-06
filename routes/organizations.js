@@ -1,10 +1,16 @@
-﻿var express = require('express');
+var express = require('express');
 var router = express.Router();
 var authHandler = require('../utils/authHandler');
 var organizationController = require('../controllers/organizationController');
 
-router.get('/organizations', organizationController.getOrganizations);
-router.get('/organizations/:id', organizationController.getOrganizationById);
-router.post('/organizations/register', authHandler.requireAuth, organizationController.registerOrganization);
+router.get('/organizations', async function (req, res, next) {
+  try { let result = await organizationController.getOrganizations(req.query); res.send(result); } catch (error) { next(error); }
+});
+router.get('/organizations/:id', async function (req, res, next) {
+  try { let result = await organizationController.getOrganizationById(req.params.id); res.send(result); } catch (error) { next(error); }
+});
+router.post('/organizations/register', authHandler.CheckLogin, async function (req, res, next) {
+  try { let result = await organizationController.registerOrganization(req.authUser.userId, req.body); res.status(201).send(result); } catch (error) { next(error); }
+});
 
 module.exports = router;

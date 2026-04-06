@@ -40,53 +40,53 @@ const AdminEventApprovals = () => {
 
   return (
     <section>
-      <h1 className="mb-2 text-2xl font-semibold tracking-tight">Event Approvals</h1>
-      <p className="text-muted-foreground mb-6 text-sm">Danh sách sự kiện đang ở trạng thái draft/pending.</p>
+      <h1 className="h3 mb-2">Event Approvals</h1>
+      <p className="text-muted small mb-4">Danh sách sự kiện đang ở trạng thái draft/pending.</p>
 
-      <form className="mb-4 flex gap-2" onSubmit={onSearchSubmit}>
+      <form className="row g-2 mb-3" onSubmit={onSearchSubmit}>
         <input
-          className="w-full max-w-md rounded border px-3 py-2 text-sm"
+          className="form-control col"
           placeholder="Tìm theo tiêu đề/tổ chức"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button className="rounded bg-black px-3 py-2 text-sm text-white" type="submit">
+        <button className="btn btn-dark col-auto" type="submit">
           Search
         </button>
       </form>
 
-      {loading ? <div className="rounded border bg-card p-4 text-sm">Đang tải dữ liệu...</div> : null}
-      {error ? <div className="mb-4 rounded border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div> : null}
+      {loading ? <div className="alert alert-light border">Đang tải dữ liệu...</div> : null}
+      {error ? <div className="alert alert-danger">{error}</div> : null}
 
-      <div className="overflow-x-auto rounded-xl border bg-card">
-        <table className="min-w-full text-sm">
+      <div className="table-responsive card">
+        <table className="table table-hover mb-0 align-middle">
           <thead>
-            <tr className="border-b bg-muted/40 text-left">
-              <th className="px-4 py-3">Title</th>
-              <th className="px-4 py-3">Organization</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Start</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+            <tr>
+              <th>Title</th>
+              <th>Organization</th>
+              <th>Status</th>
+              <th>Start</th>
+              <th className="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr className="border-b" key={item.id}>
-                <td className="px-4 py-3">{item.title}</td>
-                <td className="px-4 py-3">{item.organizationName || 'N/A'}</td>
-                <td className="px-4 py-3">{item.status}</td>
-                <td className="px-4 py-3">{new Date(item.startTime).toLocaleDateString('vi-VN')}</td>
-                <td className="px-4 py-3 text-right">
-                  <div className="inline-flex gap-2">
+              <tr key={item.id}>
+                <td>{item.title}</td>
+                <td>{item.organizationName || 'N/A'}</td>
+                <td>{item.status}</td>
+                <td>{new Date(item.startTime).toLocaleDateString('vi-VN')}</td>
+                <td className="text-end">
+                  <div className="d-inline-flex gap-2">
                     <button
-                      className="rounded bg-green-600 px-3 py-1 text-white"
+                      className="btn btn-sm btn-success"
                       onClick={() => void updateStatus(item.id, 'approve')}
                       type="button"
                     >
                       Approve
                     </button>
                     <button
-                      className="rounded bg-red-600 px-3 py-1 text-white"
+                      className="btn btn-sm btn-danger"
                       onClick={() => void updateStatus(item.id, 'reject')}
                       type="button"
                     >
@@ -98,7 +98,7 @@ const AdminEventApprovals = () => {
             ))}
             {!loading && !items.length ? (
               <tr>
-                <td className="px-4 py-5 text-center text-muted-foreground" colSpan={5}>
+                <td className="text-center text-muted py-4" colSpan={5}>
                   Không có sự kiện nào đang chờ duyệt.
                 </td>
               </tr>
