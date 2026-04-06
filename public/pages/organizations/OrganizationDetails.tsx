@@ -527,6 +527,70 @@ const OrganizationDetails = () => {
                   </div>
                 </div>
               </div>
+              
+              <div style={sectionCard}>
+                <div style={titleStyle}>
+                  <Star size={20} color="#16a34a" />
+                  <span>Chi tiết đánh giá các sự kiện</span>
+                </div>
+
+                {item.reviews && item.reviews.length > 0 ? (
+                  <div className="d-flex flex-column gap-3">
+                    {item.reviews.map((review: any) => (
+                      <div
+                        key={review.id}
+                        style={{
+                          background: '#f8fafc',
+                          borderRadius: '12px',
+                          padding: '20px',
+                          border: '1px solid #e5e7eb',
+                        }}
+                      >
+                        <div className="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+                          <div>
+                            <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ width: '32px', height: '32px', background: '#dcfce7', color: '#16a34a', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>
+                                {(review.userName || 'U')[0].toUpperCase()}
+                              </div>
+                              {review.userName}
+                            </div>
+                            <div style={{ color: '#16a34a', fontSize: '0.85rem', fontWeight: 600, marginTop: '8px' }}>
+                              Tham gia sự kiện: {review.eventName || 'Sự kiện không xác định'}
+                            </div>
+                          </div>
+                          <div className="d-flex align-items-center gap-1 bg-white px-2 py-1 rounded-pill border">
+                            {[1, 2, 3, 4, 5].map(star => (
+                              <Star
+                                key={star}
+                                fill={star <= review.rating ? '#fbbf24' : 'transparent'}
+                                color="#fbbf24"
+                                size={14}
+                              />
+                            ))}
+                            <span style={{ fontSize: '0.85rem', fontWeight: 700, marginLeft: '4px', color: '#0f172a' }}>
+                              {review.rating.toFixed(1)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {review.review && (
+                          <div style={{ color: '#475569', fontSize: '0.95rem', lineHeight: 1.6, marginTop: '12px', background: '#ffffff', padding: '12px 16px', borderRadius: '8px', borderLeft: '3px solid #16a34a' }}>
+                            "{review.review}"
+                          </div>
+                        )}
+                        <div style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <CalendarDays size={12} />
+                          {new Date(review.createdAt).toLocaleDateString('vi-VN')} lúc {new Date(review.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: '#64748b', marginBottom: 0 }}>
+                    Tổ chức này chưa nhận được đánh giá nào từ cộng đồng tình nguyện viên.
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="col-lg-4">

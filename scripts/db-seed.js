@@ -419,8 +419,6 @@ async function runSeed() {
   // ==================== EVENT REGISTRATIONS ====================
   console.log('✍️  Creating event registrations...');
 
-  const registrationIds = [];
-
   for (let i = 0; i < createdEvents.length; i++) {
     const event = createdEvents[i];
 
@@ -435,10 +433,10 @@ async function runSeed() {
     for (const volIndex of selectedVolunteers) {
       const volunteer = volunteerProfiles[volIndex];
       const volunteerUser = volunteerUsers[volIndex];
-      const statuses = ['Pending', 'Confirmed', 'Rejected', 'Cancelled'];
+      const statuses = ['Pending', 'Approved', 'Rejected', 'Completed'];
       const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
 
-      const registration = await models.eventRegistration.findOneAndUpdate(
+      await models.eventRegistration.findOneAndUpdate(
         {
           eventId: event._id,
           volunteerId: volunteer._id,
@@ -458,32 +456,7 @@ async function runSeed() {
             registeredAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
           },
         },
-        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
-      ).lean();
-
-      if (registration && registration._id) {
-        registrationIds.push(String(registration._id));
-      }
-    }
-  }
-
-  // ==================== EVENT FAVORITES ====================
-  console.log('❤️  Creating event favorites...');
-
-  for (const volunteer of volunteerProfiles) {
-    const favoriteCount = Math.min(createdEvents.length, 2 + Math.floor(Math.random() * 3));
-    const pickedIndexes = new Set();
-
-    while (pickedIndexes.size < favoriteCount) {
-      pickedIndexes.add(Math.floor(Math.random() * createdEvents.length));
-    }
-
-    for (const eventIndexValue of pickedIndexes) {
-      const event = createdEvents[eventIndexValue];
-      await models.eventFavorite.findOneAndUpdate(
-        { eventId: event._id, volunteerId: volunteer._id },
-        { $set: { createdAt: new Date(Date.now() - Math.random() * 20 * 24 * 60 * 60 * 1000) } },
-        { upsert: true, setDefaultsOnInsert: true }
+        { upsert: true }
       );
     }
   }
@@ -617,107 +590,13 @@ async function runSeed() {
     }
   }
 
-  // ==================== EVENT REPORTS ====================
-  console.log('🚩 Creating event reports...');
-
-  const reportReasons = [
-    'Inappropriate content',
-    'Potential scam event',
-    'Incorrect event information',
-    'Unsafe location or activity',
-  ];
-
-  for (let i = 0; i < Math.min(6, createdEvents.length); i++) {
-    const event = createdEvents[i];
-    const reporter = volunteerUsers[i % volunteerUsers.length];
-    const reason = reportReasons[i % reportReasons.length];
-
-    await models.eventReport.findOneAndUpdate(
-      { eventId: event._id, reporterUserId: reporter._id, reason },
-      {
-        $set: {
-          details: 'Seeded moderation sample report for testing workflows.',
-          status: ['Pending', 'Approved', 'Rejected'][i % 3],
-          reviewedByUserId: i % 3 === 0 ? null : adminUsers[i % adminUsers.length]._id,
-          reviewedAt: i % 3 === 0 ? null : new Date(),
-        },
-      },
-      { upsert: true, setDefaultsOnInsert: true }
-    );
-  }
-
-  // ==================== VOLUNTEER EVALUATIONS ====================
-  console.log('🧾 Creating volunteer evaluations...');
-
-  const confirmedRegistrations = await models.eventRegistration
-    .find({ _id: { $in: registrationIds.map((id) => mongoose.Types.ObjectId.createFromHexString(id)) }, status: 'Confirmed' })
-    .populate('eventId')
-    .lean();
-
-  for (const registration of confirmedRegistrations.slice(0, 12)) {
-    const event = registration.eventId;
-    if (!event || !event.organizationId) {
-      continue;
-    }
-
-    const organization = organizations.find((item) => String(item._id) === String(event.organizationId));
-    if (!organization) {
-      continue;
-    }
-
-    const organizerUser = organizerUsers.find((user) => String(user._id) === String(organization.ownerUserId));
-    if (!organizerUser) {
-      continue;
-    }
-
-    await models.volunteerEvaluation.findOneAndUpdate(
-      { registrationId: registration._id },
-      {
-        $set: {
-          volunteerId: registration.volunteerId,
-          organizerUserId: organizerUser._id,
-          rating: 3 + Math.floor(Math.random() * 3),
-          comment: [
-            'Reliable volunteer and on time.',
-            'Great attitude and teamwork throughout the event.',
-            'Completed assigned tasks responsibly.',
-            'Communicated clearly and helped other volunteers.',
-          ][Math.floor(Math.random() * 4)],
-        },
-      },
-      { upsert: true, setDefaultsOnInsert: true }
-    );
-  }
-
-  // ==================== DONATIONS ====================
-  console.log('💳 Creating donations...');
-
-  for (let i = 1; i <= 8; i++) {
-    await models.donation.findOneAndUpdate(
-      { transactionCode: `SEED_DONATION_${i}` },
-      {
-        $set: {
-          donorName: `Seed Donor ${i}`,
-          amount: 50000 * i,
-          phoneNumber: `09800000${String(i).padStart(2, '0')}`,
-          message: i % 2 === 0 ? 'Keep up the great community work!' : 'Happy to support this cause.',
-          paymentMethod: i % 2 === 0 ? 'momo' : 'bank',
-          status: ['Pending', 'Success', 'Failed'][i % 3],
-          providerRef: i % 3 === 0 ? null : `PROVIDER_REF_${i}`,
-        },
-      },
-      { upsert: true, setDefaultsOnInsert: true }
-    );
-  }
-
   console.log('✅ Seed completed!');
   console.log(`📊 Summary:`);
   console.log(`   - ${adminUsers.length + organizerUsers.length + volunteerUsers.length} users created`);
   console.log(`   - ${organizations.length} organizations created`);
   console.log(`   - ${categories.length} categories created`);
   console.log(`   - ${createdEvents.length} events created`);
-  console.log(`   - Registrations, favorites, ratings, comments, and reports added`);
-  console.log(`   - Volunteer evaluations and donation transactions added`);
+  console.log(`   - Multiple registrations, ratings, reviews, and comments added`);
 }
 
 runSeed()

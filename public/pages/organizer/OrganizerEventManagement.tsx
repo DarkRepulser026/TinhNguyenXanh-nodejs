@@ -18,6 +18,7 @@ type EventFormState = {
   description: string;
   location: string;
   categoryId: string;
+  images: string;
   startTime: string;
   endTime: string;
   maxVolunteers: string;
@@ -28,6 +29,7 @@ const emptyForm: EventFormState = {
   description: '',
   location: '',
   categoryId: '',
+  images: '',
   startTime: '',
   endTime: '',
   maxVolunteers: '0',
@@ -197,6 +199,23 @@ const OrganizerEventManagement = () => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Kích thước ảnh không được vượt quá 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      updateForm('images', base64);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const onFilterSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSuccess(null);
@@ -234,6 +253,7 @@ const OrganizerEventManagement = () => {
         description: form.description.trim() || undefined,
         location: form.location.trim() || undefined,
         categoryId: form.categoryId.trim() || undefined,
+        images: form.images.trim() || undefined,
         startTime: form.startTime,
         endTime: form.endTime,
         maxVolunteers: Number(form.maxVolunteers) || 0,
@@ -265,7 +285,8 @@ const OrganizerEventManagement = () => {
       title: item.title || '',
       description: item.description || '',
       location: item.location || '',
-      categoryId: item.categoryId || '',
+      categoryId: typeof item.categoryId === 'string' ? item.categoryId : ((item.categoryId as any)?.id || (item.categoryId as any)?._id || ''),
+      images: item.images || '',
       startTime: toDateTimeLocal(item.startTime),
       endTime: toDateTimeLocal(item.endTime),
       maxVolunteers: String(item.maxVolunteers ?? 0),
@@ -408,6 +429,40 @@ const OrganizerEventManagement = () => {
                       onChange={(e) => updateForm('categoryId', e.target.value)}
                       placeholder="Nhập category id nếu có"
                     />
+                  </div>
+
+                  <div className="mb-3">
+                    <label style={labelStyle}>Ảnh sự kiện (Tải lên hoặc nhập URL)</label>
+                    <div className="d-flex gap-2 mb-2">
+                       <input
+                         type="file"
+                         accept="image/*"
+                         className="form-control"
+                         style={{ ...inputStyle, flex: 1 }}
+                         onChange={handleImageUpload}
+                       />
+                    </div>
+                    <input
+                      className="form-control"
+                      style={inputStyle}
+                      value={form.images}
+                      onChange={(e) => updateForm('images', e.target.value)}
+                      placeholder="Hoặc dán URL ảnh vào đây..."
+                    />
+                    
+                    {form.images && (
+                      <div className="mt-3 p-2 border rounded text-center bg-light">
+                        <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '8px' }}>Ảnh xem trước:</div>
+                        <img 
+                          src={form.images} 
+                          alt="Preview" 
+                          style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain', borderRadius: '8px' }} 
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=1000';
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="row">

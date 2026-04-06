@@ -109,6 +109,7 @@ const OrganizerOrganizationManagement = () => {
     organizationType: '',
     legalRepresentative: '',
     achievements: '',
+    avatarUrl: '',
   });
 
   const load = async () => {
@@ -133,6 +134,7 @@ const OrganizerOrganizationManagement = () => {
         organizationType: item.organizationType || '',
         legalRepresentative: item.legalRepresentative || '',
         achievements: item.achievements || '',
+        avatarUrl: item.avatarUrl || '',
       });
     } catch (err) {
       setError(getApiErrorMessage(err, 'Không thể tải hồ sơ tổ chức.'));
@@ -158,6 +160,23 @@ const OrganizerOrganizationManagement = () => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Kích thước ảnh không được vượt quá 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      updateField('avatarUrl', base64);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -179,6 +198,7 @@ const OrganizerOrganizationManagement = () => {
         organizationType: form.organizationType.trim() || undefined,
         legalRepresentative: form.legalRepresentative.trim() || undefined,
         achievements: form.achievements.trim() || undefined,
+        avatarUrl: form.avatarUrl.trim() || undefined,
       });
 
       setOrganization(response.data);
@@ -314,6 +334,42 @@ const OrganizerOrganizationManagement = () => {
                         />
                       </div>
                     </div>
+
+                    <div className="mb-3">
+                      <label style={labelStyle}>Ảnh đại diện / Logo Tổ chức (Tải lên hoặc nhập URL)</label>
+                      <div className="d-flex gap-2 mb-2">
+                         <input
+                           type="file"
+                           accept="image/*"
+                           className="form-control"
+                           style={{ ...inputStyle, flex: 1 }}
+                           onChange={handleImageUpload}
+                         />
+                      </div>
+                      <input
+                        className="form-control"
+                        style={inputStyle}
+                        value={form.avatarUrl}
+                        onChange={(e) => updateField('avatarUrl', e.target.value)}
+                        placeholder="Hoặc dán URL ảnh đại diện vào đây..."
+                      />
+                      
+                      {form.avatarUrl && (
+                        <div className="mt-3 p-2 border rounded text-center bg-light">
+                          <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '8px' }}>Ảnh xem trước:</div>
+                          <img 
+                            src={form.avatarUrl} 
+                            alt="Avatar Preview" 
+                            style={{ maxWidth: '100%', maxHeight: '150px', objectFit: 'contain', borderRadius: '8px' }} 
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?auto=format&fit=crop&q=80&w=1000';
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+
 
                     <div className="mb-3">
                       <label style={labelStyle}>Mô tả tổ chức</label>

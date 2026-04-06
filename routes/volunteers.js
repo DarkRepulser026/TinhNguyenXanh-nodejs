@@ -1,114 +1,83 @@
-const express = require('express');
-const router = express.Router();
-const authHandler = require('../utils/authHandler');
-const volunteerController = require('../controllers/volunteerController');
+var express = require('express');
+var router = express.Router();
+var authHandler = require('../utils/authHandler');
+var volunteerController = require('../controllers/volunteerController');
 
-router.get('/volunteers/:userId/profile', authHandler.requireAuth, async function (req, res, next) {
-    try {
-        const result = await volunteerController.getVolunteerProfile(req.authUser, req.params.userId);
-        res.send(result);
-    } catch (error) {
-        next(error);
-    }
+function assertAccess(reqUserId, authUser) {
+  if (!authUser) return false;
+  return String(reqUserId || '').trim() === String(authUser.userId || '').trim() || authUser.role === 'Admin';
+}
+
+router.get('/volunteers/:userId/profile', authHandler.CheckLogin, async function (req, res, next) {
+  try {
+    if (!assertAccess(req.params.userId, req.authUser)) return res.status(403).send({ message: 'You do not have access to this profile.' });
+    let result = await volunteerController.getProfile(req.params.userId);
+    res.send(result);
+  } catch (error) { next(error); }
 });
-
-router.get('/volunteers/:userId/registrations', authHandler.requireAuth, async function (req, res, next) {
-    try {
-        const result = await volunteerController.getVolunteerRegistrations(req.authUser, req.params.userId);
-        res.send(result);
-    } catch (error) {
-        next(error);
-    }
+router.put('/volunteers/:userId/profile', authHandler.CheckLogin, async function (req, res, next) {
+  try {
+    if (!assertAccess(req.params.userId, req.authUser)) return res.status(403).send({ message: 'You do not have access to this profile.' });
+    let result = await volunteerController.updateProfile(req.params.userId, req.body.fullName, req.body.phone);
+    res.send(result);
+  } catch (error) { next(error); }
 });
-
-router.delete('/volunteers/:userId/registrations/:registrationId', authHandler.requireAuth, async function (req, res, next) {
-    try {
-        const result = await volunteerController.removeVolunteerRegistration(req.authUser, req.params.userId, req.params.registrationId);
-        res.send(result);
-    } catch (error) {
-        next(error);
-    }
+router.post('/volunteers/:userId/avatar', authHandler.CheckLogin, async function (req, res, next) {
+  try {
+    if (!assertAccess(req.params.userId, req.authUser)) return res.status(403).send({ message: 'You do not have access to upload avatar.' });
+    let result = await volunteerController.uploadAvatar(req.params.userId, req.body.avatarData);
+    res.send(result);
+  } catch (error) { next(error); }
 });
-
-router.get('/volunteers/:userId/favorites', authHandler.requireAuth, async function (req, res, next) {
-    try {
-        const result = await volunteerController.getVolunteerFavorites(req.authUser, req.params.userId);
-        res.send(result);
-    } catch (error) {
-        next(error);
-    }
+router.get('/volunteers/:userId/registrations', authHandler.CheckLogin, async function (req, res, next) {
+  try {
+    if (!assertAccess(req.params.userId, req.authUser)) return res.status(403).send({ message: 'You do not have access to these registrations.' });
+    let result = await volunteerController.getRegistrations(req.params.userId);
+    res.send(result);
+  } catch (error) { next(error); }
 });
-
-router.delete('/volunteers/:userId/favorites/:eventId', authHandler.requireAuth, async function (req, res, next) {
-    try {
-        const result = await volunteerController.removeVolunteerFavorite(req.authUser, req.params.userId, req.params.eventId);
-        res.send(result);
-    } catch (error) {
-        next(error);
-    }
+router.delete('/volunteers/:userId/registrations/:registrationId', authHandler.CheckLogin, async function (req, res, next) {
+  try {
+    if (!assertAccess(req.params.userId, req.authUser)) return res.status(403).send({ message: 'You do not have access to these registrations.' });
+    let result = await volunteerController.deleteRegistration(req.params.userId, req.params.registrationId);
+    res.send(result);
+  } catch (error) { next(error); }
 });
-
-router.get('/volunteers/:userId/dashboard', authHandler.requireAuth, async function (req, res, next) {
-    try {
-        const result = await volunteerController.getVolunteerDashboard(req.authUser, req.params.userId);
-        res.send(result);
-    } catch (error) {
-        next(error);
-    }
+router.get('/volunteers/:userId/favorites', authHandler.CheckLogin, async function (req, res, next) {
+  try {
+    if (!assertAccess(req.params.userId, req.authUser)) return res.status(403).send({ message: 'You do not have access to these favorites.' });
+    let result = await volunteerController.getFavorites(req.params.userId);
+    res.send(result);
+  } catch (error) { next(error); }
 });
-
+router.delete('/volunteers/:userId/favorites/:eventId', authHandler.CheckLogin, async function (req, res, next) {
+  try {
+    if (!assertAccess(req.params.userId, req.authUser)) return res.status(403).send({ message: 'You do not have access to these favorites.' });
+    let result = await volunteerController.deleteFavorite(req.params.userId, req.params.eventId);
+    res.send(result);
+  } catch (error) { next(error); }
+});
+router.get('/volunteers/:userId/dashboard', authHandler.CheckLogin, async function (req, res, next) {
+  try {
+    if (!assertAccess(req.params.userId, req.authUser)) return res.status(403).send({ message: 'You do not have access to this dashboard.' });
+    let result = await volunteerController.getDashboard(req.params.userId);
+    res.send(result);
+  } catch (error) { next(error); }
+});
 router.get('/events/:eventId/comments', async function (req, res, next) {
-    try {
-        const result = await volunteerController.getEventComments(req.params.eventId);
-        res.send(result);
-    } catch (error) {
-        next(error);
-    }
+  try { let result = await volunteerController.getEventComments(req.params.eventId); res.send(result); } catch (error) { next(error); }
 });
-
-router.post('/events/:eventId/comments', authHandler.requireAuth, async function (req, res, next) {
-    try {
-        const result = await volunteerController.createEventComment(req.authUser, req.params.eventId, req.body.content);
-        res.status(201).send(result);
-    } catch (error) {
-        next(error);
-    }
+router.post('/events/:eventId/comments', authHandler.CheckLogin, async function (req, res, next) {
+  try { let result = await volunteerController.createEventComment(req.params.eventId, req.authUser.userId, req.authUser.fullName, req.body.content); res.status(201).send(result); } catch (error) { next(error); }
 });
-
 router.get('/events/:eventId/ratings', async function (req, res, next) {
-    try {
-        const result = await volunteerController.getEventRatings(req.params.eventId);
-        res.send(result);
-    } catch (error) {
-        next(error);
-    }
+  try { let result = await volunteerController.getEventRatings(req.params.eventId); res.send(result); } catch (error) { next(error); }
 });
-
-router.post('/events/:eventId/ratings', authHandler.requireAuth, async function (req, res, next) {
-    try {
-        const result = await volunteerController.createOrUpdateEventRating(req.authUser, req.params.eventId, req.body.rating, req.body.review);
-        res.status(201).send(result);
-    } catch (error) {
-        next(error);
-    }
-});
-
-router.put('/volunteers/:userId/profile', authHandler.requireAuth, async function (req, res, next) {
-    try {
-        const result = await volunteerController.updateVolunteerProfile(req.authUser, req.params.userId, req.body.fullName, req.body.phone);
-        res.send(result);
-    } catch (error) {
-        next(error);
-    }
-});
-
-router.post('/volunteers/:userId/avatar', authHandler.requireAuth, async function (req, res, next) {
-    try {
-        const result = await volunteerController.uploadVolunteerAvatar(req.authUser, req.params.userId, req.body.avatarData);
-        res.send(result);
-    } catch (error) {
-        next(error);
-    }
+router.post('/events/:eventId/ratings', authHandler.CheckLogin, async function (req, res, next) {
+  try {
+    let result = await volunteerController.createOrUpdateRating(req.params.eventId, req.authUser.userId, req.authUser.fullName, req.body.rating, req.body.review);
+    if (result.updated) { res.send(result); } else { res.status(201).send(result); }
+  } catch (error) { next(error); }
 });
 
 module.exports = router;

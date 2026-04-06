@@ -80,33 +80,38 @@ const OrganizerOverview = () => {
 
   const summary = useMemo(() => {
     const d = dashboard || {};
+    const metrics = d.metrics || {};
 
     return {
       organizationName:
-        d.organizationName ||
         d.organization?.name ||
+        d.organizationName ||
         d.profile?.name ||
         'Tổ chức của bạn',
 
       totalEvents:
+        metrics.totalEvents ??
         d.totalEvents ??
         d.eventCount ??
         d.eventsCount ??
         0,
 
       pendingEvents:
+        metrics.pendingEvents ??
         d.pendingEvents ??
         d.pendingApprovals ??
         d.pendingEventCount ??
         0,
 
       pendingRegistrations:
+        metrics.pendingRegistrations ??
         d.pendingRegistrations ??
         d.pendingVolunteerRegistrations ??
         d.totalPendingRegistrations ??
         0,
 
       confirmedVolunteers:
+        metrics.confirmedRegistrations ??
         d.confirmedVolunteers ??
         d.totalConfirmedVolunteers ??
         d.approvedVolunteers ??
