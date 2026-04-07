@@ -7,6 +7,10 @@ const defaultReport: AdminModerationReport = {
     rejectedEvents: 0,
     hiddenEvents: 0,
     inactiveUsers: 0,
+    pendingReports: 0,
+    approvedReports: 0,
+    rejectedReports: 0,
+    totalReports: 0,
   },
   message: '',
 };
@@ -58,24 +62,24 @@ const AdminModeration = () => {
         <div className="col-12 col-md-4">
           <div className="card h-100">
             <div className="card-body">
-              <p className="fw-semibold mb-1">Rejected events</p>
-              <p className="h4 mb-0">{report.summary.rejectedEvents}</p>
+              <p className="fw-semibold mb-1">Pending reports</p>
+              <p className="h4 mb-0">{report.summary.pendingReports ?? 0}</p>
             </div>
           </div>
         </div>
         <div className="col-12 col-md-4">
           <div className="card h-100">
             <div className="card-body">
-              <p className="fw-semibold mb-1">Hidden events</p>
-              <p className="h4 mb-0">{report.summary.hiddenEvents}</p>
+              <p className="fw-semibold mb-1">Approved reports</p>
+              <p className="h4 mb-0">{report.summary.approvedReports ?? 0}</p>
             </div>
           </div>
         </div>
         <div className="col-12 col-md-4">
           <div className="card h-100">
             <div className="card-body">
-              <p className="fw-semibold mb-1">Inactive users</p>
-              <p className="h4 mb-0">{report.summary.inactiveUsers}</p>
+              <p className="fw-semibold mb-1">Rejected reports</p>
+              <p className="h4 mb-0">{report.summary.rejectedReports ?? report.summary.rejectedEvents ?? 0}</p>
             </div>
           </div>
         </div>

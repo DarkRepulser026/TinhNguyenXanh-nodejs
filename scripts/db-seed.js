@@ -2,6 +2,7 @@
 
 const { connectToDatabase, mongoose } = require('../utils/mongo-connection');
 const models = require('../utils/models');
+const bcrypt = require('bcrypt');
 
 function toDate(daysFromNow, hour, minute) {
   const value = new Date();
@@ -11,6 +12,13 @@ function toDate(daysFromNow, hour, minute) {
 }
 
 async function upsertUser(input) {
+  const passwordValue = typeof input.password === 'string' ? input.password : '';
+  if (!passwordValue) {
+    throw new Error('Seed user password is required.');
+  }
+
+  const passwordHash = await bcrypt.hash(passwordValue, 10);
+
   return models.appUser.findOneAndUpdate(
     { email: input.email.toLowerCase() },
     {
@@ -19,7 +27,7 @@ async function upsertUser(input) {
         phone: input.phone || null,
         role: input.role,
         isActive: true,
-        passwordHash: input.password,
+        passwordHash,
       },
       $setOnInsert: {
         email: input.email.toLowerCase(),

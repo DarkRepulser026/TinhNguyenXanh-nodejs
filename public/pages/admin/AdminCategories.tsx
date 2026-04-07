@@ -78,27 +78,35 @@ const AdminCategories = () => {
       <p className="text-muted small mb-4">CRUD danh mục cho phân loại sự kiện.</p>
 
       <form className="row g-2 mb-2" onSubmit={onSearchSubmit}>
-        <input
-          className="form-control col"
-          placeholder="Tìm danh mục"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <button className="btn btn-dark col-auto" type="submit">
-          Search
-        </button>
+        <div className="col-12 col-md">
+          <input
+            className="form-control"
+            placeholder="Tìm danh mục"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="col-12 col-md-auto">
+          <button className="btn btn-dark w-100" type="submit">
+            Search
+          </button>
+        </div>
       </form>
 
       <form className="row g-2 mb-3" onSubmit={createCategory}>
-        <input
-          className="form-control col"
-          placeholder="Tên danh mục mới"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <button className="btn btn-success col-auto" type="submit">
-          Add
-        </button>
+        <div className="col-12 col-md">
+          <input
+            className="form-control"
+            placeholder="Tên danh mục mới"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div className="col-12 col-md-auto">
+          <button className="btn btn-success w-100" type="submit">
+            Add
+          </button>
+        </div>
       </form>
 
       {loading ? <div className="alert alert-light border">Đang tải dữ liệu...</div> : null}
