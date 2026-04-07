@@ -33,9 +33,10 @@ const EventRegisterPage = lazy(() => import('./pages/events/EventRegister'));
 const AccountSettings = lazy(() => import('./pages/volunteer/AccountSettings'));
 const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'));
 const AdminEventApprovalsPage = lazy(() => import('./pages/admin/AdminEventApprovalsPage'));
-const AdminModerationPage = lazy(() => import('./pages/admin/AdminModerationPage'));
 const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
 const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
+const AdminDonationsPage = lazy(() => import('./pages/admin/AdminDonationsPage'));
+const AdminRegistrationsPage = lazy(() => import('./pages/admin/AdminRegistrationsPage'));
 const AdminCategoriesPage = lazy(() => import('./pages/admin/AdminCategoriesPage'));
 const OrganizerOverview = lazy(() => import('./pages/organizer/OrganizerOverview'));
 const OrganizerEventManagementPage = lazy(() => import('./pages/organizer/OrganizerEventManagementPage'));
@@ -179,14 +180,6 @@ function App() {
               }
             />
             <Route
-              path="/admin/moderation"
-              element={
-                <RequireAuth roles={ADMIN_ROLES}>
-                  <AdminModerationPage />
-                </RequireAuth>
-              }
-            />
-            <Route
               path="/admin/users"
               element={
                 <RequireAuth roles={ADMIN_ROLES}>
@@ -207,6 +200,22 @@ function App() {
               element={
                 <RequireAuth roles={ADMIN_ROLES}>
                   <AdminReportsPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/admin/donations"
+              element={
+                <RequireAuth roles={ADMIN_ROLES}>
+                  <AdminDonationsPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/admin/registrations"
+              element={
+                <RequireAuth roles={ADMIN_ROLES}>
+                  <AdminRegistrationsPage />
                 </RequireAuth>
               }
             />

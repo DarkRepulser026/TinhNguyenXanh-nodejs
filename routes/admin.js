@@ -118,4 +118,40 @@ router.patch('/admin/event-reports/:id/reject', authHandler.CheckLogin, authHand
   }
 });
 
+router.get('/admin/donations', authHandler.CheckLogin, authHandler.CheckRole('Admin'), async function (req, res, next) {
+  try {
+    const result = await adminController.getDonations(req.query);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch('/admin/donations/:id/status', authHandler.CheckLogin, authHandler.CheckRole('Admin'), async function (req, res, next) {
+  try {
+    const result = await adminController.updateDonationStatus(req.params.id, req.body.status);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/admin/registrations', authHandler.CheckLogin, authHandler.CheckRole('Admin'), async function (req, res, next) {
+  try {
+    const result = await adminController.getRegistrations(req.query);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch('/admin/registrations/:id/status', authHandler.CheckLogin, authHandler.CheckRole('Admin'), async function (req, res, next) {
+  try {
+    const result = await adminController.updateRegistrationStatusByAdmin(req.params.id, req.body.status);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

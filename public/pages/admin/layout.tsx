@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  FileWarning, 
+  AlertTriangle,
+  Home,
   LayoutDashboard, 
   ListChecks, 
   LogOut, 
@@ -10,9 +11,11 @@ import {
   ShieldCheck, 
   Users,
   Shield,
-  AlertTriangle
+  Wallet,
+  UserCheck
 } from 'lucide-react';
 import { useAuth } from '../../contexts/useAuth';
+import './AdminTheme.css';
 
 type AdminLayoutProps = {
   children: React.ReactNode;
@@ -45,19 +48,30 @@ const brandBoxStyle: CSSProperties = {
 const mainStyle: CSSProperties = {
   flex: 1,
   minWidth: 0,
-};
-
-const topbarStyle: CSSProperties = {
-  background: '#ffffff',
-  borderBottom: '1px solid #e5e7eb',
-  padding: '18px 28px',
-  position: 'sticky',
-  top: 0,
-  zIndex: 10,
+  background: 'radial-gradient(1200px 520px at 100% -20%, rgba(22,163,74,0.10), rgba(255,255,255,0) 55%), linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)',
 };
 
 const contentWrapStyle: CSSProperties = {
   padding: '28px',
+};
+
+const contentPanelStyle: CSSProperties = {
+  background: 'linear-gradient(180deg, #ffffff 0%, #fcfffd 100%)',
+  border: '1px solid #e2e8f0',
+  borderRadius: '20px',
+  boxShadow: '0 18px 40px rgba(15,23,42,0.06), 0 3px 10px rgba(15,23,42,0.04)',
+  padding: '22px',
+  position: 'relative',
+  overflow: 'hidden',
+};
+
+const contentPanelAccentStyle: CSSProperties = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  height: '4px',
+  background: 'linear-gradient(90deg, #16a34a 0%, #22c55e 45%, #86efac 100%)',
 };
 
 const sectionLabelStyle: CSSProperties = {
@@ -99,11 +113,15 @@ const getLinkStyle = (active: boolean): CSSProperties => ({
   boxShadow: active ? '0 8px 18px rgba(22,163,74,0.18)' : 'none',
 });
 
-const quickCardStyle: CSSProperties = {
-  border: '1px solid #e5e7eb',
+const profileCardStyle: CSSProperties = {
+  marginTop: 'auto',
+  border: '1px solid #bbf7d0',
   borderRadius: '16px',
-  padding: '16px',
-  background: '#ffffff',
+  padding: '14px',
+  background: 'linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%)',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '10px',
 };
 
 const mobileMenuBtnStyle: CSSProperties = {
@@ -132,8 +150,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navItems = [
     { label: 'Tổng quan', path: '/admin', icon: LayoutDashboard },
     { label: 'Phê duyệt', path: '/admin/approvals', icon: ListChecks },
-    { label: 'Moderation', path: '/admin/moderation', icon: FileWarning },
     { label: 'Báo cáo', path: '/admin/reports', icon: AlertTriangle },
+    { label: 'Ủng hộ', path: '/admin/donations', icon: Wallet },
+    { label: 'Đăng ký', path: '/admin/registrations', icon: UserCheck },
     { label: 'Người dùng', path: '/admin/users', icon: Users },
     { label: 'Danh mục', path: '/admin/categories', icon: ShieldCheck },
   ];
@@ -149,6 +168,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           {/* Desktop Sidebar */}
           <aside style={{ 
             ...sidebarStyle, 
+            display: 'flex',
+            flexDirection: 'column',
             '@media (max-width: 768px)': { display: 'none' } 
           } as any}>
             <div style={brandBoxStyle}>
@@ -173,14 +194,14 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 color: '#0f172a',
                 marginBottom: '4px',
               }}>
-                Admin Panel
+                VolunteerHub
               </div>
               <div style={{
                 color: '#64748b',
                 fontSize: '0.9rem',
                 lineHeight: 1.6,
               }}>
-                Quản trị toàn diện hệ thống VolunteerHub
+                Khu vực quản trị hệ thống
               </div>
             </div>
 
@@ -199,94 +220,48 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
               ))}
             </div>
 
-            <div style={sectionLabelStyle}>Truy cập nhanh</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={quickCardStyle}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '8px',
-                  color: '#0f172a',
-                  fontWeight: 700,
-                }}>
-                  <ListChecks size={16} color="#16a34a" />
-                  Phê duyệt sự kiện
-                </div>
-                <div style={{ color: '#64748b', fontSize: '0.88rem', lineHeight: 1.6 }}>
-                  Kiểm tra và duyệt các sự kiện mới từ tổ chức.
-                </div>
+            <div style={profileCardStyle}>
+              <div style={{ color: '#166534', fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Tài khoản
               </div>
+              <div style={{ color: '#0f172a', fontSize: '0.95rem', fontWeight: 700 }}>
+                Chào mừng, {user?.fullName || 'Quản trị viên'}
+              </div>
+              <Link
+                to="/"
+                style={{
+                  ...baseLinkStyle,
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  border: '1px solid #d1d5db',
+                }}
+              >
+                <Home size={18} />
+                <span>Trang chủ</span>
+              </Link>
+              <button
+                style={{
+                  ...baseLinkStyle,
+                  background: '#fee2e2',
+                  color: '#dc2626',
+                  border: '1px solid #fecaca',
+                }}
+                onClick={() => void logout()}
+              >
+                <LogOut size={18} />
+                <span>Đăng xuất</span>
+              </button>
             </div>
           </aside>
 
           {/* Main Content */}
-          <main style={mainStyle}>
-            <div style={topbarStyle}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap' as any,
-                gap: '16px',
-              }}>
-                <div>
-                  <div style={{
-                    color: '#0f172a',
-                    fontSize: '1.1rem',
-                    fontWeight: 800 as any,
-                    marginBottom: '4px',
-                  }}>
-                    Admin Dashboard
-                  </div>
-                  <div style={{
-                    color: '#64748b',
-                    fontSize: '0.9rem',
-                  }}>
-                    Chào mừng, {user?.fullName || 'Quản trị viên'} 👋
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <Link
-                    to="/"
-                    style={{
-                      textDecoration: 'none',
-                      color: '#0f172a',
-                      border: '1px solid #e5e7eb',
-                      background: '#ffffff',
-                      padding: '10px 14px',
-                      borderRadius: '10px',
-                      fontWeight: 600 as any,
-                      fontSize: '0.9rem',
-                    }}
-                  >
-                    🏠 Trang chủ
-                  </Link>
-                  <button
-                    onClick={() => void logout()}
-                    style={{
-                      textDecoration: 'none',
-                      color: '#ffffff',
-                      background: '#0f172a',
-                      border: 'none',
-                      padding: '10px 14px',
-                      borderRadius: '10px',
-                      fontWeight: 600 as any,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <LogOut size={16} />
-                    Đăng xuất
-                  </button>
-                </div>
+          <main style={mainStyle} className="admin-main-surface">
+            <div style={contentWrapStyle}>
+              <div style={contentPanelStyle} className="admin-content-panel">
+                <div style={contentPanelAccentStyle} />
+                {children}
               </div>
             </div>
-
-            <div style={contentWrapStyle}>{children}</div>
           </main>
         </div>
 
@@ -314,6 +289,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 bottom: 0,
                 zIndex: 1000,
                 width: '280px',
+                display: 'flex',
+                flexDirection: 'column',
                 transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
                 transition: 'transform 0.3s ease',
               }}
@@ -340,14 +317,14 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                   color: '#0f172a',
                   marginBottom: '4px',
                 }}>
-                  Admin Panel
+                  VolunteerHub
                 </div>
                 <div style={{
                   color: '#64748b',
                   fontSize: '0.9rem',
                   lineHeight: 1.6,
                 }}>
-                  Quản trị toàn diện hệ thống VolunteerHub
+                  Khu vực quản trị hệ thống
                 </div>
               </div>
 
@@ -365,22 +342,42 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                   </Link>
                 ))}
               </div>
-              <button 
-                style={{
-                  ...baseLinkStyle,
-                  marginTop: 'auto',
-                  background: '#fee2e2',
-                  color: '#dc2626',
-                  border: '1px solid #fecaca',
-                }}
-                onClick={() => {
-                  logout();
-                  setSidebarOpen(false);
-                }}
-              >
-                <LogOut size={18} />
-                <span>Đăng xuất</span>
-              </button>
+              <div style={profileCardStyle}>
+                <div style={{ color: '#166534', fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Tài khoản
+                </div>
+                <div style={{ color: '#0f172a', fontSize: '0.95rem', fontWeight: 700 }}>
+                  Chào mừng, {user?.fullName || 'Quản trị viên'}
+                </div>
+                <Link
+                  to="/"
+                  style={{
+                    ...baseLinkStyle,
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    border: '1px solid #d1d5db',
+                  }}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <Home size={18} />
+                  <span>Trang chủ</span>
+                </Link>
+                <button 
+                  style={{
+                    ...baseLinkStyle,
+                    background: '#fee2e2',
+                    color: '#dc2626',
+                    border: '1px solid #fecaca',
+                  }}
+                  onClick={() => {
+                    void logout();
+                    setSidebarOpen(false);
+                  }}
+                >
+                  <LogOut size={18} />
+                  <span>Đăng xuất</span>
+                </button>
+              </div>
             </aside>
           </>
         )}

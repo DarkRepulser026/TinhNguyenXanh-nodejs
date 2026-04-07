@@ -2,6 +2,7 @@
 
 const { connectToDatabase, mongoose } = require('../utils/mongo-connection');
 const models = require('../utils/models');
+const bcrypt = require('bcrypt');
 
 function toDate(daysFromNow, hour, minute) {
   const value = new Date();
@@ -11,6 +12,13 @@ function toDate(daysFromNow, hour, minute) {
 }
 
 async function upsertUser(input) {
+  const passwordValue = typeof input.password === 'string' ? input.password : '';
+  if (!passwordValue) {
+    throw new Error('Seed user password is required.');
+  }
+
+  const passwordHash = await bcrypt.hash(passwordValue, 10);
+
   return models.appUser.findOneAndUpdate(
     { email: input.email.toLowerCase() },
     {
@@ -19,7 +27,7 @@ async function upsertUser(input) {
         phone: input.phone || null,
         role: input.role,
         isActive: true,
-        passwordHash: input.password,
+        passwordHash,
       },
       $setOnInsert: {
         email: input.email.toLowerCase(),
@@ -381,6 +389,7 @@ async function runSeed() {
 
   const createdEvents = [];
   let eventIndex = 0;
+  const statusCycle = ['approved', 'approved', 'pending', 'draft', 'approved', 'pending'];
 
   for (let i = 0; i < 3; i++) {
     const org = organizations[i];
@@ -401,7 +410,8 @@ async function runSeed() {
             categoryId: category._id,
             startTime: toDate(template.baseDay, 7 + Math.floor(Math.random() * 4), 0),
             endTime: toDate(template.baseDay, 11 + Math.floor(Math.random() * 4), 30),
-            status: 'approved',
+            // Keep a stable mix of statuses so admin approval queue always has test data.
+            status: statusCycle[eventIndex % statusCycle.length],
             maxVolunteers: template.maxVolunteers,
             isHidden: false,
             images: `https://source.unsplash.com/600x400/?${encodeURIComponent(getEventImageQuery(template.title, template.category))}&sig=${eventIndex}`,

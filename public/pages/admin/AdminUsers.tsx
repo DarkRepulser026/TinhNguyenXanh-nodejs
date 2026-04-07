@@ -49,19 +49,52 @@ const AdminUsers = () => {
 
   return (
     <section>
-      <h1 className="h3 mb-2">Users</h1>
-      <p className="text-muted small mb-4">Quản lý vai trò và trạng thái hoạt động của tài khoản.</p>
+      <div className="admin-page-header mb-4">
+        <h1 className="h3 mb-2">Users</h1>
+        <p className="text-muted small mb-0">Quản lý vai trò và trạng thái hoạt động của tài khoản.</p>
+      </div>
 
-      <form className="row g-2 mb-3" onSubmit={onSearchSubmit}>
-        <input
-          className="form-control col"
-          placeholder="Tìm theo email/tên/sđt"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <button className="btn btn-dark col-auto" type="submit">
-          Search
-        </button>
+      <div className="row g-3 mb-3 admin-stats-row">
+        <div className="col-12 col-md-4">
+          <div className="card h-100 admin-stat-card">
+            <div className="card-body">
+              <p className="fw-semibold mb-1">Tổng tài khoản</p>
+              <p className="h4 mb-0">{items.length}</p>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-md-4">
+          <div className="card h-100 admin-stat-card">
+            <div className="card-body">
+              <p className="fw-semibold mb-1">Đang hoạt động</p>
+              <p className="h4 mb-0">{items.filter((item) => item.isActive).length}</p>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-md-4">
+          <div className="card h-100 admin-stat-card">
+            <div className="card-body">
+              <p className="fw-semibold mb-1">Đã khóa</p>
+              <p className="h4 mb-0">{items.filter((item) => !item.isActive).length}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <form className="admin-toolbar row g-2 mb-3" onSubmit={onSearchSubmit}>
+        <div className="col-12 col-md">
+          <input
+            className="form-control"
+            placeholder="Tìm theo email/tên/sđt"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="col-12 col-md-auto">
+          <button className="btn btn-dark w-100" type="submit">
+            Search
+          </button>
+        </div>
       </form>
 
       {loading ? <div className="alert alert-light border">Đang tải dữ liệu...</div> : null}
@@ -72,10 +105,10 @@ const AdminUsers = () => {
           <thead>
             <tr>
               <th>Email</th>
-              <th>Name</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th className="text-end">Actions</th>
+              <th>Họ tên</th>
+              <th>Vai trò</th>
+              <th>Trạng thái</th>
+              <th className="text-end">Thao tác</th>
             </tr>
           </thead>
           <tbody>

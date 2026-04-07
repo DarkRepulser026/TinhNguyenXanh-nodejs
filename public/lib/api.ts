@@ -70,6 +70,8 @@ export type AdminModerationReport = any
 export type AdminUserItem = any
 export type AdminDashboardMetrics = any
 export type AdminEventReport = any
+export type AdminDonationItem = any
+export type AdminRegistrationItem = any
 export type OrganizerEventItem = any
 export type FavoriteItem = any
 export type RegistrationItem = any
@@ -151,6 +153,10 @@ export const adminService = {
   getEventReports: () => axios.get('/admin/event-reports'),
   approveReport: (id: string) => axios.patch(`/admin/event-reports/${id}/approve`),
   rejectReport: (id: string) => axios.patch(`/admin/event-reports/${id}/reject`),
+  getDonations: (params?: Record<string, unknown>) => axios.get('/admin/donations', { params }),
+  updateDonationStatus: (id: string, status: DonationStatus) => axios.patch(`/admin/donations/${id}/status`, { status }),
+  getRegistrations: (params?: Record<string, unknown>) => axios.get('/admin/registrations', { params }),
+  updateRegistrationStatus: (id: string, status: string) => axios.patch(`/admin/registrations/${id}/status`, { status }),
 }
 
 export const organizerService = {

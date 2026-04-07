@@ -35,47 +35,47 @@ export default function AdminPage() {
 
   return (
     <section>
-      <div>
+      <div className="admin-page-header mb-4">
         <h1 className="h3 mb-1">Admin Dashboard</h1>
-        <p className="text-muted small">Tổng quan hệ thống theo dữ liệu backend.</p>
+        <p className="text-muted small mb-0">Tổng quan hệ thống theo dữ liệu backend.</p>
       </div>
 
       {loading ? <div className="alert alert-light border mt-3">Đang tải số liệu...</div> : null}
       {error ? <div className="alert alert-danger mt-3">{error}</div> : null}
 
-      <div className="row g-3 mt-1">
+      <div className="row g-3 mt-1 admin-stats-row">
         <div className="col-12 col-md-6 col-xl-4">
-          <div className="card h-100">
+          <div className="card h-100 admin-stat-card">
             <div className="card-body">
-              <p className="small fw-semibold mb-1">Users</p>
-              <p className="h3 mb-1">{metrics.totalUsers}</p>
+              <p className="fw-semibold mb-1">Users</p>
+              <p className="h4 mb-1">{metrics.totalUsers}</p>
               <p className="text-muted small mb-0">Active: {metrics.activeUsers}</p>
             </div>
           </div>
         </div>
         <div className="col-12 col-md-6 col-xl-4">
-          <div className="card h-100">
+          <div className="card h-100 admin-stat-card">
             <div className="card-body">
-              <p className="small fw-semibold mb-1">Events</p>
-              <p className="h3 mb-1">{metrics.totalEvents}</p>
+              <p className="fw-semibold mb-1">Events</p>
+              <p className="h4 mb-1">{metrics.totalEvents}</p>
               <p className="text-muted small mb-0">Pending approvals: {metrics.pendingApprovals}</p>
             </div>
           </div>
         </div>
         <div className="col-12 col-xl-4">
-          <div className="card h-100">
+          <div className="card h-100 admin-stat-card">
             <div className="card-body">
-              <p className="small fw-semibold mb-1">Registrations</p>
-              <p className="h3 mb-1">{metrics.pendingRegistrations}</p>
+              <p className="fw-semibold mb-1">Registrations</p>
+              <p className="h4 mb-1">{metrics.pendingRegistrations}</p>
               <p className="text-muted small mb-0">Pending volunteer confirmations</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="row g-3 mt-1">
+      <div className="row g-3 mt-1 admin-stats-row">
         <div className="col-12 col-md-4">
-          <div className="card h-100">
+          <div className="card h-100 admin-stat-card">
             <div className="card-body">
               <p className="fw-semibold mb-1">Organizations</p>
               <p className="h4 mb-0">{metrics.totalOrganizations}</p>
@@ -83,7 +83,7 @@ export default function AdminPage() {
           </div>
         </div>
         <div className="col-12 col-md-4">
-          <div className="card h-100">
+          <div className="card h-100 admin-stat-card">
             <div className="card-body">
               <p className="fw-semibold mb-1">Categories</p>
               <p className="h4 mb-0">{metrics.totalCategories}</p>
@@ -91,7 +91,7 @@ export default function AdminPage() {
           </div>
         </div>
         <div className="col-12 col-md-4">
-          <div className="card h-100">
+          <div className="card h-100 admin-stat-card">
             <div className="card-body">
               <p className="fw-semibold mb-1">Volunteers</p>
               <p className="h4 mb-0">{metrics.totalVolunteers}</p>
