@@ -66,3 +66,4 @@ dist/
 sample
 controllers/layout/
 FRONTEND_FLOW_TEST_DESIGN.md
+postman_collection.json
