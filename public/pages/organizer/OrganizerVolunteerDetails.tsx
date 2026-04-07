@@ -221,19 +221,16 @@ const OrganizerVolunteerDetails = () => {
       setEvaluationError(null);
       setSuccess(null);
 
-      const response = await organizerService.saveRegistrationEvaluation(id, {
+      await organizerService.saveRegistrationEvaluation(id, {
         rating: numericRating,
         comment: comment.trim() || undefined,
       });
 
-      setEvaluation(response.data);
-      setRating(String(response.data.rating));
-      setComment(response.data.comment || '');
+      await loadEvaluation(id);
       setToastType('success');
       setSuccess('Lưu đánh giá tình nguyện viên thành công.');
     } catch (err) {
       setToastType('error');
-      setSuccess(getApiErrorMessage(err, 'Không thể lưu đánh giá tình nguyện viên.'));
       setEvaluationError(getApiErrorMessage(err, 'Không thể lưu đánh giá tình nguyện viên.'));
       setSuccess(null);
     } finally {

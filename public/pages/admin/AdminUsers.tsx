@@ -53,15 +53,19 @@ const AdminUsers = () => {
       <p className="text-muted small mb-4">Quản lý vai trò và trạng thái hoạt động của tài khoản.</p>
 
       <form className="row g-2 mb-3" onSubmit={onSearchSubmit}>
-        <input
-          className="form-control col"
-          placeholder="Tìm theo email/tên/sđt"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <button className="btn btn-dark col-auto" type="submit">
-          Search
-        </button>
+        <div className="col-12 col-md">
+          <input
+            className="form-control"
+            placeholder="Tìm theo email/tên/sđt"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="col-12 col-md-auto">
+          <button className="btn btn-dark w-100" type="submit">
+            Search
+          </button>
+        </div>
       </form>
 
       {loading ? <div className="alert alert-light border">Đang tải dữ liệu...</div> : null}

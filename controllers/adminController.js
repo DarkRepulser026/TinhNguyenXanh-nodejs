@@ -137,7 +137,24 @@ module.exports = {
     const rejectedEvents = await models.event.countDocuments({ status: 'rejected' });
     const hiddenEvents = await models.event.countDocuments({ isHidden: true });
     const inactiveUsers = await models.appUser.countDocuments({ isActive: false });
-    return { queue: mongo.toPlain(queue), summary: { rejectedEvents, hiddenEvents, inactiveUsers }, message: 'Moderation queue loaded.' };
+    const pendingReports = await models.eventReport.countDocuments({ status: 'Pending' });
+    const approvedReports = await models.eventReport.countDocuments({ status: 'Approved' });
+    const rejectedReports = await models.eventReport.countDocuments({ status: 'Rejected' });
+    const totalReports = pendingReports + approvedReports + rejectedReports;
+
+    return {
+      queue: mongo.toPlain(queue),
+      summary: {
+        rejectedEvents,
+        hiddenEvents,
+        inactiveUsers,
+        pendingReports,
+        approvedReports,
+        rejectedReports,
+        totalReports,
+      },
+      message: 'Moderation queue loaded.',
+    };
   },
   
   getEventReports: async function () {

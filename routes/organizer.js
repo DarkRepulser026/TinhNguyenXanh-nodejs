@@ -115,9 +115,25 @@ router.get('/organizer/registrations/:id/evaluation', authHandler.CheckLogin, au
     next(error);
   }
 });
+router.post('/organizer/registrations/:id/evaluation', authHandler.CheckLogin, authHandler.CheckRole('Organizer', 'Admin'), async function (req, res, next) {
+  try {
+    const result = await organizerController.saveRegistrationEvaluation(req.authUser.userId, req.params.id, req.body);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+});
 router.get('/organizer/volunteers/:id/history', authHandler.CheckLogin, authHandler.CheckRole('Organizer', 'Admin'), async function (req, res, next) {
   try {
     const result = await organizerController.getVolunteerHistory(req.authUser.userId, req.params.id);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+});
+router.get('/organizer/members', authHandler.CheckLogin, authHandler.CheckRole('Organizer', 'Admin'), async function (req, res, next) {
+  try {
+    const result = await organizerController.getMembers(req.authUser.userId);
     res.send(result);
   } catch (error) {
     next(error);

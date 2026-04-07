@@ -2,6 +2,7 @@
 
 const { connectToDatabase, mongoose } = require('../utils/mongo-connection');
 const models = require('../utils/models');
+const bcrypt = require('bcrypt');
 
 function toDate(daysFromNow, hour, minute) {
   const value = new Date();
@@ -11,6 +12,13 @@ function toDate(daysFromNow, hour, minute) {
 }
 
 async function upsertUser(input) {
+  const passwordValue = typeof input.password === 'string' ? input.password : '';
+  if (!passwordValue) {
+    throw new Error('Seed user password is required.');
+  }
+
+  const passwordHash = await bcrypt.hash(passwordValue, 10);
+
   return models.appUser.findOneAndUpdate(
     { email: input.email.toLowerCase() },
     {
@@ -19,7 +27,7 @@ async function upsertUser(input) {
         phone: input.phone || null,
         role: input.role,
         isActive: true,
-        passwordHash: input.password,
+        passwordHash,
       },
       $setOnInsert: {
         email: input.email.toLowerCase(),
@@ -39,6 +47,35 @@ async function upsertCategory(name) {
 
 async function runSeed() {
   await connectToDatabase();
+
+  // ==================== CLEANUP SMOKE ARTIFACTS ====================
+  console.log('🧹 Cleaning smoke-test artifacts...');
+
+  const smokeUsers = await models.appUser.find({ email: /^smoke\./i }).select('_id').lean();
+  const smokeUserIds = smokeUsers.map((user) => user._id);
+
+  if (smokeUserIds.length > 0) {
+    const smokeVolunteers = await models.volunteer.find({ userId: { $in: smokeUserIds } }).select('_id').lean();
+    const smokeVolunteerIds = smokeVolunteers.map((item) => item._id);
+
+    await models.organizationMember.deleteMany({ userId: { $in: smokeUserIds } });
+    await models.eventComment.deleteMany({ userId: { $in: smokeUserIds } });
+    await models.eventRating.deleteMany({ userId: { $in: smokeUserIds } });
+    await models.organizationReview.deleteMany({ userId: { $in: smokeUserIds } });
+    await models.eventReport.deleteMany({ reporterUserId: { $in: smokeUserIds } });
+    await models.donation.deleteMany({ userId: { $in: smokeUserIds } });
+    await models.appUser.deleteMany({ _id: { $in: smokeUserIds } });
+
+    if (smokeVolunteerIds.length > 0) {
+      await models.eventRegistration.deleteMany({ volunteerId: { $in: smokeVolunteerIds } });
+      await models.eventFavorite.deleteMany({ volunteerId: { $in: smokeVolunteerIds } });
+      await models.volunteerEvaluation.deleteMany({ volunteerId: { $in: smokeVolunteerIds } });
+      await models.volunteer.deleteMany({ _id: { $in: smokeVolunteerIds } });
+    }
+  }
+
+  await models.event.deleteMany({ title: { $in: ['Smoke Event', 'Updated Smoke Event'] } });
+  await models.eventCategory.deleteMany({ name: 'Smoke Category' });
 
   // ==================== USERS ====================
   console.log('📝 Creating users...');
@@ -135,6 +172,7 @@ async function runSeed() {
       website: 'https://tinhnguyenxanh.local',
       organizationType: 'Non-profit',
       avatar: 'https://api.dicebear.com/7.x/icons/svg?seed=tinhnguyenxanh',
+      focusAreas: ['Environment', 'Education', 'Community Support'],
     },
     {
       owner: organizerUsers[1],
@@ -148,6 +186,7 @@ async function runSeed() {
       website: 'https://educationforall.local',
       organizationType: 'Non-profit',
       avatar: 'https://api.dicebear.com/7.x/icons/svg?seed=education',
+      focusAreas: ['Education', 'Community Support'],
     },
     {
       owner: organizerUsers[2],
@@ -161,6 +200,7 @@ async function runSeed() {
       website: 'https://healthfoundation.local',
       organizationType: 'NGO',
       avatar: 'https://api.dicebear.com/7.x/icons/svg?seed=health',
+      focusAreas: ['Healthcare', 'Community Support'],
     },
   ];
 
@@ -180,8 +220,9 @@ async function runSeed() {
           website: orgData.website,
           organizationType: orgData.organizationType,
           verified: true,
-          logo: orgData.avatar,
-          headerImage: `https://picsum.photos/1200/400?random=${Math.random()}`,
+          avatarUrl: orgData.avatar,
+          focusAreas: orgData.focusAreas || [],
+          memberCount: 1,
         },
         $setOnInsert: {
           ownerUserId: orgData.owner._id,
@@ -608,7 +649,9 @@ async function runSeed() {
         {
           $set: {
             rating: rating,
+            title: 'Đánh giá tổ chức',
             content: orgReviews[Math.floor(Math.random() * orgReviews.length)],
+            status: 'Approved',
             createdAt: new Date(),
           },
         },
@@ -693,10 +736,12 @@ async function runSeed() {
   console.log('💳 Creating donations...');
 
   for (let i = 1; i <= 8; i++) {
+    const donationUser = volunteerUsers[(i - 1) % volunteerUsers.length];
     await models.donation.findOneAndUpdate(
       { transactionCode: `SEED_DONATION_${i}` },
       {
         $set: {
+          userId: donationUser ? donationUser._id : null,
           donorName: `Seed Donor ${i}`,
           amount: 50000 * i,
           phoneNumber: `09800000${String(i).padStart(2, '0')}`,
