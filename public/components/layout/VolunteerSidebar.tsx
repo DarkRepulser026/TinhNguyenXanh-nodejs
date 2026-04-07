@@ -6,7 +6,6 @@ import {
   Camera,
   CreditCard,
   Heart,
-  Settings,
   User as UserIcon,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -14,19 +13,14 @@ import { useAuth } from '../../contexts/useAuth';
 import Swal from 'sweetalert2';
 import { getApiErrorMessage, volunteerService } from '../../lib/api';
 
-type VolunteerSidebarProps = {
-  rank?: string;
-  points?: number;
-};
-
-const VolunteerSidebar: React.FC<VolunteerSidebarProps> = ({
-  rank = 'Tình nguyện viên',
-  points = 0,
-}) => {
+const VolunteerSidebar: React.FC = () => {
   const { user } = useAuth();
   const location = useLocation();
   const [avatarUrl, setAvatarUrl] = React.useState<string>('');
   const [uploadingAvatar, setUploadingAvatar] = React.useState(false);
+  const [rank, setRank] = React.useState<string>('Tình nguyện viên');
+  const [points, setPoints] = React.useState<number>(0);
+  const [showPointsTip, setShowPointsTip] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const navItems = [
@@ -35,32 +29,37 @@ const VolunteerSidebar: React.FC<VolunteerSidebarProps> = ({
     { to: '/volunteer/registrations', label: 'Lịch sử đăng ký', icon: Calendar },
     { to: '/volunteer/favorites', label: 'Yêu thích', icon: Heart },
     { to: '/volunteer/donations', label: 'Lịch sử đóng góp', icon: CreditCard },
-    { to: '/account/settings', label: 'Cài đặt', icon: Settings },
   ];
 
-  const isActive = (path: string) => {
-    if (path === '/account/settings') {
-      return location.pathname === '/account/settings' || location.pathname.startsWith('/account/');
-    }
-    return location.pathname === path;
-  };
+  const isActive = (path: string) => location.pathname === path;
 
   React.useEffect(() => {
-    const loadProfileAvatar = async () => {
+    const loadSidebarData = async () => {
       if (!user?.id) {
         return;
       }
 
       try {
-        const response = await volunteerService.getProfile(user.id);
-        setAvatarUrl(response.data?.avatar || '');
+        const [profileResponse, dashboardResponse] = await Promise.all([
+          volunteerService.getProfile(user.id),
+          volunteerService.getDashboard(user.id),
+        ]);
+
+        const profileData = profileResponse.data || {};
+        const dashboardStats = dashboardResponse.data?.stats || {};
+
+        setAvatarUrl(profileData.avatar || '');
+        setRank(dashboardStats.rank || profileData.rank || user.role || 'Tình nguyện viên');
+        setPoints(Number(dashboardStats.points || profileData.points || 0));
       } catch {
         setAvatarUrl('');
+        setRank(user?.role || 'Tình nguyện viên');
+        setPoints(0);
       }
     };
 
-    void loadProfileAvatar();
-  }, [user?.id]);
+    void loadSidebarData();
+  }, [user?.id, user?.role]);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -83,7 +82,7 @@ const VolunteerSidebar: React.FC<VolunteerSidebarProps> = ({
         const base64 = event.target?.result as string;
 
         try {
-          const response = await volunteerService.uploadAvatar(user.id as number, base64);
+          const response = await volunteerService.uploadAvatar(user.id, base64);
           setAvatarUrl(response.data.avatar || '');
           Swal.fire('Thành công', 'Ảnh đại diện đã được cập nhật.', 'success');
         } catch (err) {
@@ -141,7 +140,38 @@ const VolunteerSidebar: React.FC<VolunteerSidebarProps> = ({
           )}
 
           <h5 className="fw-bold mb-1">{user?.fullName || 'Tình nguyện viên'}</h5>
-          <p className="text-muted small mb-3">{rank}</p>
+          <p className="text-muted small mb-0">{rank}</p>
+
+          <div
+            className="card border-0 shadow-sm rounded-4 p-3 text-white mt-3 position-relative"
+            style={{ background: 'linear-gradient(135deg, #198754 0%, #20c997 100%)' }}
+            onMouseEnter={() => setShowPointsTip(true)}
+            onMouseLeave={() => setShowPointsTip(false)}
+          >
+            <div
+              className="position-absolute top-0 start-50 translate-middle-x px-3 py-2 rounded-3 shadow-sm bg-white text-success small fw-semibold"
+              style={{
+                marginTop: '8px',
+                whiteSpace: 'nowrap',
+                pointerEvents: 'none',
+                zIndex: 2,
+                opacity: showPointsTip ? 1 : 0,
+                transform: `translate(-50%, ${showPointsTip ? '0' : '-4px'})`,
+                transition: 'opacity 160ms ease, transform 160ms ease',
+              }}
+            >
+              Dùng để mở khóa phần thưởng.
+            </div>
+
+            <div className="d-flex align-items-center justify-content-between mb-2">
+              <div className="small fw-semibold opacity-75">Điểm tích lũy</div>
+              <Award size={18} />
+            </div>
+            <div className="d-flex align-items-end justify-content-between">
+              <h4 className="fw-bold mb-0">{points.toLocaleString('vi-VN')}</h4>
+              <span className="badge rounded-pill text-bg-light text-success fw-semibold">PTS</span>
+            </div>
+          </div>
         </div>
 
         <div className="px-4 pb-4">
@@ -166,18 +196,6 @@ const VolunteerSidebar: React.FC<VolunteerSidebarProps> = ({
             })}
           </div>
         </div>
-      </div>
-
-      <div
-        className="card border-0 shadow-sm rounded-4 p-4 bg-gradient-success text-white"
-        style={{ background: 'linear-gradient(135deg, #198754 0%, #20c997 100%)' }}
-      >
-        <div className="d-flex align-items-center justify-content-between mb-3">
-          <h6 className="fw-bold mb-0">Điểm tích lũy</h6>
-          <Award size={24} />
-        </div>
-        <h2 className="fw-bold mb-0">{points}</h2>
-        <p className="small mb-0 opacity-75">Điểm sẽ được dùng để đổi quà tặng</p>
       </div>
     </>
   );

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Heart, 
   Trash2, 
   Eye, 
   Clock, 
@@ -77,7 +76,7 @@ const FavoriteEvents: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container py-5 text-center">
+      <div className="py-5 text-center">
         <div className="spinner-border text-success" role="status">
           <span className="visually-hidden">Đang tải...</span>
         </div>
@@ -86,18 +85,15 @@ const FavoriteEvents: React.FC = () => {
   }
 
   if (error) {
-    return <div className="alert alert-danger">{error}</div>;
+    return <div className="alert alert-danger rounded-4">{error}</div>;
   }
 
   return (
     <div>
           <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div>
-              <h2 className="fw-bold text-success mb-1">
-                <Heart className="me-2 text-danger" fill="currentColor" />
-                Sự kiện yêu thích
-              </h2>
-              <p className="text-muted mb-0">Danh sách các hoạt động bạn đã lưu để theo dõi</p>
+              <h2 className="fw-bold text-success mb-1">Sự kiện yêu thích</h2>
+              <p className="text-muted mb-0">Danh sách các hoạt động bạn đã lưu để theo dõi.</p>
             </div>
 
             <div className="position-relative" style={{ width: '300px', maxWidth: '100%' }}>

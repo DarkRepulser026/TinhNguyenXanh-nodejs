@@ -106,7 +106,7 @@ const MyRegistrations: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container py-5 text-center">
+      <div className="py-5 text-center">
         <div className="spinner-border text-success" role="status">
           <span className="visually-hidden">Đang tải...</span>
         </div>
@@ -115,15 +115,15 @@ const MyRegistrations: React.FC = () => {
   }
 
   if (error) {
-    return <div className="alert alert-danger">{error}</div>;
+    return <div className="alert alert-danger rounded-4">{error}</div>;
   }
 
   return (
     <div>
           <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div>
-              <h2 className="fw-bold text-success mb-1">Cá nhân & Đăng ký</h2>
-              <p className="text-muted mb-0">Quản lý lịch sử tham gia hoạt động tình nguyện của bạn</p>
+              <h2 className="fw-bold text-success mb-1">Lịch sử đăng ký</h2>
+              <p className="text-muted mb-0">Quản lý lịch sử tham gia hoạt động tình nguyện của bạn.</p>
             </div>
 
             <div className="d-flex gap-2 flex-wrap">

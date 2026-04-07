@@ -33,7 +33,13 @@ const VolunteerDashboard: React.FC = () => {
     }, [user?.id]);
 
     if (loading) {
-        return <div className="d-flex justify-content-center align-items-center min-vh-100">Đang tải bảng điều khiển...</div>;
+        return (
+            <div className="py-5 text-center">
+                <div className="spinner-border text-success" role="status">
+                    <span className="visually-hidden">Đang tải...</span>
+                </div>
+            </div>
+        );
     }
     
     // Ráp dữ liệu từ API hoặc dùng mặc định nếu chưa có
@@ -49,8 +55,11 @@ const VolunteerDashboard: React.FC = () => {
 
     return (
         <div className="volunteer-dashboard">
-                        <div className="d-flex justify-content-between align-items-center mb-4">
-                            <h3 className="fw-bold mb-0">Bảng điều khiển</h3>
+                        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                            <div>
+                                <h2 className="fw-bold text-success mb-1">Bảng điều khiển</h2>
+                                <p className="text-muted mb-0">Theo dõi tổng quan hoạt động tình nguyện của bạn.</p>
+                            </div>
                             <Link to="/events" className="btn btn-outline-success rounded-pill px-4">
                                 Khám phá sự kiện mới
                             </Link>

@@ -107,7 +107,7 @@ const VolunteerProfile: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container py-5 text-center">
+      <div className="py-5 text-center">
         <div className="spinner-border text-success" role="status">
           <span className="visually-hidden">Đang tải...</span>
         </div>
@@ -117,8 +117,8 @@ const VolunteerProfile: React.FC = () => {
 
   if (error || !profile || !user) {
     return (
-      <div className="container py-5">
-        <div className="alert alert-danger" role="alert">
+      <div>
+        <div className="alert alert-danger rounded-4" role="alert">
           {error || 'Không tìm thấy hồ sơ.'}
         </div>
       </div>
@@ -126,10 +126,16 @@ const VolunteerProfile: React.FC = () => {
   }
 
   return (
-    <div className="row g-4 align-items-start">
+    <div>
+      <div className="mb-4">
+        <h2 className="fw-bold text-success mb-1">Thông tin cá nhân</h2>
+        <p className="text-muted mb-0">Xem và cập nhật thông tin hồ sơ của bạn.</p>
+      </div>
+
+      <div className="row g-4 align-items-start">
       <div className="col-12">
         <div className="card border-0 shadow-sm rounded-4">
-          <div className="card-body p-4">
+          <div className="card-body p-3 p-md-4">
             {isEditing ? (
               <>
                 <h5 className="fw-bold mb-4 d-flex align-items-center gap-2">
@@ -165,6 +171,20 @@ const VolunteerProfile: React.FC = () => {
                       disabled
                     />
                     <small className="text-muted">Email không thể thay đổi</small>
+                  </div>
+
+                  <div className="mb-3">
+                    <label htmlFor="role" className="form-label fw-semibold">
+                      Vai trò
+                    </label>
+                    <input
+                      type="text"
+                      id="role"
+                      className="form-control rounded-pill px-4"
+                      value={user?.role || 'Tình nguyện viên'}
+                      disabled
+                    />
+                    <small className="text-muted">Vai trò không thể thay đổi</small>
                   </div>
 
                   <div className="mb-4">
@@ -206,18 +226,7 @@ const VolunteerProfile: React.FC = () => {
               </>
             ) : (
               <>
-                <div className="d-flex justify-content-between align-items-center gap-2 mb-4 flex-wrap">
-                  <h5 className="fw-bold mb-0">Thông tin cá nhân</h5>
-                  <button
-                    type="button"
-                    className="btn btn-outline-success btn-sm rounded-pill d-flex align-items-center justify-content-center gap-2"
-                    onClick={handleStartEdit}
-                  >
-                    <Edit2 size={16} /> Chỉnh sửa hồ sơ
-                  </button>
-                </div>
-
-                <div className="row g-3 mb-4">
+                <div className="row g-3 mb-0">
                   <div className="col-12">
                     <div className="d-flex gap-3 p-3 bg-light rounded-3">
                       <User size={20} className="text-success flex-shrink-0 mt-1" />
@@ -240,6 +249,16 @@ const VolunteerProfile: React.FC = () => {
 
                   <div className="col-12">
                     <div className="d-flex gap-3 p-3 bg-light rounded-3">
+                      <User size={20} className="text-success flex-shrink-0 mt-1" />
+                      <div>
+                        <div className="small text-muted">Vai trò</div>
+                        <div className="fw-semibold">{user.role || 'Tình nguyện viên'}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-12">
+                    <div className="d-flex gap-3 p-3 bg-light rounded-3">
                       <Phone size={20} className="text-success flex-shrink-0 mt-1" />
                       <div>
                         <div className="small text-muted">Số điện thoại</div>
@@ -249,10 +268,21 @@ const VolunteerProfile: React.FC = () => {
                   </div>
                 </div>
 
+                <div className="d-flex justify-content-end mt-3">
+                  <button
+                    type="button"
+                    className="btn btn-outline-success rounded-pill px-4 d-flex align-items-center justify-content-center gap-2"
+                    onClick={handleStartEdit}
+                  >
+                    <Edit2 size={16} /> Chỉnh sửa hồ sơ
+                  </button>
+                </div>
+
               </>
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

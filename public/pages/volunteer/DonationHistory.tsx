@@ -4,12 +4,13 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
-import { volunteerService } from '../../lib/api';
+import { getApiErrorMessage, volunteerService } from '../../lib/api';
 
 const DonationHistory: React.FC = () => {
     const { user } = useAuth();
     const [donations, setDonations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchDonations = async () => {
@@ -17,8 +18,8 @@ const DonationHistory: React.FC = () => {
             try {
                 const response = await volunteerService.getDonations(user.id);
                 setDonations(response.data);
-            } catch (error) {
-                console.error("Lỗi khi tải lịch sử đóng góp:", error);
+            } catch (e) {
+                setError(getApiErrorMessage(e, 'Không tải được lịch sử đóng góp.'));
             } finally {
                 setLoading(false);
             }
@@ -27,17 +28,29 @@ const DonationHistory: React.FC = () => {
         void fetchDonations();
     }, [user?.id]);
 
+    if (loading) {
+        return (
+            <div className="py-5 text-center">
+                <div className="spinner-border text-success" role="status">
+                    <span className="visually-hidden">Đang tải...</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return <div className="alert alert-danger rounded-4">{error}</div>;
+    }
+
     return (
         <div>
+                        <div className="mb-4">
+                            <h2 className="fw-bold text-success mb-1">Lịch sử đóng góp</h2>
+                            <p className="text-muted mb-0">Theo dõi các khoản đóng góp bạn đã thực hiện.</p>
+                        </div>
+
                         <div className="card border-0 shadow-sm rounded-4 p-4 h-100 bg-white">
-                            <h4 className="fw-bold mb-4">Lịch sử đóng góp</h4>
-                            {loading ? (
-                                <div className="text-center py-5">
-                                    <div className="spinner-border text-success" role="status">
-                                        <span className="visually-hidden">Loading...</span>
-                                    </div>
-                                </div>
-                            ) : donations.length > 0 ? (
+                            {donations.length > 0 ? (
                                 <div className="table-responsive">
                                     <table className="table align-middle">
                                         <thead>

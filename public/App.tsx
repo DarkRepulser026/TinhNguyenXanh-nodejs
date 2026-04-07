@@ -1,7 +1,7 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import RequireAuth from './components/auth/RequireAuth';
-import { ADMIN_ROLES, ORGANIZER_ROLES, VOLUNTEER_ROLES } from './constants/roles';
+import { ADMIN_ROLES, ORGANIZER_ROLES } from './constants/roles';
 import MainLayout from './components/layout/MainLayout';
 import VolunteerSectionLayout from './components/layout/VolunteerSectionLayout';
 import VolunteerDashboard from './pages/volunteer/VolunteerDashboard';
@@ -9,7 +9,6 @@ import FavoriteEvents from './pages/volunteer/FavoriteEvents';
 import MyRegistrations from './pages/volunteer/MyRegistrations';
 import VolunteerProfile from './pages/volunteer/VolunteerProfile';
 import DonationHistory from './pages/volunteer/DonationHistory';
-import AccountSettings from './pages/volunteer/AccountSettings';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -77,14 +76,6 @@ function App() {
               <Route path="/volunteer/registrations" element={<MyRegistrations />} />
               <Route path="/volunteer/profile" element={<VolunteerProfile />} />
               <Route path="/volunteer/donations" element={<DonationHistory />} />
-              <Route
-                path="/account/settings"
-                element={
-                  <RequireAuth roles={VOLUNTEER_ROLES}>
-                    <AccountSettings />
-                  </RequireAuth>
-                }
-              />
             </Route>
             <Route
               path="/admin"
