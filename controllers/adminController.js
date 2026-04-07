@@ -220,4 +220,189 @@ module.exports = {
 
     return { message: "Report rejected." };
   },
+
+  getDonations: async function (query) {
+    const search = typeof query.search === 'string' ? query.search.trim().toLowerCase() : '';
+    const status = typeof query.status === 'string' ? query.status.trim() : '';
+    const method = typeof query.method === 'string' ? query.method.trim() : '';
+    const paging = toPageParams(query, 20);
+
+    let rows = mongo.toPlain(await models.donation.find({}).sort({ createdAt: -1 }).lean());
+    rows = rows.filter((item) => {
+      const searchOk = !search
+        || String(item.transactionCode || '').toLowerCase().includes(search)
+        || String(item.donorName || '').toLowerCase().includes(search)
+        || String(item.phoneNumber || '').toLowerCase().includes(search)
+        || String(item.providerRef || '').toLowerCase().includes(search);
+      const statusOk = !status || item.status === status;
+      const methodOk = !method || item.paymentMethod === method;
+      return searchOk && statusOk && methodOk;
+    });
+
+    const toAmount = (value) => {
+      const normalized = Number(String(value == null ? 0 : value));
+      return Number.isFinite(normalized) ? normalized : 0;
+    };
+
+    const totalCount = rows.length;
+    const summary = {
+      totalAmountSuccess: rows
+        .filter((item) => item.status === 'Success')
+        .reduce((sum, item) => sum + toAmount(item.amount), 0),
+      pendingCount: rows.filter((item) => item.status === 'Pending').length,
+      successCount: rows.filter((item) => item.status === 'Success').length,
+      failedCount: rows.filter((item) => item.status === 'Failed').length,
+    };
+
+    const items = rows
+      .slice((paging.page - 1) * paging.pageSize, (paging.page - 1) * paging.pageSize + paging.pageSize)
+      .map((item) => ({
+        id: item.id,
+        userId: item.userId || null,
+        donorName: item.donorName || null,
+        amount: toAmount(item.amount),
+        phoneNumber: item.phoneNumber || null,
+        message: item.message || null,
+        transactionCode: item.transactionCode,
+        paymentMethod: item.paymentMethod || 'momo',
+        status: item.status,
+        providerRef: item.providerRef || null,
+        createdAt: item.createdAt || null,
+        updatedAt: item.updatedAt || null,
+      }));
+
+    return {
+      items,
+      totalCount,
+      page: paging.page,
+      pageSize: paging.pageSize,
+      totalPages: Math.ceil(totalCount / paging.pageSize),
+      summary,
+    };
+  },
+
+  updateDonationStatus: async function (id, status) {
+    id = typeof id === 'string' ? id.trim() : '';
+    status = typeof status === 'string' ? status.trim() : '';
+    if (!id) throw { status: 400, message: 'Invalid donation id.' };
+    if (!(status === 'Pending' || status === 'Success' || status === 'Failed')) {
+      throw { status: 400, message: 'Invalid donation status.' };
+    }
+
+    let donation = mongo.toPlain(await models.donation.findOne({ _id: mongo.toObjectId(id) }).lean());
+    if (!donation) throw { status: 404, message: 'Donation not found.' };
+
+    donation = mongo.toPlain(
+      await models.donation.findOneAndUpdate(
+        { _id: mongo.toObjectId(donation.id) },
+        { $set: { status } },
+        { new: true },
+      ).lean(),
+    );
+
+    return {
+      id: donation.id,
+      status: donation.status,
+      updatedAt: donation.updatedAt || null,
+    };
+  },
+
+  getRegistrations: async function (query) {
+    const search = typeof query.search === 'string' ? query.search.trim().toLowerCase() : '';
+    const status = typeof query.status === 'string' ? query.status.trim() : '';
+    const eventId = typeof query.eventId === 'string' ? query.eventId.trim() : '';
+    const organizationId = typeof query.organizationId === 'string' ? query.organizationId.trim() : '';
+    const paging = toPageParams(query, 20);
+
+    let rows = await models.eventRegistration
+      .find({})
+      .populate({
+        path: 'eventId',
+        populate: { path: 'organizationId' },
+      })
+      .populate('volunteerId')
+      .sort({ registeredAt: -1 })
+      .lean();
+
+    rows = mongo.toPlain(rows).filter((item) => {
+      const event = item.eventId || null;
+      const organization = event && event.organizationId ? event.organizationId : null;
+      const volunteer = item.volunteerId || null;
+
+      const searchOk = !search
+        || String(item.fullName || '').toLowerCase().includes(search)
+        || String(item.phone || '').toLowerCase().includes(search)
+        || String(event && event.title ? event.title : '').toLowerCase().includes(search)
+        || String(organization && organization.name ? organization.name : '').toLowerCase().includes(search)
+        || String(volunteer && volunteer.fullName ? volunteer.fullName : '').toLowerCase().includes(search);
+      const statusOk = !status || item.status === status;
+      const eventOk = !eventId || (event && event.id === eventId);
+      const orgOk = !organizationId || (organization && organization.id === organizationId);
+      return searchOk && statusOk && eventOk && orgOk;
+    });
+
+    const totalCount = rows.length;
+    const summary = {
+      pendingCount: rows.filter((item) => item.status === 'Pending').length,
+      confirmedCount: rows.filter((item) => item.status === 'Confirmed').length,
+      rejectedCount: rows.filter((item) => item.status === 'Rejected').length,
+      cancelledCount: rows.filter((item) => item.status === 'Cancelled').length,
+    };
+
+    const items = rows
+      .slice((paging.page - 1) * paging.pageSize, (paging.page - 1) * paging.pageSize + paging.pageSize)
+      .map((item) => {
+        const event = item.eventId || null;
+        const organization = event && event.organizationId ? event.organizationId : null;
+        const volunteer = item.volunteerId || null;
+        return {
+          id: item.id,
+          fullName: item.fullName || null,
+          phone: item.phone || null,
+          reason: item.reason || null,
+          status: item.status,
+          registeredAt: item.registeredAt || null,
+          eventId: event ? event.id : null,
+          eventTitle: event ? event.title : null,
+          organizationId: organization ? organization.id : null,
+          organizationName: organization ? organization.name : null,
+          volunteerId: volunteer ? volunteer.id : null,
+          volunteerName: volunteer ? volunteer.fullName : item.fullName || null,
+        };
+      });
+
+    return {
+      items,
+      totalCount,
+      page: paging.page,
+      pageSize: paging.pageSize,
+      totalPages: Math.ceil(totalCount / paging.pageSize),
+      summary,
+    };
+  },
+
+  updateRegistrationStatusByAdmin: async function (id, status) {
+    id = typeof id === 'string' ? id.trim() : '';
+    status = typeof status === 'string' ? status.trim() : '';
+    if (!id) throw { status: 400, message: 'Invalid registration id.' };
+    if (!(status === 'Pending' || status === 'Confirmed' || status === 'Rejected' || status === 'Cancelled')) {
+      throw { status: 400, message: 'Invalid registration status.' };
+    }
+
+    let registration = mongo.toPlain(await models.eventRegistration.findOne({ _id: mongo.toObjectId(id) }).lean());
+    if (!registration) throw { status: 404, message: 'Registration not found.' };
+
+    registration = mongo.toPlain(
+      await models.eventRegistration.findOneAndUpdate(
+        { _id: mongo.toObjectId(registration.id) },
+        { $set: { status } },
+        { new: true },
+      ).lean(),
+    );
+
+    return {
+      id: registration.id,
+      status: registration.status,
+    };
+  },
 };

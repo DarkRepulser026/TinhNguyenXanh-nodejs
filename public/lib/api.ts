@@ -70,6 +70,8 @@ export type AdminModerationReport = any
 export type AdminUserItem = any
 export type AdminDashboardMetrics = any
 export type AdminEventReport = any
+export type AdminDonationItem = any
+export type AdminRegistrationItem = any
 export type OrganizerEventItem = any
 export type FavoriteItem = any
 export type RegistrationItem = any
@@ -177,15 +179,19 @@ export const adminService = {
   getEventReports: () => axios.get('/admin/event-reports'),
   approveReport: (id: string) => axios.patch(`/admin/event-reports/${id}/approve`),
   rejectReport: (id: string) => axios.patch(`/admin/event-reports/${id}/reject`),
+  getDonations: (params?: Record<string, unknown>) => axios.get('/admin/donations', { params }),
+  updateDonationStatus: (id: string, status: DonationStatus) => axios.patch(`/admin/donations/${id}/status`, { status }),
+  getRegistrations: (params?: Record<string, unknown>) => axios.get('/admin/registrations', { params }),
+  updateRegistrationStatus: (id: string, status: string) => axios.patch(`/admin/registrations/${id}/status`, { status }),
 }
 
 export const organizerService = {
   getDashboard: () => axios.get('/organizer/dashboard'),
   getOrganization: () => axios.get('/organizer/profile'),
   updateOrganization: (payload: Record<string, unknown>) => axios.put('/organizer/profile', payload),
-  claimOrganization: (claimId: string) => axios.post('/organizer/claim', { claimId }),
+  claimOrganization: (organizationId: string) => axios.post('/organizer/claim', { organizationId }),
   getEvents: (params?: Record<string, unknown>) => axios.get('/organizer/events', { params }),
-  getEventById: (id: string | number) => axios.get(`/organizer/registrations/${id}`),
+  getEventById: (id: string | number) => axios.get(`/organizer/events/${id}`),
   createEvent: (payload: Record<string, unknown>) => axios.post('/organizer/events', payload),
   updateEvent: (id: string | number, payload: Record<string, unknown>) =>
     axios.put(`/organizer/events/${id}`, payload),

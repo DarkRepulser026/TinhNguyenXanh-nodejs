@@ -36,6 +36,15 @@ const AdminEventApprovals = () => {
     return items.filter((item) => item.status === filterStatus);
   }, [filterStatus, items]);
 
+  const stats = useMemo(
+    () => ({
+      total: items.length,
+      pending: items.filter((item) => item.status === 'pending').length,
+      draft: items.filter((item) => item.status === 'draft').length,
+    }),
+    [items],
+  );
+
   const updateStatus = async (id: number, action: 'approve' | 'reject') => {
     if (action === 'reject' && !confirm('Bạn có chắc chắn muốn từ chối sự kiện này?')) {
       return;
@@ -68,13 +77,40 @@ const AdminEventApprovals = () => {
 
   return (
     <section>
-      <div className="d-flex justify-content-between align-items-center mb-2">
+      <div className="admin-page-header d-flex justify-content-between align-items-center mb-4">
         <h1 className="h3 mb-0">Event Approvals</h1>
         <span className="badge rounded-pill text-bg-dark">{filteredItems.length}</span>
       </div>
       <p className="text-muted small mb-4">Quản lý sự kiện nháp và sự kiện chờ phê duyệt.</p>
 
-      <form className="row g-2 mb-3" onSubmit={onSearchSubmit}>
+      <div className="row g-3 mb-3 admin-stats-row">
+        <div className="col-12 col-md-4">
+          <div className="card h-100 admin-stat-card">
+            <div className="card-body">
+              <p className="fw-semibold mb-1">Tổng sự kiện</p>
+              <p className="h4 mb-0">{stats.total}</p>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-md-4">
+          <div className="card h-100 admin-stat-card">
+            <div className="card-body">
+              <p className="fw-semibold mb-1">Chờ duyệt</p>
+              <p className="h4 mb-0">{stats.pending}</p>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-md-4">
+          <div className="card h-100 admin-stat-card">
+            <div className="card-body">
+              <p className="fw-semibold mb-1">Nháp</p>
+              <p className="h4 mb-0">{stats.draft}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <form className="admin-toolbar row g-2 mb-3" onSubmit={onSearchSubmit}>
         <div className="col-12 col-md">
           <input
             className="form-control"
@@ -109,11 +145,11 @@ const AdminEventApprovals = () => {
         <table className="table table-hover mb-0 align-middle">
           <thead>
             <tr>
-              <th>Event</th>
-              <th>Organization</th>
-              <th>Start time</th>
-              <th>Status</th>
-              <th className="text-end">Actions</th>
+              <th>Sự kiện</th>
+              <th>Tổ chức</th>
+              <th>Thời gian bắt đầu</th>
+              <th>Trạng thái</th>
+              <th className="text-end">Thao tác</th>
             </tr>
           </thead>
           <tbody>

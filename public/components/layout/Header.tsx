@@ -4,11 +4,8 @@ import {
   Building2,
   Calendar,
   CircleHelp,
-  ClipboardPen,
   Heart,
   LayoutGrid,
-  Shield,
-  BriefcaseBusiness,
   Mail,
   MapPin,
   Phone,
@@ -18,10 +15,8 @@ import {
   ChevronDown,
   User,
   BarChart2,
-  Settings,
   LogOut,
   HandCoins, // Thêm icon HandCoins cho Đóng góp
-  CreditCard
 } from 'lucide-react';
 import { useAuth } from '../../contexts/useAuth';
 
@@ -33,6 +28,11 @@ const Header: React.FC = () => {
   const [category, setCategory] = React.useState('');
   const [keyword, setKeyword] = React.useState('');
   const [searchLocation, setSearchLocation] = React.useState('');
+  const shouldHideSearchSection =
+    location.pathname === '/volunteer' ||
+    location.pathname.startsWith('/volunteer/') ||
+    location.pathname === '/account' ||
+    location.pathname.startsWith('/account/');
 
   React.useEffect(() => {
     if (!location.pathname.startsWith('/events')) {
@@ -156,64 +156,14 @@ const Header: React.FC = () => {
                   </button>
 
                   <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 auth-dropdown-menu">
-                    {user?.role === 'Admin' && (
-                      <li>
-                        <Link to="/admin" className="dropdown-item d-flex align-items-center gap-2">
-                          <Shield size={15} /> Trang Quản trị
-                        </Link>
-                      </li>
-                    )}
-                    
-                    {user?.role === 'Organizer' && (
-                      <li>
-                        <Link to="/organizer" className="dropdown-item d-flex align-items-center gap-2">
-                          <BriefcaseBusiness size={15} /> Quản lý Tổ chức
-                        </Link>
-                      </li>
-                    )}
-
-                    {(!user?.role || user?.role === 'Volunteer') && (
-                      <>
-                        <li>
-                          <Link to="/volunteer/dashboard" className="dropdown-item d-flex align-items-center gap-2">
-                            <BarChart2 size={15} /> Tổng quan
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/volunteer/profile" className="dropdown-item d-flex align-items-center gap-2">
-                            <User size={15} /> Hồ sơ cá nhân
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/volunteer/registrations" className="dropdown-item d-flex align-items-center gap-2">
-                            <Calendar size={15} /> Lịch sử đăng ký
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/volunteer/donations" className="dropdown-item d-flex align-items-center gap-2">
-                            <CreditCard size={15} /> Lịch sử đóng góp
-                          </Link>
-                        </li>
-                        
-                        <li>
-                          <Link to="/volunteer/favorites" className="dropdown-item d-flex align-items-center gap-2">
-                            <Heart size={15} /> Yêu thích
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/organizations/register" className="dropdown-item d-flex align-items-center gap-2">
-                            <ClipboardPen size={15} /> Đăng ký Tổ chức
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/account/settings" className="dropdown-item d-flex align-items-center gap-2">
-                            <Settings size={15} /> Cài đặt
-                          </Link>
-                        </li>
-                      </>
-                    )}
-
-                    <li><hr className="dropdown-divider" /></li>
+                    <li>
+                      <Link
+                        to={user?.role === 'Admin' ? '/admin' : user?.role === 'Organizer' ? '/organizer' : '/volunteer/dashboard'}
+                        className="dropdown-item d-flex align-items-center gap-2"
+                      >
+                        <BarChart2 size={15} /> Tổng quan
+                      </Link>
+                    </li>
                     
                     <li>
                       <button
@@ -239,6 +189,7 @@ const Header: React.FC = () => {
         </div>
       </nav>
 
+      {!shouldHideSearchSection && (
       <div className="search-section border-bottom">
         <div className="container">
           <div className="search-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
@@ -312,6 +263,7 @@ const Header: React.FC = () => {
           </form>
         </div>
       </div>
+      )}
     </header>
   );
 };

@@ -1,8 +1,14 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import RequireAuth from './components/auth/RequireAuth';
-import { ADMIN_ROLES, ORGANIZER_ROLES, VOLUNTEER_ROLES } from './constants/roles';
+import { ADMIN_ROLES, ORGANIZER_ROLES } from './constants/roles';
 import MainLayout from './components/layout/MainLayout';
+import VolunteerSectionLayout from './components/layout/VolunteerSectionLayout';
+import VolunteerDashboard from './pages/volunteer/VolunteerDashboard';
+import FavoriteEvents from './pages/volunteer/FavoriteEvents';
+import MyRegistrations from './pages/volunteer/MyRegistrations';
+import VolunteerProfile from './pages/volunteer/VolunteerProfile';
+import DonationHistory from './pages/volunteer/DonationHistory';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -13,10 +19,6 @@ import './styles/variables.css';
 const Home = lazy(() => import('./pages/public/Home'));
 const EventList = lazy(() => import('./pages/events/EventList'));
 const EventDetails = lazy(() => import('./pages/events/EventDetails'));
-const VolunteerDashboard = lazy(() => import('./pages/volunteer/VolunteerDashboard'));
-const FavoriteEvents = lazy(() => import('./pages/volunteer/FavoriteEvents'));
-const MyRegistrations = lazy(() => import('./pages/volunteer/MyRegistrations'));
-const VolunteerProfile = lazy(() => import('./pages/volunteer/VolunteerProfile'));
 const OrganizationList = lazy(() => import('./pages/organizations/OrganizationList'));
 const OrganizationDetails = lazy(() => import('./pages/organizations/OrganizationDetails'));
 const OrganizationRegister = lazy(() => import('./pages/organizations/OrganizationRegister'));
@@ -25,17 +27,16 @@ const Contact = lazy(() => import('./pages/public/Contact'));
 const SearchPage = lazy(() => import('./pages/public/Search'));
 const DonatePage = lazy(() => import('./pages/public/Donate'));
 const PaymentResultPage = lazy(() => import('./pages/public/PaymentResult'));
-const DonationHistory = lazy(() => import('./pages/volunteer/DonationHistory'));
 const PrivacyPage = lazy(() => import('./pages/public/Privacy'));
 const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
 const EventRegisterPage = lazy(() => import('./pages/events/EventRegister'));
-const AccountSettings = lazy(() => import('./pages/volunteer/AccountSettings'));
 const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'));
 const AdminEventApprovalsPage = lazy(() => import('./pages/admin/AdminEventApprovalsPage'));
-const AdminModerationPage = lazy(() => import('./pages/admin/AdminModerationPage'));
 const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
 const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
+const AdminDonationsPage = lazy(() => import('./pages/admin/AdminDonationsPage'));
+const AdminRegistrationsPage = lazy(() => import('./pages/admin/AdminRegistrationsPage'));
 const AdminCategoriesPage = lazy(() => import('./pages/admin/AdminCategoriesPage'));
 const OrganizerOverview = lazy(() => import('./pages/organizer/OrganizerOverview'));
 const OrganizerEventManagementPage = lazy(() => import('./pages/organizer/OrganizerEventManagementPage'));
@@ -64,45 +65,18 @@ function App() {
             <Route path="/events" element={<EventList />} />
             <Route path="/events/:id" element={<EventDetails />} />
             <Route
-              path="/volunteer/dashboard"
               element={
                 <RequireAuth>
-                  <VolunteerDashboard />
+                  <VolunteerSectionLayout />
                 </RequireAuth>
               }
-            />
-            <Route
-              path="/volunteer/favorites"
-              element={
-                <RequireAuth>
-                  <FavoriteEvents />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/volunteer/registrations"
-              element={
-                <RequireAuth>
-                  <MyRegistrations />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/volunteer/profile"
-              element={
-                <RequireAuth>
-                  <VolunteerProfile />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/account/settings"
-              element={
-                <RequireAuth roles={VOLUNTEER_ROLES}>
-                  <AccountSettings />
-                </RequireAuth>
-              }
-            />
+            >
+              <Route path="/volunteer/dashboard" element={<VolunteerDashboard />} />
+              <Route path="/volunteer/favorites" element={<FavoriteEvents />} />
+              <Route path="/volunteer/registrations" element={<MyRegistrations />} />
+              <Route path="/volunteer/profile" element={<VolunteerProfile />} />
+              <Route path="/volunteer/donations" element={<DonationHistory />} />
+            </Route>
             <Route
               path="/admin"
               element={
@@ -179,14 +153,6 @@ function App() {
               }
             />
             <Route
-              path="/admin/moderation"
-              element={
-                <RequireAuth roles={ADMIN_ROLES}>
-                  <AdminModerationPage />
-                </RequireAuth>
-              }
-            />
-            <Route
               path="/admin/users"
               element={
                 <RequireAuth roles={ADMIN_ROLES}>
@@ -210,6 +176,22 @@ function App() {
                 </RequireAuth>
               }
             />
+            <Route
+              path="/admin/donations"
+              element={
+                <RequireAuth roles={ADMIN_ROLES}>
+                  <AdminDonationsPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/admin/registrations"
+              element={
+                <RequireAuth roles={ADMIN_ROLES}>
+                  <AdminRegistrationsPage />
+                </RequireAuth>
+              }
+            />
 
             <Route path="/organizations" element={<OrganizationList />} />
             <Route path="/organizations/:id" element={<OrganizationDetails />} />
@@ -221,11 +203,6 @@ function App() {
             <Route path="/donate" element={
               <RequireAuth>
                 <DonatePage />
-              </RequireAuth>
-            } />
-            <Route path="/volunteer/donations" element={
-              <RequireAuth>
-                <DonationHistory />
               </RequireAuth>
             } />
             <Route path="/payment-result" element={<PaymentResultPage />} />

@@ -29,7 +29,7 @@ router.put('/organizer/profile', authHandler.CheckLogin, authHandler.CheckRole('
 });
 router.post('/organizer/claim', authHandler.CheckLogin, async function (req, res, next) {
   try {
-    const result = await organizerController.claimOrganization(req.authUser.userId, req.body.organizationId);
+    const result = await organizerController.claimOrganization(req.authUser.userId, req.body.organizationId || req.body.claimId);
     res.send(result);
   } catch (error) {
     next(error);

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  FileWarning, 
+  AlertTriangle,
   Home,
   LayoutDashboard, 
   ListChecks, 
@@ -10,9 +10,12 @@ import {
   Menu, 
   ShieldCheck, 
   Users,
-  Shield
+  Shield,
+  Wallet,
+  UserCheck
 } from 'lucide-react';
 import { useAuth } from '../../contexts/useAuth';
+import './AdminTheme.css';
 
 type AdminLayoutProps = {
   children: React.ReactNode;
@@ -45,10 +48,30 @@ const brandBoxStyle: CSSProperties = {
 const mainStyle: CSSProperties = {
   flex: 1,
   minWidth: 0,
+  background: 'radial-gradient(1200px 520px at 100% -20%, rgba(22,163,74,0.10), rgba(255,255,255,0) 55%), linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)',
 };
 
 const contentWrapStyle: CSSProperties = {
   padding: '28px',
+};
+
+const contentPanelStyle: CSSProperties = {
+  background: 'linear-gradient(180deg, #ffffff 0%, #fcfffd 100%)',
+  border: '1px solid #e2e8f0',
+  borderRadius: '20px',
+  boxShadow: '0 18px 40px rgba(15,23,42,0.06), 0 3px 10px rgba(15,23,42,0.04)',
+  padding: '22px',
+  position: 'relative',
+  overflow: 'hidden',
+};
+
+const contentPanelAccentStyle: CSSProperties = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  height: '4px',
+  background: 'linear-gradient(90deg, #16a34a 0%, #22c55e 45%, #86efac 100%)',
 };
 
 const sectionLabelStyle: CSSProperties = {
@@ -127,8 +150,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navItems = [
     { label: 'Tổng quan', path: '/admin', icon: LayoutDashboard },
     { label: 'Phê duyệt', path: '/admin/approvals', icon: ListChecks },
-    { label: 'Moderation', path: '/admin/moderation', icon: FileWarning },
     { label: 'Báo cáo', path: '/admin/reports', icon: AlertTriangle },
+    { label: 'Ủng hộ', path: '/admin/donations', icon: Wallet },
+    { label: 'Đăng ký', path: '/admin/registrations', icon: UserCheck },
     { label: 'Người dùng', path: '/admin/users', icon: Users },
     { label: 'Danh mục', path: '/admin/categories', icon: ShieldCheck },
   ];
@@ -231,8 +255,13 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           </aside>
 
           {/* Main Content */}
-          <main style={mainStyle}>
-            <div style={contentWrapStyle}>{children}</div>
+          <main style={mainStyle} className="admin-main-surface">
+            <div style={contentWrapStyle}>
+              <div style={contentPanelStyle} className="admin-content-panel">
+                <div style={contentPanelAccentStyle} />
+                {children}
+              </div>
+            </div>
           </main>
         </div>
 

@@ -83,6 +83,31 @@ function normalizeRouteKey(routeKey) {
 }
 
 var tests = [
+  { method: 'GET', path: '/api/v1/health', noAuth: [200], withAuth: [200] },
+  { method: 'GET', path: '/api/v1/events?page=1&pageSize=1', noAuth: [200], withAuth: [200] },
+  { method: 'GET', path: '/api/v1/organizations?page=1&pageSize=1', noAuth: [200], withAuth: [200] },
+
+  { method: 'GET', path: '/api/v1/admin/dashboard', noAuth: [401], withAuth: expectedProtectedWithToken, auth: true },
+  { method: 'GET', path: '/api/v1/admin/events/approvals?page=1&pageSize=1', noAuth: [401], withAuth: expectedProtectedWithToken, auth: true },
+  { method: 'GET', path: '/api/v1/admin/users?page=1&pageSize=1', noAuth: [401], withAuth: expectedProtectedWithToken, auth: true },
+  { method: 'GET', path: '/api/v1/admin/categories', noAuth: [401], withAuth: expectedProtectedWithToken, auth: true },
+  { method: 'GET', path: '/api/v1/admin/moderation?page=1&pageSize=1', noAuth: [401], withAuth: expectedProtectedWithToken, auth: true },
+
+  { method: 'GET', path: '/api/v1/organizer/dashboard', noAuth: [401], withAuth: expectedProtectedWithToken, auth: true },
+  { method: 'GET', path: '/api/v1/organizer/profile', noAuth: [401], withAuth: expectedProtectedWithToken, auth: true },
+  { method: 'GET', path: '/api/v1/organizer/events?page=1&pageSize=1', noAuth: [401], withAuth: expectedProtectedWithToken, auth: true },
+  { method: 'GET', path: '/api/v1/organizer/volunteers?page=1&pageSize=1', noAuth: [401], withAuth: expectedProtectedWithToken, auth: true },
+
+  // Organizer contract checks for frontend/backend endpoint alignment.
+  { method: 'POST', path: '/api/v1/organizer/claim', noAuth: [401], withAuth: [400, 404], auth: true },
+  { method: 'GET', path: '/api/v1/organizer/events/000000000000000000000000', noAuth: [401], withAuth: [400, 403, 404], auth: true },
+  { method: 'POST', path: '/api/v1/organizer/registrations/000000000000000000000000/evaluation', noAuth: [401], withAuth: [400, 403, 404], auth: true },
+
+  { method: 'GET', path: '/api/v1/events/000000000000000000000000/comments', noAuth: [200], withAuth: [200] },
+  { method: 'GET', path: '/api/v1/organizations/000000000000000000000000/reviews', noAuth: [404], withAuth: [404] },
+  { method: 'GET', path: '/api/v1/payments/TEST', noAuth: [404], withAuth: [404] },
+  { method: 'GET', path: '/api/v1/profile', noAuth: [401], withAuth: [200], auth: true },
+
   { routeKey: 'GET /', method: 'GET', path: '/', noAuth: [200], withAuth: [200] },
 
   { routeKey: 'GET /api/v1/health', method: 'GET', path: '/api/v1/health', noAuth: [200], withAuth: [200] },

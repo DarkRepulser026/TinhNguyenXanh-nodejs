@@ -65,3 +65,4 @@ dist/
 .github
 sample
 controllers/layout/
+FRONTEND_FLOW_TEST_DESIGN.md
