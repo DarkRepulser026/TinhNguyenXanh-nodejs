@@ -254,4 +254,39 @@ module.exports = {
     let evaluation = mongo.toPlain(await models.volunteerEvaluation.findOne({ registrationId: mongo.toObjectId(id) }).lean());
     return { item: evaluation || null };
   },
+
+  saveRegistrationEvaluation: async function (userId, id, body) {
+    const organization = await getOwnedOrganization(userId);
+    id = typeof id === 'string' ? id.trim() : '';
+    if (!organization) throw { status: 404, message: 'Organizer organization profile not found.' };
+    if (!id) throw { status: 400, message: 'Invalid registration id.' };
+
+    let registration = mongo.toPlain(await models.eventRegistration.findOne({ _id: mongo.toObjectId(id) }).populate('eventId').lean());
+    if (!registration) throw { status: 404, message: 'Registration not found.' };
+    const event = registration.eventId;
+    if (!event || event.organizationId !== organization.id) throw { status: 403, message: 'You do not have access to this registration.' };
+    if (registration.status !== 'Confirmed') throw { status: 400, message: 'Only confirmed registrations can be evaluated.' };
+    if (!registration.volunteerId) throw { status: 400, message: 'Registration does not have an associated volunteer.' };
+
+    const rating = Number(body && body.rating);
+    const comment = typeof (body && body.comment) === 'string' ? body.comment.trim() : null;
+    if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+      throw { status: 400, message: 'Rating must be between 1 and 5.' };
+    }
+
+    const saved = mongo.toPlain(await models.volunteerEvaluation.findOneAndUpdate(
+      { registrationId: mongo.toObjectId(id) },
+      {
+        $set: {
+          volunteerId: mongo.toObjectId(registration.volunteerId),
+          organizerUserId: mongo.toObjectId(userId),
+          rating,
+          comment: comment || null,
+        },
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    ).lean());
+
+    return saved;
+  },
 };

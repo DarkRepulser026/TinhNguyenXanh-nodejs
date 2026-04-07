@@ -29,7 +29,7 @@ router.put('/organizer/profile', authHandler.CheckLogin, authHandler.CheckRole('
 });
 router.post('/organizer/claim', authHandler.CheckLogin, async function (req, res, next) {
   try {
-    const result = await organizerController.claimOrganization(req.authUser.userId, req.body.organizationId);
+    const result = await organizerController.claimOrganization(req.authUser.userId, req.body.organizationId || req.body.claimId);
     res.send(result);
   } catch (error) {
     next(error);
@@ -110,6 +110,14 @@ router.patch('/organizer/registrations/:id/status', authHandler.CheckLogin, auth
 router.get('/organizer/registrations/:id/evaluation', authHandler.CheckLogin, authHandler.CheckRole('Organizer', 'Admin'), async function (req, res, next) {
   try {
     const result = await organizerController.getRegistrationEvaluation(req.authUser.userId, req.params.id);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+});
+router.post('/organizer/registrations/:id/evaluation', authHandler.CheckLogin, authHandler.CheckRole('Organizer', 'Admin'), async function (req, res, next) {
+  try {
+    const result = await organizerController.saveRegistrationEvaluation(req.authUser.userId, req.params.id, req.body);
     res.send(result);
   } catch (error) {
     next(error);
