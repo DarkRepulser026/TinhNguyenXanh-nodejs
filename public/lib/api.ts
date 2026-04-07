@@ -78,6 +78,32 @@ export type OrganizerRegistrationItem = any
 export type OrganizerRegistrationDetail = any
 export type VolunteerEvaluationItem = any
 export type OrganizerVolunteerHistoryItem = any
+export type OrganizationMemberItem = {
+  id?: string
+  organizationId?: string
+  userId?: string
+  fullName?: string | null
+  email?: string | null
+  phone?: string | null
+  role?: string
+  status?: string
+  joinedAt?: string
+}
+export type OrganizationReviewItem = {
+  id?: string
+  userId?: string
+  rating?: number
+  title?: string | null
+  content?: string | null
+  status?: string
+  createdAt?: string
+}
+
+export type OrganizationReviewListResponse = {
+  items?: OrganizationReviewItem[]
+  totalCount?: number
+  averageRating?: number
+}
 
 export const authService = {
   me: () => axios.get('/profile'),
@@ -140,12 +166,12 @@ export const adminService = {
   updateEventStatus: (id: string | number, action: string | number) =>
     axios.patch(`/admin/events/${id}/status`, { action }),
   getUsers: (params?: Record<string, unknown>) => axios.get('/admin/users', { params }),
-  updateUserStatus: (id: string, isActive: boolean) => axios.patch('/admin/users/${id}/status', { isActive }),
-  updateUserRole: (id: string, role: UserRole) => axios.patch('/admin/users/${id}/role', { role }),
+  updateUserStatus: (id: string, isActive: boolean) => axios.patch(`/admin/users/${id}/status`, { isActive }),
+  updateUserRole: (id: string, role: UserRole) => axios.patch(`/admin/users/${id}/role`, { role }),
   getCategories: (params?: Record<string, unknown>) => axios.get('/admin/categories', { params }),
   createCategory: (name: string) => axios.post('/admin/categories', { name }),
   updateCategory: (id: string, name: string) => axios.patch(`/admin/categories/${id}`, { name }),
-  deleteCategory: (id: string) => axios.delete('/admin/categories/${id}'),
+  deleteCategory: (id: string) => axios.delete(`/admin/categories/${id}`),
   getModeration: () => axios.get('/admin/moderation'),
 }
 
@@ -167,11 +193,18 @@ export const organizerService = {
     axios.patch(`/organizer/registrations/${id}/status`, { action }),
   getRegistrationEvaluation: (id: string | number) => axios.get(`/organizer/registrations/${id}/evaluation`),
   saveRegistrationEvaluation: (id: string | number, payload: { rating: number; comment?: string }) =>
-    axios.post(`/organizer/registrations/${id}/ratings`, payload),
+    axios.post(`/organizer/registrations/${id}/evaluation`, payload),
   getVolunteerHistory: (id: string | number) => axios.get(`/organizer/volunteers/${id}/history`),
+  getMembers: () => axios.get('/organizer/members'),
 }
 
 export const moderationService = {
+  getOrganizationReviews: (organizationId: string | number) =>
+    axios.get(`/organizations/${organizationId}/reviews`),
+  createOrganizationReview: (
+    organizationId: string | number,
+    payload: { rating: number; title?: string; content?: string },
+  ) => axios.post(`/organizations/${organizationId}/reviews`, payload),
   reportEvent: (eventId: string | number, payload: { reason: string; details?: string }) => {
     return axios.post(`/events/${eventId}/reports`, payload).catch((error) => {
       const message = getApiErrorMessage(error, 'Không thể báo cáo sự kiện');

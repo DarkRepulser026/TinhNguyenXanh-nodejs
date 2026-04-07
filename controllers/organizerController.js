@@ -254,4 +254,63 @@ module.exports = {
     let evaluation = mongo.toPlain(await models.volunteerEvaluation.findOne({ registrationId: mongo.toObjectId(id) }).lean());
     return { item: evaluation || null };
   },
+
+  saveRegistrationEvaluation: async function (userId, id, payload) {
+    const organization = await getOwnedOrganization(userId);
+    id = typeof id === 'string' ? id.trim() : '';
+    if (!organization) throw { status: 404, message: 'Organizer organization profile not found.' };
+    if (!id) throw { status: 400, message: 'Invalid registration id.' };
+
+    let registration = mongo.toPlain(await models.eventRegistration.findOne({ _id: mongo.toObjectId(id) }).populate('eventId').lean());
+    if (!registration) throw { status: 404, message: 'Registration not found.' };
+    const event = registration.eventId;
+    if (!event || event.organizationId !== organization.id) throw { status: 403, message: 'You do not have access to this registration.' };
+    if (registration.status !== 'Confirmed') throw { status: 400, message: 'Only confirmed registrations can be evaluated.' };
+
+    const rating = Number(payload && payload.rating);
+    const comment = typeof (payload && payload.comment) === 'string' ? payload.comment.trim() : null;
+    if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+      throw { status: 400, message: 'rating must be between 1 and 5.' };
+    }
+
+    const result = await models.volunteerEvaluation.findOneAndUpdate(
+      { registrationId: mongo.toObjectId(id) },
+      {
+        $set: {
+          volunteerId: mongo.toObjectId(registration.volunteerId),
+          organizerUserId: mongo.toObjectId(userId),
+          rating,
+          comment: comment || null,
+        },
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    ).lean();
+
+    return { item: mongo.toPlain(result) };
+  },
+
+  getMembers: async function (userId) {
+    const organization = await getOwnedOrganization(userId);
+    if (!organization) throw { status: 404, message: 'Organizer organization profile not found.' };
+
+    const rows = await models.organizationMember
+      .find({ organizationId: mongo.toObjectId(organization.id) })
+      .populate('userId', 'fullName email phone')
+      .sort({ joinedAt: 1, createdAt: 1 })
+      .lean();
+
+    const items = mongo.toPlain(rows).map((row) => ({
+      id: row.id,
+      organizationId: row.organizationId,
+      userId: row.userId && row.userId.id ? row.userId.id : row.userId,
+      fullName: row.userId && row.userId.fullName ? row.userId.fullName : null,
+      email: row.userId && row.userId.email ? row.userId.email : null,
+      phone: row.userId && row.userId.phone ? row.userId.phone : null,
+      role: row.role,
+      status: row.status,
+      joinedAt: row.joinedAt,
+    }));
+
+    return { items, totalCount: items.length };
+  },
 };
