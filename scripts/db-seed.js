@@ -48,6 +48,35 @@ async function upsertCategory(name) {
 async function runSeed() {
   await connectToDatabase();
 
+  // ==================== CLEANUP SMOKE ARTIFACTS ====================
+  console.log('🧹 Cleaning smoke-test artifacts...');
+
+  const smokeUsers = await models.appUser.find({ email: /^smoke\./i }).select('_id').lean();
+  const smokeUserIds = smokeUsers.map((user) => user._id);
+
+  if (smokeUserIds.length > 0) {
+    const smokeVolunteers = await models.volunteer.find({ userId: { $in: smokeUserIds } }).select('_id').lean();
+    const smokeVolunteerIds = smokeVolunteers.map((item) => item._id);
+
+    await models.organizationMember.deleteMany({ userId: { $in: smokeUserIds } });
+    await models.eventComment.deleteMany({ userId: { $in: smokeUserIds } });
+    await models.eventRating.deleteMany({ userId: { $in: smokeUserIds } });
+    await models.organizationReview.deleteMany({ userId: { $in: smokeUserIds } });
+    await models.eventReport.deleteMany({ reporterUserId: { $in: smokeUserIds } });
+    await models.donation.deleteMany({ userId: { $in: smokeUserIds } });
+    await models.appUser.deleteMany({ _id: { $in: smokeUserIds } });
+
+    if (smokeVolunteerIds.length > 0) {
+      await models.eventRegistration.deleteMany({ volunteerId: { $in: smokeVolunteerIds } });
+      await models.eventFavorite.deleteMany({ volunteerId: { $in: smokeVolunteerIds } });
+      await models.volunteerEvaluation.deleteMany({ volunteerId: { $in: smokeVolunteerIds } });
+      await models.volunteer.deleteMany({ _id: { $in: smokeVolunteerIds } });
+    }
+  }
+
+  await models.event.deleteMany({ title: { $in: ['Smoke Event', 'Updated Smoke Event'] } });
+  await models.eventCategory.deleteMany({ name: 'Smoke Category' });
+
   // ==================== USERS ====================
   console.log('📝 Creating users...');
 
@@ -665,7 +694,9 @@ async function runSeed() {
         {
           $set: {
             rating: rating,
+            title: 'Đánh giá tổ chức',
             content: orgReviews[Math.floor(Math.random() * orgReviews.length)],
+            status: 'Approved',
             createdAt: new Date(),
           },
         },
@@ -750,10 +781,12 @@ async function runSeed() {
   console.log('💳 Creating donations...');
 
   for (let i = 1; i <= 8; i++) {
+    const donationUser = volunteerUsers[(i - 1) % volunteerUsers.length];
     await models.donation.findOneAndUpdate(
       { transactionCode: `SEED_DONATION_${i}` },
       {
         $set: {
+          userId: donationUser ? donationUser._id : null,
           donorName: `Seed Donor ${i}`,
           amount: 50000 * i,
           phoneNumber: `09800000${String(i).padStart(2, '0')}`,

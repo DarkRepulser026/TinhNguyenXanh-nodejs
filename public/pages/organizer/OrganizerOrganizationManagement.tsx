@@ -10,7 +10,12 @@ import {
   Save,
   ShieldCheck,
 } from 'lucide-react';
-import { getApiErrorMessage, organizerService, type OrganizationItem } from '../../lib/api';
+import {
+  getApiErrorMessage,
+  organizerService,
+  type OrganizationItem,
+  type OrganizationMemberItem,
+} from '../../lib/api';
 import Toast from '../../components/ui/Toast';
 
 const emptyOrganization: OrganizationItem = {
@@ -93,6 +98,9 @@ const OrganizerOrganizationManagement = () => {
   const [saving, setSaving] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [claimId, setClaimId] = useState('');
+  const [members, setMembers] = useState<OrganizationMemberItem[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersError, setMembersError] = useState<string | null>(null);
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -118,11 +126,17 @@ const OrganizerOrganizationManagement = () => {
     try {
       setLoading(true);
       setError(null);
+      setMembersError(null);
 
-      const response = await organizerService.getOrganization();
-      const item = response.data;
+      const [organizationResponse, membersResponse] = await Promise.all([
+        organizerService.getOrganization(),
+        organizerService.getMembers(),
+      ]);
+      const item = organizationResponse.data;
+      const memberItems = Array.isArray(membersResponse.data?.items) ? membersResponse.data.items : [];
 
       setOrganization(item);
+      setMembers(memberItems);
       setForm({
         name: item.name || '',
         description: item.description || '',
@@ -148,6 +162,19 @@ const OrganizerOrganizationManagement = () => {
   useEffect(() => {
     void load();
   }, []);
+
+  const loadMembers = async () => {
+    try {
+      setMembersLoading(true);
+      setMembersError(null);
+      const response = await organizerService.getMembers();
+      setMembers(Array.isArray(response.data?.items) ? response.data.items : []);
+    } catch (err) {
+      setMembersError(getApiErrorMessage(err, 'Không thể tải danh sách thành viên tổ chức.'));
+    } finally {
+      setMembersLoading(false);
+    }
+  };
 
   const summary = useMemo(() => {
     return {
@@ -231,6 +258,7 @@ const OrganizerOrganizationManagement = () => {
       setSuccess('Liên kết tổ chức thành công.');
       setClaimId('');
       await load();
+      await loadMembers();
     } catch (err) {
       setError(getApiErrorMessage(err, 'Không thể liên kết tổ chức.'));
     } finally {
@@ -607,6 +635,71 @@ const OrganizerOrganizationManagement = () => {
                       <span>{organization.website || 'Chưa có website'}</span>
                     </div>
                   </div>
+                </div>
+
+                <div style={cardStyle}>
+                  <div style={sectionTitleStyle}>
+                    <BadgeCheck size={22} color="#16a34a" />
+                    <span>Thành viên tổ chức</span>
+                  </div>
+
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <div className="text-muted small">
+                      Tổng thành viên: {members.length}
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() => {
+                        void loadMembers();
+                      }}
+                      disabled={membersLoading}
+                    >
+                      {membersLoading ? 'Đang tải...' : 'Làm mới'}
+                    </button>
+                  </div>
+
+                  {membersError ? <div className="alert alert-danger py-2">{membersError}</div> : null}
+
+                  {membersLoading ? (
+                    <div className="alert alert-light border py-2 mb-0">Đang tải danh sách thành viên...</div>
+                  ) : null}
+
+                  {!membersLoading && members.length === 0 ? (
+                    <p className="text-muted mb-0">Chưa có thành viên nào trong tổ chức này.</p>
+                  ) : null}
+
+                  {!membersLoading && members.length > 0 ? (
+                    <div className="table-responsive">
+                      <table className="table table-sm align-middle mb-0">
+                        <thead>
+                          <tr>
+                            <th scope="col">Thành viên</th>
+                            <th scope="col">Vai trò</th>
+                            <th scope="col">Trạng thái</th>
+                            <th scope="col">Tham gia</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {members.map((member) => (
+                            <tr key={member.id}>
+                              <td>
+                                <div style={{ fontWeight: 600, color: '#0f172a' }}>
+                                  {member.fullName || 'Không rõ tên'}
+                                </div>
+                                <div className="small text-muted">{member.email || member.phone || '--'}</div>
+                              </td>
+                              <td>{member.role || '--'}</td>
+                              <td>{member.status || '--'}</td>
+                              <td className="small text-muted">
+                                {member.joinedAt ? new Date(member.joinedAt).toLocaleDateString('vi-VN') : '--'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>

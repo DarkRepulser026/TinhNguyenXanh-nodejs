@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   AlertCircle,
@@ -15,7 +15,15 @@ import {
   Star,
   Users,
 } from 'lucide-react';
-import { getApiErrorMessage, organizationService, type OrganizationItem } from '../../lib/api';
+import {
+  getApiErrorMessage,
+  moderationService,
+  organizationService,
+  type OrganizationItem,
+  type OrganizationReviewItem,
+  type OrganizationReviewListResponse,
+} from '../../lib/api';
+import { useAuth } from '../../contexts/useAuth';
 
 const emptyOrg: OrganizationItem = {
   id: '',
@@ -65,9 +73,18 @@ const infoRow: CSSProperties = {
 
 const OrganizationDetails = () => {
   const { id } = useParams();
+  const { isAuthenticated } = useAuth();
   const [item, setItem] = useState<OrganizationItem>(emptyOrg);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reviews, setReviews] = useState<OrganizationReviewItem[]>([]);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewRating, setReviewRating] = useState<number>(5);
+  const [reviewTitle, setReviewTitle] = useState('');
+  const [reviewContent, setReviewContent] = useState('');
+  const [reviewSubmitMessage, setReviewSubmitMessage] = useState<string | null>(null);
 
   const ratingValue = useMemo(() => Number(item.averageRating || 0), [item.averageRating]);
 
@@ -93,6 +110,61 @@ const OrganizationDetails = () => {
 
     void load();
   }, [id]);
+
+  const loadOrganizationReviews = async (organizationId: string) => {
+    try {
+      setReviewLoading(true);
+      setReviewError(null);
+      const response = await moderationService.getOrganizationReviews(organizationId);
+      const data = (response.data || {}) as OrganizationReviewListResponse;
+      setReviews(Array.isArray(data.items) ? data.items : []);
+    } catch (err) {
+      setReviewError(getApiErrorMessage(err, 'Không thể tải đánh giá tổ chức.'));
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!id) return;
+    void loadOrganizationReviews(id);
+  }, [id]);
+
+  const submitOrganizationReview = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!id) return;
+    if (!isAuthenticated) {
+      setReviewSubmitMessage('Vui lòng đăng nhập để gửi đánh giá.');
+      return;
+    }
+    if (!Number.isFinite(reviewRating) || reviewRating < 1 || reviewRating > 5) {
+      setReviewSubmitMessage('Điểm đánh giá phải từ 1 đến 5.');
+      return;
+    }
+    if (!reviewContent.trim()) {
+      setReviewSubmitMessage('Nội dung đánh giá là bắt buộc.');
+      return;
+    }
+
+    try {
+      setSubmittingReview(true);
+      setReviewSubmitMessage(null);
+      await moderationService.createOrganizationReview(id, {
+        rating: reviewRating,
+        title: reviewTitle.trim() || undefined,
+        content: reviewContent.trim(),
+      });
+      setReviewTitle('');
+      setReviewContent('');
+      setReviewRating(5);
+      setReviewSubmitMessage('Đã gửi đánh giá. Đánh giá sẽ hiển thị sau khi được duyệt.');
+      await loadOrganizationReviews(id);
+    } catch (err) {
+      setReviewSubmitMessage(getApiErrorMessage(err, 'Không thể gửi đánh giá lúc này.'));
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   const renderStars = () => {
     const stars = [];
@@ -590,6 +662,109 @@ const OrganizationDetails = () => {
                     Tổ chức này chưa nhận được đánh giá nào từ cộng đồng tình nguyện viên.
                   </p>
                 )}
+              </div>
+
+              <div style={sectionCard}>
+                <div style={titleStyle}>
+                  <Star size={20} color="#16a34a" />
+                  <span>Đánh giá tổ chức</span>
+                </div>
+
+                <form onSubmit={submitOrganizationReview} className="mb-4">
+                  <div className="row g-3">
+                    <div className="col-md-3">
+                      <label className="form-label fw-semibold">Điểm</label>
+                      <select
+                        className="form-select"
+                        value={reviewRating}
+                        onChange={(event) => setReviewRating(Number(event.target.value))}
+                        disabled={submittingReview}
+                      >
+                        {[5, 4, 3, 2, 1].map((value) => (
+                          <option key={value} value={value}>
+                            {value} sao
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-md-9">
+                      <label className="form-label fw-semibold">Tiêu đề (tuỳ chọn)</label>
+                      <input
+                        className="form-control"
+                        value={reviewTitle}
+                        onChange={(event) => setReviewTitle(event.target.value)}
+                        disabled={submittingReview}
+                        placeholder="Ví dụ: Tổ chức hỗ trợ tốt và chuyên nghiệp"
+                        maxLength={120}
+                      />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label fw-semibold">Nội dung đánh giá</label>
+                      <textarea
+                        className="form-control"
+                        rows={4}
+                        value={reviewContent}
+                        onChange={(event) => setReviewContent(event.target.value)}
+                        disabled={submittingReview}
+                        placeholder="Chia sẻ trải nghiệm của bạn với tổ chức này"
+                      />
+                    </div>
+                    <div className="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                      <div className="small text-muted">
+                        {isAuthenticated ? 'Đánh giá mới sẽ cần duyệt trước khi hiển thị công khai.' : 'Đăng nhập để gửi đánh giá.'}
+                      </div>
+                      <button type="submit" className="btn btn-success" disabled={submittingReview || !isAuthenticated}>
+                        {submittingReview ? 'Đang gửi...' : 'Gửi đánh giá'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+
+                {reviewSubmitMessage ? <div className="alert alert-info">{reviewSubmitMessage}</div> : null}
+                {reviewError ? <div className="alert alert-danger">{reviewError}</div> : null}
+                {reviewLoading ? <div className="alert alert-light border">Đang tải đánh giá tổ chức...</div> : null}
+
+                {!reviewLoading && reviews.length === 0 ? (
+                  <p style={{ color: '#64748b', marginBottom: 0 }}>
+                    Chưa có đánh giá tổ chức nào được duyệt.
+                  </p>
+                ) : null}
+
+                {!reviewLoading && reviews.length > 0 ? (
+                  <div className="d-flex flex-column gap-3">
+                    {reviews.map((review) => (
+                      <div
+                        key={review.id}
+                        style={{
+                          background: '#f8fafc',
+                          borderRadius: '12px',
+                          padding: '16px',
+                          border: '1px solid #e5e7eb',
+                        }}
+                      >
+                        <div className="d-flex justify-content-between align-items-center gap-2 mb-2">
+                          <div style={{ fontWeight: 700, color: '#0f172a' }}>
+                            {review.title || 'Đánh giá từ tình nguyện viên'}
+                          </div>
+                          <div className="d-flex align-items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                fill={star <= Number(review.rating || 0) ? '#fbbf24' : 'transparent'}
+                                color="#fbbf24"
+                                size={14}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ color: '#475569', lineHeight: 1.6 }}>{review.content || ''}</div>
+                        <div style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '8px' }}>
+                          {review.createdAt ? new Date(review.createdAt).toLocaleString('vi-VN') : '--'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
 

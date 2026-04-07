@@ -131,5 +131,13 @@ router.get('/organizer/volunteers/:id/history', authHandler.CheckLogin, authHand
     next(error);
   }
 });
+router.get('/organizer/members', authHandler.CheckLogin, authHandler.CheckRole('Organizer', 'Admin'), async function (req, res, next) {
+  try {
+    const result = await organizerController.getMembers(req.authUser.userId);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;
