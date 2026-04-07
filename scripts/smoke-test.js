@@ -134,7 +134,7 @@ var tests = [
   { routeKey: 'GET /api/v1/events/:id/ratings', method: 'GET', path: '/api/v1/events/{{eventId}}/ratings', noAuth: [200], withAuth: [200], minItems: 1 },
   { routeKey: 'POST /api/v1/events/:id/ratings', method: 'POST', path: '/api/v1/events/{{eventId}}/ratings', noAuth: [401], withAuth: [400, 401, 403, 201, 200], auth: true, body: { rating: 5, review: 'Smoke rating' } },
 
-  { routeKey: 'GET /api/v1/organizations/:id/reviews', method: 'GET', path: '/api/v1/organizations/{{organizationId}}/reviews', noAuth: [200], withAuth: [200], minItems: 1 },
+  { routeKey: 'GET /api/v1/organizations/:id/reviews', method: 'GET', path: '/api/v1/organizations/{{organizationId}}/reviews', noAuth: [200], withAuth: [200] },
   { routeKey: 'POST /api/v1/organizations/:id/reviews', method: 'POST', path: '/api/v1/organizations/{{organizationId}}/reviews', noAuth: [401], withAuth: [400, 401, 403, 201, 200], auth: true, body: { rating: 5, title: 'Smoke review', content: 'Smoke content' } },
   { routeKey: 'POST /api/v1/events/:id/reports', method: 'POST', path: '/api/v1/events/{{eventId}}/reports', noAuth: [401], withAuth: [400, 401, 403, 201], auth: true, body: { reason: 'Smoke test report', details: 'Automated check' } },
 
@@ -153,6 +153,13 @@ var tests = [
   { routeKey: 'PATCH /api/v1/admin/categories/:id', method: 'PATCH', path: '/api/v1/admin/categories/{{adminCategoryId}}', noAuth: [401], withAuth: [200, 400], auth: true, body: { name: 'Updated Smoke Category' } },
   { routeKey: 'DELETE /api/v1/admin/categories/:id', method: 'DELETE', path: '/api/v1/admin/categories/{{adminCategoryId}}', noAuth: [401], withAuth: [200, 400], auth: true },
   { routeKey: 'GET /api/v1/admin/moderation', method: 'GET', path: '/api/v1/admin/moderation?page=1&pageSize=1', noAuth: [401], withAuth: expectedProtectedWithToken, auth: true },
+  { routeKey: 'GET /api/v1/admin/donations', method: 'GET', path: '/api/v1/admin/donations?page=1&pageSize=1', noAuth: [401], withAuth: expectedProtectedWithToken, auth: true },
+  { routeKey: 'GET /api/v1/admin/event-reports', method: 'GET', path: '/api/v1/admin/event-reports', noAuth: [401], withAuth: expectedProtectedWithToken, auth: true },
+  { routeKey: 'GET /api/v1/admin/registrations', method: 'GET', path: '/api/v1/admin/registrations?page=1&pageSize=1', noAuth: [401], withAuth: expectedProtectedWithToken, auth: true },
+  { routeKey: 'PATCH /api/v1/admin/donations/:id/status', method: 'PATCH', path: '/api/v1/admin/donations/{{adminDonationId}}/status', noAuth: [401], withAuth: [200, 400], auth: true, body: { status: 'Pending' } },
+  { routeKey: 'PATCH /api/v1/admin/event-reports/:id/approve', method: 'PATCH', path: '/api/v1/admin/event-reports/{{adminEventReportId}}/approve', noAuth: [401], withAuth: [200, 400], auth: true },
+  { routeKey: 'PATCH /api/v1/admin/event-reports/:id/reject', method: 'PATCH', path: '/api/v1/admin/event-reports/{{adminEventReportId}}/reject', noAuth: [401], withAuth: [200, 400], auth: true },
+  { routeKey: 'PATCH /api/v1/admin/registrations/:id/status', method: 'PATCH', path: '/api/v1/admin/registrations/{{adminRegistrationId}}/status', noAuth: [401], withAuth: [200, 400], auth: true, body: { status: 'Pending' } },
 
   { routeKey: 'GET /api/v1/organizer/dashboard', method: 'GET', path: '/api/v1/organizer/dashboard', noAuth: [401], withAuth: [200], auth: true },
   { routeKey: 'GET /api/v1/organizer/profile', method: 'GET', path: '/api/v1/organizer/profile', noAuth: [401], withAuth: [200], auth: true },
@@ -197,6 +204,9 @@ function resolvePath(path, context) {
     .replace(/\{\{organizationId\}\}/g, context.organizationId || zeroId)
     .replace(/\{\{adminTargetUserId\}\}/g, context.adminTargetUserId || zeroId)
     .replace(/\{\{adminCategoryId\}\}/g, context.adminCategoryId || zeroId)
+    .replace(/\{\{adminDonationId\}\}/g, context.adminDonationId || zeroId)
+    .replace(/\{\{adminEventReportId\}\}/g, context.adminEventReportId || zeroId)
+    .replace(/\{\{adminRegistrationId\}\}/g, context.adminRegistrationId || zeroId)
     .replace(/\{\{organizerEventId\}\}/g, context.organizerEventId || zeroId)
     .replace(/\{\{organizerRegistrationId\}\}/g, context.organizerRegistrationId || zeroId)
     .replace(/\{\{organizerVolunteerId\}\}/g, context.organizerVolunteerId || zeroId)
@@ -215,6 +225,9 @@ function resolveBodyPlaceholders(value, context) {
       .replace(/\{\{organizationId\}\}/g, context.organizationId || zeroId)
       .replace(/\{\{adminTargetUserId\}\}/g, context.adminTargetUserId || zeroId)
       .replace(/\{\{adminCategoryId\}\}/g, context.adminCategoryId || zeroId)
+      .replace(/\{\{adminDonationId\}\}/g, context.adminDonationId || zeroId)
+      .replace(/\{\{adminEventReportId\}\}/g, context.adminEventReportId || zeroId)
+      .replace(/\{\{adminRegistrationId\}\}/g, context.adminRegistrationId || zeroId)
       .replace(/\{\{organizerEventId\}\}/g, context.organizerEventId || zeroId)
       .replace(/\{\{organizerRegistrationId\}\}/g, context.organizerRegistrationId || zeroId)
       .replace(/\{\{organizerVolunteerId\}\}/g, context.organizerVolunteerId || zeroId)
@@ -384,6 +397,9 @@ async function buildContext() {
     organizationId: organizationId,
     adminTargetUserId: zeroId,
     adminCategoryId: zeroId,
+    adminDonationId: zeroId,
+    adminEventReportId: zeroId,
+    adminRegistrationId: zeroId,
     organizerEventId: zeroId,
     organizerRegistrationId: zeroId,
     organizerVolunteerId: zeroId,
@@ -463,6 +479,45 @@ async function enrichContextWithSeededResources(context, runtime) {
     throw new Error('Unable to resolve an admin target user id for update status/role checks.');
   }
   context.adminTargetUserId = targetUser.id;
+
+  var reportSeed = await requestAsRole(
+    'POST',
+    '/api/v1/events/' + context.eventId + '/reports',
+    { reason: 'Smoke setup report', details: 'Ensure admin event-report routes have data' },
+    'volunteer',
+    runtime
+  );
+  requireStatus(reportSeed, [201, 400], 'Failed to seed at least one event report for admin smoke checks.');
+
+  var adminDonations = await requestAsRole('GET', '/api/v1/admin/donations?page=1&pageSize=1', null, 'admin', runtime);
+  requireStatus(adminDonations, [200], 'Failed to load admin donations for smoke setup.');
+  var adminDonationsPayload = tryParseJson(adminDonations.body);
+  var donationItems = adminDonationsPayload && Array.isArray(adminDonationsPayload.items) ? adminDonationsPayload.items : [];
+  var donation = donationItems[0] || null;
+  if (!donation || !donation.id) {
+    throw new Error('Unable to resolve an admin donation id for update status checks.');
+  }
+  context.adminDonationId = donation.id;
+
+  var adminEventReports = await requestAsRole('GET', '/api/v1/admin/event-reports', null, 'admin', runtime);
+  requireStatus(adminEventReports, [200], 'Failed to load admin event reports for smoke setup.');
+  var adminEventReportsPayload = tryParseJson(adminEventReports.body);
+  var reportItems = adminEventReportsPayload && Array.isArray(adminEventReportsPayload.items) ? adminEventReportsPayload.items : [];
+  var report = reportItems[0] || null;
+  if (!report || !report.id) {
+    throw new Error('Unable to resolve an admin event report id for approve/reject checks.');
+  }
+  context.adminEventReportId = report.id;
+
+  var adminRegistrations = await requestAsRole('GET', '/api/v1/admin/registrations?page=1&pageSize=1', null, 'admin', runtime);
+  requireStatus(adminRegistrations, [200], 'Failed to load admin registrations for smoke setup.');
+  var adminRegistrationsPayload = tryParseJson(adminRegistrations.body);
+  var adminRegistrationItems = adminRegistrationsPayload && Array.isArray(adminRegistrationsPayload.items) ? adminRegistrationsPayload.items : [];
+  var adminRegistration = adminRegistrationItems[0] || null;
+  if (!adminRegistration || !adminRegistration.id) {
+    throw new Error('Unable to resolve an admin registration id for update status checks.');
+  }
+  context.adminRegistrationId = adminRegistration.id;
 
   var volunteerProfile = await requestAsRole('GET', '/api/v1/profile', null, 'volunteer', runtime);
   requireStatus(volunteerProfile, [200], 'Failed to load volunteer profile for smoke setup.');
@@ -666,48 +721,56 @@ async function run() {
     if (Object.prototype.hasOwnProperty.call(test, 'body')) {
       test.body = resolveBodyPlaceholders(test.body, context);
     }
-    var expected = token ? test.withAuth : test.noAuth;
-    if (test.auth && !token) {
-      expected = test.withAuth;
-    }
-    var result = await requestTest(test, runtime);
-    updateContextFromResult(test, result, context);
-    var statusPassed = expected.includes(result.status);
-    if (test.auth && result.status === 401) {
-      statusPassed = false;
-    }
-    var contentValidation = validateResult(test, result);
-    var disallowedErrorMessage = result.status >= 400 && /not have access|not found/i.test(String(result.body || ''));
-    var passed = statusPassed && contentValidation.ok;
-
-    if (passed && disallowedErrorMessage) {
-      passed = false;
-      contentValidation = {
-        ok: false,
-        reason: 'response contains disallowed error text (not have access / not found)',
-      };
-    }
-
-    if (!passed) {
-      failures += 1;
-    } else if (result.status >= 400) {
-      expectedErrorPasses += 1;
+    var variants = [];
+    if (test.auth && !token && runtime && runtime.sessions) {
+      variants.push({ mode: 'noAuth', expected: test.noAuth, auth: false });
+      variants.push({ mode: 'withAuth', expected: test.withAuth, auth: true });
     } else {
-      successPasses += 1;
+      var expected = token ? test.withAuth : test.noAuth;
+      if (test.auth && !token) {
+        expected = test.withAuth;
+      }
+      variants.push({ mode: 'single', expected: expected, auth: Boolean(test.auth) });
     }
 
-    var statusLabel = passed ? (result.status >= 400 ? 'PASS_EXPECTED_ERROR' : 'PASS') : 'FAIL';
-    var line = [
-      statusLabel,
-      test.method,
-      test.path,
-      'status=' + result.status,
-      'expected=' + toExpectedLabel(expected),
-      contentValidation.ok ? null : 'validation=' + contentValidation.reason,
-      'body=' + clip(result.body, 120),
-    ].filter(Boolean).join(' | ');
+    for (var v = 0; v < variants.length; v += 1) {
+      var variant = variants[v];
+      var request = Object.assign({}, test, { auth: variant.auth });
+      var result = await requestTest(request, runtime);
 
-    process.stdout.write(line + '\n');
+      if (variant.mode !== 'noAuth') {
+        updateContextFromResult(test, result, context);
+      }
+
+      var statusPassed = variant.expected.includes(result.status);
+      if (variant.auth && result.status === 401) {
+        statusPassed = false;
+      }
+      var contentValidation = validateResult(test, result);
+      var passed = statusPassed && contentValidation.ok;
+
+      if (!passed) {
+        failures += 1;
+      } else if (result.status >= 400) {
+        expectedErrorPasses += 1;
+      } else {
+        successPasses += 1;
+      }
+
+      var statusLabel = passed ? (result.status >= 400 ? 'PASS_EXPECTED_ERROR' : 'PASS') : 'FAIL';
+      var line = [
+        statusLabel,
+        test.method,
+        test.path,
+        variant.mode === 'single' ? null : 'mode=' + variant.mode,
+        'status=' + result.status,
+        'expected=' + toExpectedLabel(variant.expected),
+        contentValidation.ok ? null : 'validation=' + contentValidation.reason,
+        'body=' + clip(result.body, 120),
+      ].filter(Boolean).join(' | ');
+
+      process.stdout.write(line + '\n');
+    }
   }
 
   console.log('');

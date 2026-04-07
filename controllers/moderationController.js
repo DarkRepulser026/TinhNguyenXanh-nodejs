@@ -55,7 +55,7 @@ module.exports = {
     // Tối ưu hóa: Dùng upsert để gộp thao tác Tìm & Cập nhật/Tạo mới thành 1 Query duy nhất
     let result = await models.organizationReview.findOneAndUpdate(
       { organizationId: mongo.toObjectId(organizationId), userId: mongo.toObjectId(userId) },
-      { $set: { rating, title, content, status: 'Pending' } },
+      { $set: { rating, title, content, status: 'Approved' } },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     ).lean();
     return mongo.toPlain(result);

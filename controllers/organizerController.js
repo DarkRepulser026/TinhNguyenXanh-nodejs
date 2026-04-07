@@ -289,4 +289,34 @@ module.exports = {
 
     return saved;
   },
+
+  getMembers: async function (userId) {
+    const organization = await getOwnedOrganization(userId);
+    if (!organization) throw { status: 404, message: 'Organizer organization profile not found.' };
+
+    const rows = mongo.toPlain(
+      await models.organizationMember
+        .find({ organizationId: mongo.toObjectId(organization.id) })
+        .populate('userId', 'fullName email phone')
+        .sort({ role: 1, joinedAt: 1, createdAt: 1 })
+        .lean()
+    );
+
+    const items = rows.map(function (row) {
+      const user = row.userId && typeof row.userId === 'object' ? row.userId : null;
+      return {
+        id: row.id,
+        organizationId: row.organizationId,
+        userId: user && user.id ? user.id : row.userId,
+        fullName: user ? user.fullName || null : null,
+        email: user ? user.email || null : null,
+        phone: user ? user.phone || null : null,
+        role: row.role,
+        status: row.status,
+        joinedAt: row.joinedAt,
+      };
+    });
+
+    return { items, totalCount: items.length };
+  },
 };

@@ -1,0 +1,72 @@
+API Root
+Health Check
+Register User
+Login User
+Logout User
+Get My Profile
+Update My Profile
+List Events
+Get Event Details
+Register For Event
+Toggle Event Favorite
+List Event Categories
+List Organizations
+Get Organization Details
+Register Organization
+Get Volunteer Profile
+Update Volunteer Profile
+Upload Volunteer Avatar
+List Volunteer Registrations
+Delete Volunteer Registration
+List Volunteer Favorites
+Remove Favorite Event
+Get Volunteer Dashboard
+List Volunteer Donations
+List Event Comments (Volunteer)
+Create Event Comment (Volunteer)
+List Event Ratings
+Create Or Update Event Rating
+Get Organizer Dashboard
+Get Organizer Profile
+Update Organizer Profile
+Claim Organization
+List Organizer Events
+Get Organizer Event Details
+Create Organizer Event
+Update Organizer Event
+Hide Organizer Event
+Unhide Organizer Event
+List Organizer Volunteers
+Get Registration Details
+Update Registration Status
+Get Registration Evaluation
+Save Registration Evaluation
+Get Volunteer History
+List Organizer Members
+Get Admin Dashboard
+List Event Approvals
+Update Event Approval Status
+List Users
+Update User Active Status
+Update User Role
+List Categories
+Create Category
+Update Category
+Delete Category
+Get Moderation Summary
+List Event Reports
+Approve Event Report
+Reject Event Report
+List Donations
+Update Donation Status
+List Registrations
+Update Registration Status (Admin)
+Create MoMo Payment
+Handle MoMo IPN
+Get Payment Status
+List Event Comments (Moderation)
+Create Event Comment (Moderation)
+List Organization Reviews
+Create Organization Review
+Report Event
+Send Contact Message
