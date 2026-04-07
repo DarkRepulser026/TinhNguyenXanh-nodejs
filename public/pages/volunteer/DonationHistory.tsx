@@ -101,7 +101,7 @@ const DonationHistory: React.FC = () => {
                                                 <th>Mã giao dịch</th>
                                                 <th>Số tiền</th>
                                                 <th>Phương thức</th>
-                                            
+                                                 <th>Trạng thái</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -115,10 +115,11 @@ const DonationHistory: React.FC = () => {
                                                             {donation.paymentMethod === 'momo' ? 'Ví MoMo' : donation.paymentMethod}
                                                         </span>
                                                     </td>
-                                                   
-                                                
-                                                
-                                                                                        
+                                                    <td>
+                                                        <span className={`badge ${donation.status === 'Success' ? 'bg-success' : 'bg-danger'}`}>
+                                                            {donation.status === 'Success' ? 'Thành công' : 'Thất bại'}
+                                                        </span>
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
