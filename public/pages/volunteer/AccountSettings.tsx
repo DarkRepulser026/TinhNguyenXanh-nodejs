@@ -35,45 +35,45 @@ const AccountSettings: React.FC = () => {
   };
 
   return (
-    <div className="container py-5" style={{ maxWidth: '700px' }}>
-      <div className="card border-0 shadow-sm rounded-4 p-4 p-md-5">
-        <h1 className="h3 fw-bold mb-2">Cài đặt tài khoản</h1>
-        <p className="text-muted mb-4">Quản lý thông tin cá nhân cho tài khoản của bạn.</p>
+    <div>
+          <div className="card border-0 shadow-sm rounded-4 p-4 p-md-5">
+            <h1 className="h3 fw-bold mb-2">Cài đặt tài khoản</h1>
+            <p className="text-muted mb-4">Quản lý thông tin cá nhân cho tài khoản của bạn.</p>
 
-        {message && <div className="alert alert-success py-2">{message}</div>}
-        {error && <div className="alert alert-danger py-2">{error}</div>}
+            {message && <div className="alert alert-success py-2">{message}</div>}
+            {error && <div className="alert alert-danger py-2">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="d-grid gap-3">
-          <div>
-            <label className="form-label">Email</label>
-            <input className="form-control" value={user?.email || ''} disabled />
+            <form onSubmit={handleSubmit} className="d-grid gap-3">
+              <div>
+                <label className="form-label">Email</label>
+                <input className="form-control" value={user?.email || ''} disabled />
+              </div>
+
+              <div>
+                <label className="form-label">Vai trò</label>
+                <input className="form-control" value={user?.role || ''} disabled />
+              </div>
+
+              <div>
+                <label className="form-label">Họ và tên</label>
+                <input
+                  className="form-control"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Số điện thoại</label>
+                <input className="form-control" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              </div>
+
+              <button className="btn btn-success" type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
+              </button>
+            </form>
           </div>
-
-          <div>
-            <label className="form-label">Vai trò</label>
-            <input className="form-control" value={user?.role || ''} disabled />
-          </div>
-
-          <div>
-            <label className="form-label">Họ và tên</label>
-            <input
-              className="form-control"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="form-label">Số điện thoại</label>
-            <input className="form-control" value={phone} onChange={(e) => setPhone(e.target.value)} />
-          </div>
-
-          <button className="btn btn-success" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
-          </button>
-        </form>
-      </div>
     </div>
   );
 };

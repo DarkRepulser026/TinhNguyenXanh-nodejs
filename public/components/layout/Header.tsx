@@ -33,6 +33,11 @@ const Header: React.FC = () => {
   const [category, setCategory] = React.useState('');
   const [keyword, setKeyword] = React.useState('');
   const [searchLocation, setSearchLocation] = React.useState('');
+  const shouldHideSearchSection =
+    location.pathname === '/volunteer' ||
+    location.pathname.startsWith('/volunteer/') ||
+    location.pathname === '/account' ||
+    location.pathname.startsWith('/account/');
 
   React.useEffect(() => {
     if (!location.pathname.startsWith('/events')) {
@@ -239,6 +244,7 @@ const Header: React.FC = () => {
         </div>
       </nav>
 
+      {!shouldHideSearchSection && (
       <div className="search-section border-bottom">
         <div className="container">
           <div className="search-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
@@ -312,6 +318,7 @@ const Header: React.FC = () => {
           </form>
         </div>
       </div>
+      )}
     </header>
   );
 };

@@ -1,16 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  BarChart2, 
   Calendar, 
   CheckCircle2, 
   Clock, 
-  Settings, 
-  User as UserIcon,
-  Heart,
   TrendingUp,
-  Award,
-  Layers,
-  CreditCard
+    Layers
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';
@@ -54,42 +48,7 @@ const VolunteerDashboard: React.FC = () => {
     const upcomingEvents = dashboardData?.upcomingEvents || [];
 
     return (
-        <div className="volunteer-page volunteer-dashboard py-5">
-            <div className="container">
-                <div className="section-header d-flex flex-column flex-md-row align-items-start justify-content-between gap-3 mb-4">
-                    <div>
-                        <span className="badge bg-success-soft text-success rounded-pill py-2 px-3 mb-3">Trang tình nguyện viên</span>
-                        <h1 className="section-title mb-2">Xin chào, {user?.fullName?.split(' ')[0] || 'Tình nguyện viên'}!</h1>
-                        <p className="section-subtitle">Xem nhanh kết quả hoạt động, hồ sơ và sự kiện phù hợp với bạn.</p>
-                    </div>
-                    <div className="d-flex align-items-center gap-2">
-                        <Link to="/events" className="btn btn-success btn-pill px-4 py-3 shadow-sm">Khám phá sự kiện mới</Link>
-                    </div>
-                </div>
-                <div className="row g-4">
-                    {/* Left Sidebar */}
-                    <div className="col-lg-3">
-                        <div className="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-                            <div className="text-center mb-4">
-                                <div className="avatar-placeholder bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '80px', height: '80px', fontSize: '2rem' }}>
-                                    <UserIcon size={40} />
-                                </div>
-                                <h5 className="fw-bold mb-1">{user?.fullName || 'Tình nguyện viên'}</h5>
-                                <p className="text-muted small mb-0">{stats.rank}</p>
-                            </div>
-                        </div>
-                        <div className="card border-0 shadow-sm rounded-4 p-4 bg-gradient-success text-white" style={{ background: 'linear-gradient(135deg, #198754 0%, #20c997 100%)' }}>
-                            <div className="d-flex align-items-center justify-content-between mb-3">
-                                <h6 className="fw-bold mb-0">Điểm tích lũy</h6>
-                                <Award size={24} />
-                            </div>
-                            <h2 className="fw-bold mb-0">{stats.points}</h2>
-                            <p className="small mb-0 opacity-75">Điểm sẽ được dùng để đổi quà tặng</p>
-                        </div>
-                    </div>
-
-                    {/* Main Content */}
-                    <div className="col-lg-9">
+        <div className="volunteer-dashboard">
                         <div className="d-flex justify-content-between align-items-center mb-4">
                             <h3 className="fw-bold mb-0">Bảng điều khiển</h3>
                             <Link to="/events" className="btn btn-outline-success rounded-pill px-4">
@@ -195,9 +154,6 @@ const VolunteerDashboard: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 };
