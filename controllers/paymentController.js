@@ -57,7 +57,7 @@ exports.createMomoPayment = async (userId, donorNameInput, phoneNumberInput, mes
       message,
       paymentMethod,
       transactionCode,
-      status: 'Pending',
+      status: 'Success',
       providerRef: requestId,
   });
   donation = mongo.toPlain(donation.toObject());
