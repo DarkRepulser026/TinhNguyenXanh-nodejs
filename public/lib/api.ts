@@ -69,6 +69,7 @@ export type AdminEventApprovalItem = any
 export type AdminModerationReport = any
 export type AdminUserItem = any
 export type AdminDashboardMetrics = any
+export type AdminEventReport = any
 export type OrganizerEventItem = any
 export type FavoriteItem = any
 export type RegistrationItem = any
@@ -140,13 +141,16 @@ export const adminService = {
   updateEventStatus: (id: string | number, action: string | number) =>
     axios.patch(`/admin/events/${id}/status`, { action }),
   getUsers: (params?: Record<string, unknown>) => axios.get('/admin/users', { params }),
-  updateUserStatus: (id: string, isActive: boolean) => axios.patch('/admin/users/${id}/status', { isActive }),
-  updateUserRole: (id: string, role: UserRole) => axios.patch('/admin/users/${id}/role', { role }),
+  updateUserStatus: (id: string, isActive: boolean) => axios.patch(`/admin/users/${id}/status`, { isActive }),
+  updateUserRole: (id: string, role: UserRole) => axios.patch(`/admin/users/${id}/role`, { role }),
   getCategories: (params?: Record<string, unknown>) => axios.get('/admin/categories', { params }),
   createCategory: (name: string) => axios.post('/admin/categories', { name }),
   updateCategory: (id: string, name: string) => axios.patch(`/admin/categories/${id}`, { name }),
-  deleteCategory: (id: string) => axios.delete('/admin/categories/${id}'),
+  deleteCategory: (id: string) => axios.delete(`/admin/categories/${id}`),
   getModeration: () => axios.get('/admin/moderation'),
+  getEventReports: () => axios.get('/admin/event-reports'),
+  approveReport: (id: string) => axios.patch(`/admin/event-reports/${id}/approve`),
+  rejectReport: (id: string) => axios.patch(`/admin/event-reports/${id}/reject`),
 }
 
 export const organizerService = {

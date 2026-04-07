@@ -133,6 +133,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { label: 'Tổng quan', path: '/admin', icon: LayoutDashboard },
     { label: 'Phê duyệt', path: '/admin/approvals', icon: ListChecks },
     { label: 'Moderation', path: '/admin/moderation', icon: FileWarning },
+    { label: 'Báo cáo', path: '/admin/reports', icon: AlertTriangle },
     { label: 'Người dùng', path: '/admin/users', icon: Users },
     { label: 'Danh mục', path: '/admin/categories', icon: ShieldCheck },
   ];
@@ -409,4 +410,3 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 };
 
 export default AdminLayout;
-

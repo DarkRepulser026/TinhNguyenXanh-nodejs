@@ -1,7 +1,12 @@
-import AdminReports from './AdminReports'
+import AdminLayout from './layout';
+import AdminReports from './AdminReports';
 
 const AdminReportsPage = () => {
-  return <AdminReports />
-}
+  return (
+    <AdminLayout>
+      <AdminReports />
+    </AdminLayout>
+  );
+};
 
-export default AdminReportsPage
+export default AdminReportsPage;

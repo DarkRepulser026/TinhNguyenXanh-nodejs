@@ -91,5 +91,31 @@ router.get('/admin/moderation', authHandler.CheckLogin, authHandler.CheckRole('A
     next(error);
   }
 });
+router.get('/admin/event-reports', authHandler.CheckLogin, authHandler.CheckRole('Admin'), async function (req, res, next) {
+  try {
+    const result = await adminController.getEventReports();
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch('/admin/event-reports/:id/approve', authHandler.CheckLogin, authHandler.CheckRole('Admin'), async function (req, res, next) {
+  try {
+    const result = await adminController.approveReport(req.params.id);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch('/admin/event-reports/:id/reject', authHandler.CheckLogin, authHandler.CheckRole('Admin'), async function (req, res, next) {
+  try {
+    const result = await adminController.rejectReport(req.params.id);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;

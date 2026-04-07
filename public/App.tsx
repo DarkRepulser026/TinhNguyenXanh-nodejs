@@ -35,6 +35,7 @@ const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'));
 const AdminEventApprovalsPage = lazy(() => import('./pages/admin/AdminEventApprovalsPage'));
 const AdminModerationPage = lazy(() => import('./pages/admin/AdminModerationPage'));
 const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
+const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
 const AdminCategoriesPage = lazy(() => import('./pages/admin/AdminCategoriesPage'));
 const OrganizerOverview = lazy(() => import('./pages/organizer/OrganizerOverview'));
 const OrganizerEventManagementPage = lazy(() => import('./pages/organizer/OrganizerEventManagementPage'));
@@ -201,6 +202,15 @@ function App() {
                 </RequireAuth>
               }
             />
+            <Route
+              path="/admin/reports"
+              element={
+                <RequireAuth roles={ADMIN_ROLES}>
+                  <AdminReportsPage />
+                </RequireAuth>
+              }
+            />
+
             <Route path="/organizations" element={<OrganizationList />} />
             <Route path="/organizations/:id" element={<OrganizationDetails />} />
             <Route path="/organizations/register" element={<OrganizationRegister />} />

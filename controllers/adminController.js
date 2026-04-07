@@ -139,4 +139,68 @@ module.exports = {
     const inactiveUsers = await models.appUser.countDocuments({ isActive: false });
     return { queue: mongo.toPlain(queue), summary: { rejectedEvents, hiddenEvents, inactiveUsers }, message: 'Moderation queue loaded.' };
   },
+  
+  getEventReports: async function () {
+    const reports = await models.eventReport
+      .find({})
+      .populate("eventId")
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean();
+
+    return {
+      items: mongo.toPlain(reports).map((r) => ({
+        id: r.id,
+        reason: r.reason,
+        status: r.status,
+        createdAt: r.createdAt,
+
+        eventId: r.eventId?.id || null,
+        eventTitle: r.eventId?.title || null,
+        isHidden: r.eventId?.isHidden || false,
+      })),
+      message: "Event reports loaded.",
+    };
+  },
+
+  approveReport: async function (id) {
+    id = typeof id === "string" ? id.trim() : "";
+    if (!id) throw { status: 400, message: "Invalid report id." };
+
+    const report = await models.eventReport
+      .findOne({ _id: mongo.toObjectId(id) })
+      .populate("eventId");
+
+    if (!report) throw { status: 404, message: "Report not found." };
+
+    // update report
+    report.status = "Approved";
+    await report.save();
+
+    // update event
+    if (report.eventId) {
+      await models.event.findOneAndUpdate(
+        { _id: report.eventId._id },
+        { $set: { isHidden: true } }
+      );
+    }
+
+    return { message: "Approved & event hidden." };
+  },
+
+  rejectReport: async function (id) {
+    id = typeof id === "string" ? id.trim() : "";
+    if (!id) throw { status: 400, message: "Invalid report id." };
+
+    const report = await models.eventReport.findOne({
+      _id: mongo.toObjectId(id),
+    });
+
+    if (!report) throw { status: 404, message: "Report not found." };
+
+    report.status = "Rejected";
+    await report.save();
+
+    return { message: "Report rejected." };
+  },
 };
