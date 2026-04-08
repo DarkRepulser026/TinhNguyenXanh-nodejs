@@ -1,1 +1,1 @@
-"$env:LOCALAPPDATA\Microsoft\WinGet\Links\ngrok.exe" http 3000 --log=stdout --log-format=json
+ngrok http 3000 --log=stdout --log-format=json

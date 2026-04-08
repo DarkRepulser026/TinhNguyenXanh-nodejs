@@ -32,7 +32,8 @@ const Header: React.FC = () => {
     location.pathname === '/volunteer' ||
     location.pathname.startsWith('/volunteer/') ||
     location.pathname === '/account' ||
-    location.pathname.startsWith('/account/');
+    location.pathname.startsWith('/account/') ||
+    location.pathname === '/organizations/register';
 
   React.useEffect(() => {
     if (!location.pathname.startsWith('/events')) {
@@ -164,6 +165,16 @@ const Header: React.FC = () => {
                         <BarChart2 size={15} /> Tổng quan
                       </Link>
                     </li>
+                    {user?.role === 'Volunteer' && (
+                      <li>
+                        <Link
+                          to="/organizations/register"
+                          className="dropdown-item d-flex align-items-center gap-2"
+                        >
+                          <Building2 size={15} /> Đăng ký tổ chức
+                        </Link>
+                      </li>
+                    )}
                     
                     <li>
                       <button
