@@ -4,7 +4,11 @@ let mongo = require('./mongo');
 let models = require('./models');
 
 let AUTH_COOKIE_NAME = 'vh_session';
-let JWT_SECRET = 'volunteerhub-dev-secret-change-me';
+let JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET is required. Set it in environment variables (.env).');
+}
 
 function getToken(req) {
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
