@@ -15,10 +15,26 @@ module.exports = {
     const totalEvents = await models.event.countDocuments({});
     const pendingApprovals = await models.event.countDocuments({ status: { $in: ['draft', 'pending'] } });
     const totalOrganizations = await models.organization.countDocuments({});
+    const pendingOrganizationApprovals = await models.organization.countDocuments({
+      $or: [
+        { approvalStatus: 'pending' },
+        { approvalStatus: { $exists: false }, verified: false },
+      ],
+    });
     const totalCategories = await models.eventCategory.countDocuments({});
     const totalVolunteers = await models.volunteer.countDocuments({});
     const pendingRegistrations = await models.eventRegistration.countDocuments({ status: 'Pending' });
-    return { totalUsers, activeUsers, totalEvents, pendingApprovals, totalOrganizations, totalCategories, totalVolunteers, pendingRegistrations };
+    return {
+      totalUsers,
+      activeUsers,
+      totalEvents,
+      pendingApprovals,
+      totalOrganizations,
+      pendingOrganizationApprovals,
+      totalCategories,
+      totalVolunteers,
+      pendingRegistrations,
+    };
   },
 
   getEventApprovals: async function (query) {
@@ -56,6 +72,99 @@ module.exports = {
       throw { status: 400, message: "action must be 'approve' or 'reject'." };
     }
     return { id: event.id, status: event.status };
+  },
+
+  getOrganizationApprovals: async function (query) {
+    const search = typeof query.search === 'string' ? query.search.trim().toLowerCase() : '';
+    const paging = toPageParams(query, 10);
+    let rows = mongo.toPlain(
+      await models.organization
+        .find({
+          $or: [
+            { approvalStatus: 'pending' },
+            { approvalStatus: { $exists: false }, verified: false },
+          ],
+        })
+        .populate('ownerUserId', 'fullName email')
+        .sort({ createdAt: -1 })
+        .lean()
+    );
+
+    rows = rows.filter((item) => {
+      if (!search) return true;
+      return (item.name || '').toLowerCase().includes(search)
+        || (item.description || '').toLowerCase().includes(search)
+        || (item.contactEmail || '').toLowerCase().includes(search)
+        || (item.city || '').toLowerCase().includes(search)
+        || (item.ownerUserId && (item.ownerUserId.fullName || '').toLowerCase().includes(search));
+    });
+
+    const totalCount = rows.length;
+    const items = rows
+      .slice((paging.page - 1) * paging.pageSize, (paging.page - 1) * paging.pageSize + paging.pageSize)
+      .map((item) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        organizationType: item.organizationType,
+        city: item.city,
+        district: item.district,
+        address: item.address,
+        contactEmail: item.contactEmail,
+        phoneNumber: item.phoneNumber,
+        verified: Boolean(item.verified),
+        approvalStatus: item.approvalStatus || 'pending',
+        createdAt: item.createdAt,
+        ownerUserId: item.ownerUserId && item.ownerUserId.id ? item.ownerUserId.id : item.ownerUserId,
+        ownerName: item.ownerUserId && item.ownerUserId.fullName ? item.ownerUserId.fullName : null,
+        ownerEmail: item.ownerUserId && item.ownerUserId.email ? item.ownerUserId.email : null,
+      }));
+
+    return {
+      items,
+      totalCount,
+      page: paging.page,
+      pageSize: paging.pageSize,
+      totalPages: Math.ceil(totalCount / paging.pageSize),
+    };
+  },
+
+  updateOrganizationApprovalStatus: async function (id, action) {
+    id = typeof id === 'string' ? id.trim() : '';
+    if (!id) throw { status: 400, message: 'Invalid organization id.' };
+
+    let organization = mongo.toPlain(await models.organization.findOne({ _id: mongo.toObjectId(id) }).lean());
+    if (!organization) throw { status: 404, message: 'Organization not found.' };
+
+    if (action === 'approve') {
+      organization = mongo.toPlain(
+        await models.organization
+          .findOneAndUpdate(
+            { _id: mongo.toObjectId(organization.id) },
+            { $set: { approvalStatus: 'approved', verified: true } },
+            { new: true },
+          )
+          .lean()
+      );
+    } else if (action === 'reject') {
+      organization = mongo.toPlain(
+        await models.organization
+          .findOneAndUpdate(
+            { _id: mongo.toObjectId(organization.id) },
+            { $set: { approvalStatus: 'rejected', verified: false } },
+            { new: true },
+          )
+          .lean()
+      );
+    } else {
+      throw { status: 400, message: "action must be 'approve' or 'reject'." };
+    }
+
+    return {
+      id: organization.id,
+      approvalStatus: organization.approvalStatus || 'pending',
+      verified: Boolean(organization.verified),
+    };
   },
 
   getUsers: async function (query) {

@@ -36,6 +36,11 @@ const OrganizationSchema = new mongoose.Schema(
     averageRating: { type: Number, default: 0 },
     totalReviews: { type: Number, default: 0 },
     verified: { type: Boolean, default: false },
+    approvalStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
 
     ownerUserId: {
       type: mongoose.Schema.Types.ObjectId,

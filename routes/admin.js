@@ -27,6 +27,22 @@ router.patch('/admin/events/:id/status', authHandler.CheckLogin, authHandler.Che
     next(error);
   }
 });
+router.get('/admin/organizations/approvals', authHandler.CheckLogin, authHandler.CheckRole('Admin'), async function (req, res, next) {
+  try {
+    const result = await adminController.getOrganizationApprovals(req.query);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+});
+router.patch('/admin/organizations/:id/status', authHandler.CheckLogin, authHandler.CheckRole('Admin'), async function (req, res, next) {
+  try {
+    const result = await adminController.updateOrganizationApprovalStatus(req.params.id, req.body.action);
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
+});
 router.get('/admin/users', authHandler.CheckLogin, authHandler.CheckRole('Admin'), async function (req, res, next) {
   try {
     const result = await adminController.getUsers(req.query);

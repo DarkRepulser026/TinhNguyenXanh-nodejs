@@ -72,6 +72,7 @@ export type AdminDashboardMetrics = any
 export type AdminEventReport = any
 export type AdminDonationItem = any
 export type AdminRegistrationItem = any
+export type AdminOrganizationApprovalItem = any
 export type OrganizerEventItem = any
 export type FavoriteItem = any
 export type RegistrationItem = any
@@ -168,6 +169,9 @@ export const adminService = {
   getEventApprovals: (params?: Record<string, unknown>) => axios.get('/admin/events/approvals', { params }),
   updateEventStatus: (id: string | number, action: string | number) =>
     axios.patch(`/admin/events/${id}/status`, { action }),
+  getOrganizationApprovals: (params?: Record<string, unknown>) => axios.get('/admin/organizations/approvals', { params }),
+  updateOrganizationApprovalStatus: (id: string | number, action: 'approve' | 'reject') =>
+    axios.patch(`/admin/organizations/${id}/status`, { action }),
   getUsers: (params?: Record<string, unknown>) => axios.get('/admin/users', { params }),
   updateUserStatus: (id: string, isActive: boolean) => axios.patch(`/admin/users/${id}/status`, { isActive }),
   updateUserRole: (id: string, role: UserRole) => axios.patch(`/admin/users/${id}/role`, { role }),

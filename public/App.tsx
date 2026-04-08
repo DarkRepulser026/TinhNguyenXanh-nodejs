@@ -33,6 +33,7 @@ const Register = lazy(() => import('./pages/auth/Register'));
 const EventRegisterPage = lazy(() => import('./pages/events/EventRegister'));
 const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'));
 const AdminEventApprovalsPage = lazy(() => import('./pages/admin/AdminEventApprovalsPage'));
+const AdminOrganizationApprovalsPage = lazy(() => import('./pages/admin/AdminOrganizationApprovalsPage'));
 const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
 const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
 const AdminDonationsPage = lazy(() => import('./pages/admin/AdminDonationsPage'));
@@ -149,6 +150,14 @@ function App() {
               element={
                 <RequireAuth roles={ADMIN_ROLES}>
                   <AdminEventApprovalsPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/admin/organizations/approvals"
+              element={
+                <RequireAuth roles={ADMIN_ROLES}>
+                  <AdminOrganizationApprovalsPage />
                 </RequireAuth>
               }
             />

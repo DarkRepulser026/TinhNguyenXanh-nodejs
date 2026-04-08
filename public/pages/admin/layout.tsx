@@ -150,6 +150,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navItems = [
     { label: 'Tổng quan', path: '/admin', icon: LayoutDashboard },
     { label: 'Phê duyệt', path: '/admin/approvals', icon: ListChecks },
+    { label: 'Duyệt tổ chức', path: '/admin/organizations/approvals', icon: ShieldCheck },
     { label: 'Báo cáo', path: '/admin/reports', icon: AlertTriangle },
     { label: 'Ủng hộ', path: '/admin/donations', icon: Wallet },
     { label: 'Đăng ký', path: '/admin/registrations', icon: UserCheck },

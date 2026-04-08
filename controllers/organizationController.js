@@ -8,7 +8,12 @@ module.exports = {
     const city = typeof query.city === 'string' ? query.city.trim().toLowerCase() : '';
     const page = Math.max(1, Number(query.page || 1));
     const pageSize = Math.min(100, Math.max(1, Number(query.pageSize || 12)));
-    let rows = mongo.toPlain(await models.organization.find({}).lean());
+    let rows = mongo.toPlain(await models.organization.find({
+      $or: [
+        { approvalStatus: 'approved' },
+        { approvalStatus: { $exists: false }, verified: true },
+      ],
+    }).lean());
     rows = rows.filter((item) => {
       const keywordOk = !keyword || (item.name || '').toLowerCase().includes(keyword) || (item.description || '').toLowerCase().includes(keyword);
       const cityOk = !city || (item.city || '').toLowerCase().includes(city);
@@ -31,7 +36,13 @@ module.exports = {
   getOrganizationById: async function (id) {
     id = typeof id === 'string' ? id.trim() : '';
     if (!id) throw { status: 400, message: 'Invalid organization id.' };
-    let row = mongo.toPlain(await models.organization.findOne({ _id: mongo.toObjectId(id) }).lean());
+    let row = mongo.toPlain(await models.organization.findOne({
+      _id: mongo.toObjectId(id),
+      $or: [
+        { approvalStatus: 'approved' },
+        { approvalStatus: { $exists: false }, verified: true },
+      ],
+    }).lean());
     if (!row) throw { status: 404, message: 'Organization not found.' };
     const approvedEvents = await models.event.find({ organizationId: mongo.toObjectId(id), status: 'approved', isHidden: { $ne: true } }).select('title startTime endTime location status').sort({ startTime: 1 }).limit(5).lean();
     const allOrgEvents = await models.event.find({ organizationId: mongo.toObjectId(id) }).select('_id title').lean();
@@ -89,7 +100,7 @@ module.exports = {
       legalRepresentative, documentType, verificationDocsUrl, facebookUrl, zaloNumber, achievements,
       memberCount: Number.isFinite(memberCount) ? memberCount : 0,
       eventsOrganized: Number.isFinite(eventsOrganized) ? eventsOrganized : 0,
-      focusAreas, avatarUrl, verified: false, averageRating: 0, totalReviews: 0,
+      focusAreas, avatarUrl, verified: false, approvalStatus: 'pending', averageRating: 0, totalReviews: 0,
       ownerUserId: mongo.toObjectId(authUserId),
     });
     const plainOrganization = mongo.toPlain(organization.toObject());
