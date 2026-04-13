@@ -75,3 +75,11 @@ JIRA_SPRINT_WORK_ITEMS.md
 CHUONG_3_PHUONG_PHAP_AP_DUNG_CONG_CU.md
 SDLC_CONG_CU_VA_QUY_TRINH.md
 temp/JIRA_SPRINT_REPORT_BAITAP6_STYLE.csv
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+tests/req

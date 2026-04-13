@@ -41,6 +41,53 @@ app.use('/api/v1', adminRouter);
 app.use('/api/v1', organizerRouter);
 app.use('/api/v1/contact', contactRouter);
 
+if (process.env.NODE_ENV === 'production') {
+  function serveFrontendApp(req, res) {
+    return res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  }
+
+  [
+    '/',
+    '/login',
+    '/register',
+    '/about',
+    '/contact',
+    '/search',
+    '/privacy',
+    '/events',
+    '/events/:id',
+    '/events/register',
+    '/donate',
+    '/payment-result',
+    '/organizations',
+    '/organizations/:id',
+    '/organizations/register',
+    '/organizations/success',
+    '/volunteer/dashboard',
+    '/volunteer/favorites',
+    '/volunteer/registrations',
+    '/volunteer/profile',
+    '/volunteer/donations',
+    '/admin',
+    '/admin/approvals',
+    '/admin/organizations/approvals',
+    '/admin/users',
+    '/admin/categories',
+    '/admin/reports',
+    '/admin/donations',
+    '/admin/registrations',
+    '/organizer',
+    '/organizer/overview',
+    '/organizer/events',
+    '/organizer/organization',
+    '/organizer/volunteers',
+    '/organizer/registrations/:id',
+    '/organizer/volunteers/:id/history',
+  ].forEach((routePath) => {
+    app.get(routePath, serveFrontendApp);
+  });
+}
+
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
